@@ -53,3 +53,6 @@ flux = m.LightCurve(params)
 plt.plot(t, flux)
 plt.show()
 ```
+
+### API
+Coming soon!
