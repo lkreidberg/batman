@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #initializes model
-params = batman.Params()
+params = batman.TransitParams()
 params.t0 = 0.		#transit ephemeris
 params.per = 1.		#orbital period	
 params.rp = 0.1		#planet radius (in stellar radii)
