@@ -47,12 +47,14 @@ class TransitModel:
 			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo)
 			f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac)
 			err = np.max(np.abs(f-f0))*1.0e6
-			print "Max err in light curve is " + "{0:0.2f}".format(err), "ppm"
+	#		print "Max err in light curve is " + "{0:0.2f}".format(err), "ppm"
 			if plot == True:
 				plt.plot(zs, 1.0e6*(f-f0), color='k')
 				plt.xlabel("z (separation of centers)")
 				plt.ylabel("Error (ppm)") 
 				plt.show()
+
+			return err
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 	
 	def _get_fac(self):
