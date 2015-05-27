@@ -7,28 +7,34 @@ from . import rsky
 
 class TransitModel:
 	"""
-	doc
+	
 	"""
-	def __init__(self, t, t0, per, rp, a, inc, ecc, w, u, max_err, limb_dark):
-		if (limb_dark == "uniform" and len(u) != 0) or (limb_dark == "linear" and len(u) != 1) or \
-		    (limb_dark == "quadratic" and len(u) != 2) or (limb_dark == "nonlinear" and len(u) != 4):
+	def __init__(self, params, t, max_err, limb_dark):
+		#checking for invalid input
+		if (limb_dark == "uniform" and len(params.u) != 0) or (limb_dark == "linear" and len(params.u) != 1) or \
+		    (limb_dark == "quadratic" and len(params.u) != 2) or (limb_dark == "nonlinear" and len(params.u) != 4):
 			raise Exception("Incorrect number of coefficients for " +limb_dark + " limb darkening; u should have the form:\n \
 			 u = [] for uniform LD\n \
 			 u = [u1] for linear LD\n \
   			 u = [u1, u2] for quadratic LD\n \
 			 u = [u1, u2, u3, u4] for nonlinear LD") 
+		if limb_dark not in ["uniform", "linear", "quadratic", "nonlinear"]: 
+			raise Exception("\""+limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
+				uniform, linear, quadratic, nonlinear")
+
+		#initializes model parameters
 		self.t = t
-		self.t0 = t0
-		self.per = per
-		self.rp = rp
-		self.a = a
-		self.inc = inc
-		self.ecc = ecc
-		self.w = w 
-		self.u = u
+		self.t0 = params.t0
+		self.per = params.per
+		self.rp = params.rp
+		self.a = params.a
+		self.inc = params.inc
+		self.ecc = params.ecc
+		self.w = params.w 
+		self.u = params.u
 		self.max_err = max_err
 		self.limb_dark = limb_dark
-		self.zs= rsky.rsky(t, t0, per, a, inc, ecc, w)
+		self.zs= rsky.rsky(t, params.t0, params.per, params.a, params.inc, params.ecc, params.w)
 		self.fac = self._get_fac()
 
 #	def set_fac(self,fac):				#set scale factor manually
@@ -67,11 +73,23 @@ class TransitModel:
 			return fac
 		else: return 0.
 
-	def LightCurve(self, t, t0, per, rp, a, inc, ecc, w, u, max_err, limb_dark):
-		if limb_dark == "quadratic": return occultquad.occultquad(self.zs, rp, u[0], u[1])
-		elif limb_dark == "nonlinear": return occultnl.occultnl(self.zs, rp, u[0], u[1], u[2], u[3], self.fac)
-		elif limb_dark == "linear": return occultquad.occultquad(self.zs, rp, u[0], 0.)
-		elif limb_dark == "uniform": return occultuniform.occultuniform(self.zs, rp)
-		else: raise Exception("Limb darkening \"" + limb_dark+"\" not yet implemented.") 
+	def LightCurve(self, params):
+		if self.limb_dark == "quadratic": return occultquad.occultquad(self.zs, params.rp, params.u[0], params.u[1])
+		elif self.limb_dark == "nonlinear": return occultnl.occultnl(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac)
+		elif self.limb_dark == "linear": return occultquad.occultquad(self.zs, params.rp, params.u[0], 0.)
+		elif self.limb_dark == "uniform": return occultuniform.occultuniform(self.zs, params.rp)
 			
 
+class TransitParams(object):
+	"""
+	doc
+	"""
+	def __init__(self):
+		self.t0 = 0.
+		self.per = 0.
+		self.rp = 0.
+		self.a = 0.
+		self.inc = 0.
+		self.ecc = 0.
+		self.w = 0. 
+		self.u = []

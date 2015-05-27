@@ -3,52 +3,35 @@ import math
 import batman
 import matplotlib.pyplot as plt
 
-t0 = 0.
-per = 1.
-rp = 0.115
-a = 15.23
-inc = 1.555
-ecc = 0.
-w = math.pi/2.
-#u = np.array([0.1, 0.3])
-u = np.array([0.0, 0.7, 0.0, -0.3])
-t = np.linspace(t0-per/30., t0 + per/30., 1000)
+params = batman.TransitParams()
+params.t0 = 0.
+params.per = 1.
+params.rp = 0.115
+params.a = 15.23
+params.inc = 1.555
+params.ecc = 0.
+params.w = math.pi/2.
+params.u = np.array([0.0, 0.7, 0.0, -0.3])
+
+t = np.linspace(params.t0-params.per/30., params.t0 + params.per/30., 1000)
 err_max = 0.1
 limb_dark = "nonlinear"
 
-m = batman.TransitModel(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
+m = batman.TransitModel(params, t, err_max, limb_dark)
 m.calc_err(plot = True)
 
-plt.subplot(221)
-limb_dark = "uniform"
-u = []
-m = batman.TransitModel(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-plt.plot(t, m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark))
-plt.title("Uniform LD")
+ld = ["uniform", "linear", "quadratic", "nonlinear"]
+ld_coeffs = [[],[0.1],[0.1,0.3],[0.,0.7,0.,-0.3]]
 
-plt.subplot(222)
-limb_dark = "linear"
-u = [0.1]
-m = batman.TransitModel(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-plt.plot(t, m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark))
-plt.title("Linear LD")
-
-plt.subplot(223)
-limb_dark = "quadratic"
-u = [0.1, 0.3]
-m = batman.TransitModel(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-plt.plot(t, m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark))
-quad = m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-plt.title("Quadratic LD")
-
-plt.subplot(224)
-limb_dark = "nonlinear"
-u = [0., 0.7, 0.0, -0.3]
-m = batman.TransitModel(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-nl= m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark)
-plt.plot(t, m.LightCurve(t, t0, per, rp, a, inc, ecc, w, u, err_max, limb_dark))
-plt.title("Nonlinear LD")
-
+for i in range(4):
+	plt.subplot(220+i)
+	limb_dark  = ld[i]
+	params.u = ld_coeffs[i]
+	m = batman.TransitModel(params, t, err_max, limb_dark)
+	plt.plot(t, m.LightCurve(params))
+	plt.plot(t, m.LightCurve(params))
+	plt.title(limb_dark+" LD")
+	plt.ylim((0.985,1.001))
 
 plt.tight_layout()
 plt.show()
