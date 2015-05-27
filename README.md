@@ -42,7 +42,7 @@ params.w = 1.57		#longitude of periastron
 t = np.linspace(-0.05, 0.05, 1000)         #times to calculate light curve	
 err_max = 0.1                              #maximum error in light curve (in ppm)
 limb_dark = "nonlinear"                    #limb darkening model
-u = np.array([0., 0.7, 0., -0.3])          #limb darkening coefficients
+params.u = np.array([0., 0.7, 0., -0.3])          #limb darkening coefficients
 
 m = batman.TransitModel(params, t, err_max, limb_dark)
 
