@@ -109,9 +109,10 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			lambdae[i] = p*p;
 		}
 		//edge of the occulting star lies at the origin
-		if(fabs(z-p) < 1.0e-4*(z+p))		
+		if(fabs(z-p) < 1.0e-3*(z+p))		
 		{
-			//printf("zone 5\n");
+			z = p;
+		//	printf("zone 5\n");
 			if(p == 0.5)	
 			{
 				//printf("zone 6\n");
@@ -121,7 +122,7 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 				IND(mu0, i) = 1.0-lambdae[i];
 				continue;
 			}
-			if(z >= 0.5)
+			else if(z >= 0.5)
 			{
 				//printf("zone 5.1\n");
 				lam = 0.5*pi;
@@ -133,9 +134,10 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 				etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				              	(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
 				continue;
-			if(z<0.5)	
+			}
+			else if(z<0.5)	
 			{
-				//printf("zone 5.2\n");
+			//	printf("zone 5.2\n");
 				lam = 0.50*pi;
 				q = 2.0*p;
 				Kk = ellk(q);
@@ -149,7 +151,6 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			IND(mu0, i) = 1.0-lambdae[i];
 			continue;
-		}
 		}
 		//occulting star partly occults the source and crosses the limb:
 		if((z > 0.5 + fabs(p -0.5) && z < 1.0 + p) || (p > 0.5 && z > fabs(1.0-p)*1.0001 \
