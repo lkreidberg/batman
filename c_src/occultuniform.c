@@ -8,25 +8,28 @@ C  of a quadratically limb-darkened source without microlensing.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
-//#include <omp.h>
+#include <omp.h>
 
 #define IND(a,i) *((double *)(a->data+i*a->strides[0]))
 
 static PyObject *occultuniform(PyObject *self, PyObject *args)
 {
-	int i;
+	int i, nthreads;
 	double z, p, kap0, kap1, pi = acos(-1.);
 
 	PyArrayObject *zs, *muo1;
 	npy_intp dims[1];
 	
-  	if(!PyArg_ParseTuple(args,"Od", &zs, &p)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odi", &zs, &p, &nthreads)) return NULL;
 
 	dims[0] = zs->dimensions[0];
 	muo1 = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
 	
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
+	omp_set_num_threads(nthreads);
+
+	#pragma omp parallel for private(z, kap1, kap0)
 	for(i=0; i<dims[0]; i++)
 	{
 		z = IND(zs, i);

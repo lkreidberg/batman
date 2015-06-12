@@ -8,7 +8,7 @@ C  of a quadratically limb-darkened source without microlensing.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
-//#include <omp.h>
+#include <omp.h>
 
 #define IND(a,i) *((double *)(a->data+i*a->strides[0]))
 
@@ -39,14 +39,14 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 	 Limb darkening has the form:
 	 I(r)=[1-u1*(1-sqrt(1-(r/rs)^2))-u2*(1-sqrt(1-(r/rs)^2))^2]/(1-u1/3-u2/6)/pi
 */
-	int i, nz;
+	int i, nz, nthreads;
 	double u1, u2, p, *mu, *lambdad, *etad, \
 		*lambdae, lam, pi, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
 	PyArrayObject *zs, *muo1, *mu0;
 	npy_intp dims[1];
 
-  	if(!PyArg_ParseTuple(args,"Oddd", &zs, &p, &u1, &u2)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
 
 	dims[0] = zs->dimensions[0];
 	nz = dims[0];
@@ -63,7 +63,9 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 	omega=1.0-u1/3.0-u2/6.0;
 	pi=acos(-1.0);
 
-//	#pragma omp parallel for private(z, x1,x2,x3,n,q,Kk,Ek,Pk,kap0,kap1)
+	omp_set_num_threads(nthreads);
+
+	#pragma omp parallel for private(z, x1,x2,x3,n,q,Kk,Ek,Pk,kap0,kap1)
 	for(i = 0; i < nz; i++)
 	{	
 		z = IND(zs, i);

@@ -1,15 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import multiprocessing
 from . import occultnl
 from . import occultquad
 from . import occultuniform
 from . import rsky
+from timeit import timeit
+
+def wrapper(func, *args, **kwargs):
+    def wrapped():
+        return func(*args, **kwargs)
+    return wrapped
 
 class TransitModel:
 	"""
-	
+	docs!! FIXME	
 	"""
-	def __init__(self, params, t, max_err, limb_dark):
+	def __init__(self, params, t, max_err, limb_dark, nthreads = None):
 		#checking for invalid input
 		if (limb_dark == "uniform" and len(params.u) != 0) or (limb_dark == "linear" and len(params.u) != 1) or \
 		    (limb_dark == "quadratic" and len(params.u) != 2) or (limb_dark == "nonlinear" and len(params.u) != 4):
@@ -36,6 +43,9 @@ class TransitModel:
 		self.limb_dark = limb_dark
 		self.zs= rsky.rsky(t, params.t0, params.per, params.a, params.inc, params.ecc, params.w)
 		self.fac = self._get_fac()
+		if nthreads==None: self.nthreads=self._get_nthreads()
+		elif nthreads <= multiprocessing.cpu_count(): self.nthreads = nthreads
+		else: raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
 
 #	def set_fac(self,fac):				#set scale factor manually
 #		self.fac = fac
@@ -44,8 +54,8 @@ class TransitModel:
 		if self.limb_dark == "nonlinear":
 			zs = np.linspace(0., 1.1, 500)
 			fac_lo = 1.0e-4
-			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo)
-			f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac)
+			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
+			f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
 			err = np.max(np.abs(f-f0))*1.0e6
 	#		print "Max err in light curve is " + "{0:0.2f}".format(err), "ppm"
 			if plot == True:
@@ -59,14 +69,15 @@ class TransitModel:
 	
 	def _get_fac(self):
 		if self.limb_dark == "nonlinear":
+			nthreads = 1
 			fac_lo, fac_hi = 1.0e-4, 1.
 			zs = np.linspace(0., 1.1, 500)
-			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo)
+			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
 			n = 0
 			err = 0.
 			while(err > self.max_err or err < 0.99*self.max_err):
 				fac = (fac_lo + fac_hi)/2.
-				f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac)
+				f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
 				err = np.max(np.abs(f-f0))*1.0e6
 				if err> self.max_err: fac_hi = fac	
 				else: fac_lo = fac
@@ -75,11 +86,30 @@ class TransitModel:
 			return fac
 		else: return 0.
 
+	def _get_nthreads(self):
+		max_threads = multiprocessing.cpu_count()
+		tmin = 1.0e10
+		best_n = 0 
+		for nthreads in range(1, max_threads): 
+			if self.limb_dark == "quadratic": wrapped = wrapper(occultquad.occultquad, self.zs, self.rp, self.u[0], self.u[1], nthreads)
+			elif self.limb_dark == "nonlinear": wrapped = wrapper(occultnl.occultnl, self.zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, nthreads)
+			elif self.limb_dark == "linear": wrapped = wrapper(occultquad.occultquad, self.zs, self.rp, self.u[0], 0., nthreads)
+			elif self.limb_dark == "uniform": wrapped = wrapper(occultuniform.occultuniform, self.zs, self.rp, nthreads)
+			else: raise Exception("Invalid limb darkening option")
+			
+			t = timeit(wrapped,number=5)
+			if t<tmin:
+				tmin = t
+				best_n = nthreads
+		return best_n
+		
+
 	def LightCurve(self, params):
-		if self.limb_dark == "quadratic": return occultquad.occultquad(self.zs, params.rp, params.u[0], params.u[1])
-		elif self.limb_dark == "nonlinear": return occultnl.occultnl(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac)
-		elif self.limb_dark == "linear": return occultquad.occultquad(self.zs, params.rp, params.u[0], 0.)
-		elif self.limb_dark == "uniform": return occultuniform.occultuniform(self.zs, params.rp)
+		if self.limb_dark == "quadratic": return occultquad.occultquad(self.zs, params.rp, params.u[0], params.u[1], self.nthreads)
+		elif self.limb_dark == "nonlinear": return occultnl.occultnl(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+		elif self.limb_dark == "linear": return occultquad.occultquad(self.zs, params.rp, params.u[0], 0., self.nthreads)
+		elif self.limb_dark == "uniform": return occultuniform.occultuniform(self.zs, params.rp, self.nthreads)
+		else: raise Exception("Invalid limb darkening option")
 			
 
 class TransitParams(object):

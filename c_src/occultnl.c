@@ -2,6 +2,7 @@
 #include<numpy/arrayobject.h>
 #include<math.h>
 #include<stdio.h>
+#include <omp.h>
 
 #define TWOPI 6.28318531		//FIXME more precise!
 #define PI 3.14159265
@@ -31,17 +32,20 @@ double area(double d, double r, double R)
 static PyObject *occultnl(PyObject *self, PyObject *args)
 {
 	double rprs, d, fac, A_i, r, I; 
-	int i, n;
+	int i, nthreads;
 	double dr, A_f, r_in, r_out, delta, u1, u2, u3, u4;
 	
 	npy_intp dims[1];
 	PyArrayObject *zs, *flux;
-  	if(!PyArg_ParseTuple(args,"Odddddd", &zs, &rprs, &u1, &u2, &u3, &u4, &fac)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Oddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &fac, &nthreads)) return NULL;
 	
 	dims[0] = zs->dimensions[0];
 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
 
+	omp_set_num_threads(nthreads);
+
+	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
 	for(i = 0; i < dims[0]; i++)
 	{
 		d = IND(zs, i);
@@ -58,7 +62,6 @@ static PyObject *occultnl(PyObject *self, PyObject *args)
 			r += dr;
 			A_i = 0.;
 	
-			n = 0;
 			while(r<r_out)
 			{
 				A_f = area(d, r, rprs);

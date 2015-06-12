@@ -5,7 +5,7 @@ from transitmodel import TransitParams
 from transitmodel import TransitModel
 from . import occultnl 
 from . import occultquad
-#import timeit
+import timeit
 
 def wrapper(func, *args, **kwargs):
     def wrapped():
@@ -17,10 +17,15 @@ def test():
 	"""zs = np.linspace(0., 1., 1000)
 	rp = 0.1
 	u = [0., 0.7, 0.0, -0.3]
-	f = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-2)
-	fhi = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4)
-	fquad = occultquad.occultquad(zs, rp, 0.1, 0.3)
-	for i in range(len(f)): print "z, fnl, fquad", zs[i], f[i], fquad[i]
+	f = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-2, 4)
+	fhi = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4, 4)
+	fquad = occultquad.occultquad(zs, rp, 0.1, 0.3, 4)
+	#for i in range(len(f)): print "z, fnl, fquad", zs[i], f[i], fquad[i]
+
+	for i in range(1,16):
+		wrapped = wrapper(occultquad.occultquad, zs, rp, 0.1, 0.3, i)
+		t = timeit.timeit(wrapped,number=1)
+		print i, t
 
 	plt.plot(zs, (f - fhi)*1.0e6)
 	plt.plot(zs, (fhi - fquad)*1.0e6, color='r')
@@ -44,6 +49,7 @@ def test():
 	err_max = 0.1
 	limb_dark = "nonlinear"
 
+	#for i in range(10): m = TransitModel(params, t, err_max, limb_dark)
 	m = TransitModel(params, t, err_max, limb_dark)
 	nonlinear_lc = m.LightCurve(params)
 	
@@ -54,14 +60,14 @@ def test():
 	n = 20
 	ts = []
 	errs = []
-	f_ref = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4)
+	f_ref = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4, 4)
 	fac = np.logspace(-3, -1, n)
 	for i in range(n):
-		wrapped = wrapper(occultnl.occultnl, zs, rp, u[0], u[1], u[2], u[3], fac[i])
+		wrapped = wrapper(occultnl.occultnl, zs, rp, u[0], u[1], u[2], u[3], fac[i], 12)
 		t = timeit.timeit(wrapped,number=10)/10.
 		ts.append(t)
 		print t
-		f= occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], fac[i])
+		f= occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], fac[i], 12)
 		err = np.max(np.abs(f - f_ref))
 		errs.append(err)
 	plt.plot(np.array(ts), np.array(errs)*1.0e6)
@@ -74,14 +80,17 @@ def test():
 	err = m.calc_err()
 	if err > err_max: failures += 1
 
-
 	limb_dark = "quadratic"
 	params.u = [0.1,0.3]
 	m = TransitModel(params, t, err_max, limb_dark)
 	quadratic_lc = m.LightCurve(params)
 
-	if np.max(np.abs(quadratic_lc-nonlinear_lc))> err_max: failures += 1
+	#plt.plot(t, (nonlinear_lc - quadratic_lc)*1.0e6)
+	#plt.show()
+
+	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
 
 	print "Tests finished with " + "{0}".format(failures) + " failures"
 
+	
 
