@@ -8,7 +8,10 @@ C  of a quadratically limb-darkened source without microlensing.
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
-#include <omp.h>
+
+#if defined (_OPENMP)
+#  include <omp.h>
+#endif
 
 #define IND(a,i) *((double *)(a->data+i*a->strides[0]))
 
@@ -27,9 +30,13 @@ static PyObject *occultuniform(PyObject *self, PyObject *args)
 	
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
+	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
+	#endif
 
+	#if defined (_OPENMP)
 	#pragma omp parallel for private(z, kap1, kap0)
+	#endif
 	for(i=0; i<dims[0]; i++)
 	{
 		z = IND(zs, i);

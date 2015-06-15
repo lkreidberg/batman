@@ -2,7 +2,10 @@
 #include<numpy/arrayobject.h>
 #include<math.h>
 #include<stdio.h>
-#include <omp.h>
+
+#if defined (_OPENMP)
+#  include <omp.h>
+#endif
 
 #define TWOPI 6.28318531		//FIXME more precise!
 #define PI 3.14159265
@@ -43,9 +46,13 @@ static PyObject *occultnl(PyObject *self, PyObject *args)
 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
 
+	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
+	#endif
 
+	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
+	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
 		d = IND(zs, i);
