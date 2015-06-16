@@ -1,3 +1,4 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include<numpy/arrayobject.h>
 #include<math.h>
@@ -9,7 +10,6 @@
 
 #define TWOPI 6.28318531		//FIXME more precise!
 #define PI 3.14159265
-#define IND(a,i) *((double *)(a->data+i*a->strides[0]))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
@@ -38,13 +38,13 @@ static PyObject *occultnl(PyObject *self, PyObject *args)
 	int i, nthreads;
 	double dr, A_f, r_in, r_out, delta, u1, u2, u3, u4;
 	
-	npy_intp dims[1];
+	npy_intp dims[1], idx;
 	PyArrayObject *zs, *flux;
   	if(!PyArg_ParseTuple(args,"Oddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &fac, &nthreads)) return NULL;
 	
-	dims[0] = zs->dimensions[0];
+	dims[0] = PyArray_DIMS(zs)[0]; 
 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
@@ -55,11 +55,12 @@ static PyObject *occultnl(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		d = IND(zs, i);
+		idx = (npy_intp)i;
+		d = *(double*)PyArray_GetPtr(zs, &idx);
 		r_in = MAX(d - rprs, 0.);		
 		r_out = MIN(d + rprs, 1.0);		
 
-		if(r_in >= 1.) IND(flux, i) = 1.;
+		if(r_in >= 1.) *(double*)PyArray_GetPtr(flux, &idx) = 1.;
 		else
 		{
 			delta = 0.;
@@ -84,7 +85,7 @@ static PyObject *occultnl(PyObject *self, PyObject *args)
 			I = intensity_nl(r-dr/2.,u1,u2, u3, u4); 
 			delta += (A_f - A_i)*I;
 
-			IND(flux, i) = 1. - delta;	
+		 	*(double*)PyArray_GetPtr(flux, &idx) = 1. - delta;	
 		}
 	}
 

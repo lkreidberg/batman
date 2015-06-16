@@ -1,10 +1,4 @@
-/*
-C  This routine computes the lightcurve for occultation
-C  of a quadratically limb-darkened source without microlensing.
-
-	This code is a translation of the Mandel/Agol Fortran code into C.
-	LK 9/13/12
-*/
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <math.h>
@@ -12,8 +6,6 @@ C  of a quadratically limb-darkened source without microlensing.
 #if defined (_OPENMP)
 #  include <omp.h>
 #endif
-
-#define IND(a,i) *((double *)(a->data+i*a->strides[0]))
 
 double rc(double x, double y);
 double rj(double x, double y, double z, double p);
@@ -43,25 +35,25 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 	 I(r)=[1-u1*(1-sqrt(1-(r/rs)^2))-u2*(1-sqrt(1-(r/rs)^2))^2]/(1-u1/3-u2/6)/pi
 */
 	int i, nz, nthreads;
-	double u1, u2, p, *mu, *lambdad, *etad, \
+	double u1, u2, p, *mu, *mu0,  *lambdad, *etad, \
 		*lambdae, lam, pi, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
-	PyArrayObject *zs, *muo1, *mu0;
-	npy_intp dims[1];
+	PyArrayObject *zs, *muo1;
+	npy_intp dims[1], idx;
 
   	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
 
-	dims[0] = zs->dimensions[0];
+	dims[0] = PyArray_DIMS(zs)[0];
 	nz = dims[0];
 
 	lambdad = (double *)malloc(nz*sizeof(double));
 	lambdae = (double *)malloc(nz*sizeof(double));
 	etad = (double *)malloc(nz*sizeof(double));
 	mu = (double *)malloc(nz*sizeof(double));
+	mu0 = (double *)malloc(nz*sizeof(double));
 
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
-	mu0 = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
-	muo1 = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_DOUBLE);
+	muo1 = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
 
 	omega=1.0-u1/3.0-u2/6.0;
 	pi=acos(-1.0);
@@ -75,7 +67,8 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < nz; i++)
 	{	
-		z = IND(zs, i);
+		idx = (npy_intp)i;
+		z = *(double*)PyArray_GetPtr(zs, &idx);
 		x1 = pow((p - z), 2.0);
 		x2 = pow((p + z), 2.0);
 		x3 = p*p - z*z;
@@ -87,8 +80,8 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-			IND(mu0, i) = 1.0-lambdae[i];
+			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
 		//source is completely occulted:
@@ -98,8 +91,8 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.5;		//error in Fortran code corrected here, following Eastman's python code
 			lambdae[i] = 1.0;
-			IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega;
-			IND(mu0, i) = 1.0-lambdae[i];
+			 *(double*)PyArray_GetPtr(muo1, &idx)= 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega;
+			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
 		//source is partly occulted and occulting object crosses the limb:
@@ -127,8 +120,8 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 				//printf("zone 6\n");
 				lambdad[i] = 1.0/3.0-4.0/pi/9.0;
 				etad[i] = 3.0/32.0;
-				IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-				IND(mu0, i) = 1.0-lambdae[i];
+				*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
 			else if(z >= 0.5)
@@ -153,12 +146,12 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0+2.0/9.0/pi*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p+2.0*z*z);
-				IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-				IND(mu0, i) = 1.0-lambdae[i];
+				*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
-			IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-			IND(mu0, i) = 1.0-lambdae[i];
+			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
 		//occulting star partly occults the source and crosses the limb:
@@ -178,8 +171,8 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			if(z < p) lambdad[i] += 2.0/3.0;
 			etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
-			IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-			IND(mu0, i) = 1.0-lambdae[i];
+			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
 		//occulting star transits the source:
@@ -202,14 +195,14 @@ static PyObject *occultquad(PyObject *self, PyObject *args)
 			}
 			etad[i] = p*p/2.0*(p*p+2.0*z*z);
 		}
-		IND(muo1, i) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
-		IND(mu0, i) = 1.0-lambdae[i];
+		*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+		mu0[i] = 1.0-lambdae[i];
 	}
 	free(lambdae);
 	free(lambdad);
 	free(etad);
 	free(mu);
-	Py_XDECREF(mu0);
+	free(mu0);
 
 	return PyArray_Return(muo1);
 }
