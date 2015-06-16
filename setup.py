@@ -63,18 +63,9 @@ has_openmp, needs_gomp = detect_openmp()
 parallel_args = ['-fopenmp'] if has_openmp else []
 parallel_libraries = ['gomp'] if needs_gomp else []
 
-#extra_compile_args = ['-fopenmp']
-#extra_link_args = ['-lgomp']
-extra_compile_args = []
-extra_link_args = []
-
-occultnl = Extension('batman.occultnl', ['c_src/occultnl.c'], extra_compile_args = extra_compile_args, extra_link_args=extra_link_args)
-occultquad = Extension('batman.occultquad', ['c_src/occultquad.c'], extra_compile_args = extra_compile_args, extra_link_args=extra_link_args)
-occultuniform = Extension('batman.occultuniform', ['c_src/occultuniform.c'], extra_compile_args = extra_compile_args, extra_link_args=extra_link_args)
-
-#occultnl = Extension('batman.occultnl', ['c_src/occultnl.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
-#occultquad = Extension('batman.occultquad', ['c_src/occultquad.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
-#occultuniform = Extension('batman.occultuniform', ['c_src/occultuniform.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+occultnl = Extension('batman.occultnl', ['c_src/occultnl.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+occultquad = Extension('batman.occultquad', ['c_src/occultquad.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+occultuniform = Extension('batman.occultuniform', ['c_src/occultuniform.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 rsky = Extension('batman.rsky', ['c_src/rsky.c'])
 
 setup(	name='batman', 
