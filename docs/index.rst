@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-batman: Bad-Ass Transit Model cAlculatioN in Python
-===================================================
+batman: Bad-Ass Transit Model cAlculatioN
+=========================================
 
-The ``batman`` package for Python provides fast, flexible calculation of exoplanet transit light curves.  The package includes analytic calculation of light curves for quadratic limb darkening (based on Mandel & Agol 2002), as well as a brute-force integration scheme for nonlinear limb darkening (as described in Kreidberg 2015, arXiv:NNNN:NNNN).
+The ``batman`` package for Python makes super fast calculation of transit light curves easy.  
 
 
 Contents:
@@ -15,10 +15,13 @@ Contents:
    :maxdepth: 2
 
    installation
+   quickstart
    tutorial
    api
    acknowledgements
-   todo
-   history
+
+Release Notes
+-------------
+.. include::  ../changelog.rst
 
 

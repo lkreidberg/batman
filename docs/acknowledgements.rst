@@ -1,6 +1,6 @@
 .. _acknowledgements:
 
-Acknowledgements:
+Acknowledgements
 =================
 - Kevin Stevenson
 - Ethan Kruse

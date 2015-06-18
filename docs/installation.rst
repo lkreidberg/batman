@@ -3,12 +3,32 @@
 Installation
 ============
 
-Clone the github repository or download the source as a zip file.
+Download the source directory from https://github.com/lkreidberg/batman/archive/master.zip.
 
-FIXME: add to pip
+Unpack the distribution with:
 
-Run ``$ python setup.py install`` from the source root directory to install.
+::
 
-To test the installation, cd out of the root directory and run
+   $ unzip batman-master.zip
 
-``$ python -c 'import batman; batman.test()'``
+To install, navigate to the source root directory and run the setup script:
+
+::
+
+   $ cd batman-master
+   $ sudo python setup.py install
+
+Finish by cleaning up:
+
+::
+   
+   $ cd ..
+   $ sudo rm -rf batman-master
+
+Now ``batman`` is installed and ready to use! To verify that the installation is working properly, run a few tests with:
+
+::
+
+   $ python -c 'import batman; batman.test()'
+
+
