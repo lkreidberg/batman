@@ -51,7 +51,10 @@ def test():
 
 	#for i in range(10): m = TransitModel(params, t, err_max, limb_dark)
 	m = TransitModel(params, t, err_max, limb_dark)
+
 	nonlinear_lc = m.LightCurve(params)
+	plt.plot(t, nonlinear_lc)
+	plt.show()
 	
 	#generates Figure FIXME: max err as a function of function call time
 	"""zs = np.linspace(0., 1., 1000)
