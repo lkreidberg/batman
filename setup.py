@@ -63,14 +63,17 @@ has_openmp, needs_gomp = detect_openmp()
 parallel_args = ['-fopenmp'] if has_openmp else []
 parallel_libraries = ['gomp'] if needs_gomp else []
 
-occultnl = Extension('batman.occultnl', ['c_src/occultnl.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
-occultquad = Extension('batman.occultquad', ['c_src/occultquad.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
-occultuniform = Extension('batman.occultuniform', ['c_src/occultuniform.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
-rsky = Extension('batman.rsky', ['c_src/rsky.c'])
+_nonlinear_ld = Extension('batman._nonlinear_ld', ['c_src/_nonlinear_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_quadratic_ld = Extension('batman._quadratic_ld', ['c_src/_quadratic_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_uniform_ld   = Extension('batman._uniform_ld', ['c_src/_uniform_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
 
 setup(	name='batman', 
-	version='1.0', 
+	version='1.0.0', 
+	author='Laura Kreidberg',
 	packages =['batman'],
+	description ='Fast transit light curve modeling',
 	include_dirs = [np.get_include()],
-	ext_modules=[occultnl, occultquad, occultuniform, rsky]
+	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _custom_ld, _rsky]
 )
