@@ -3,9 +3,6 @@
 #include<numpy/arrayobject.h>
 #include<math.h>
 
-#define TWOPI 6.28318531
-#define PI 3.14159265
-
 static PyObject *_rsky(PyObject *self, PyObject *args);
 
 double getE(double M, double e)	//determines the eccentric anomaly (Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
@@ -30,7 +27,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 
 	zs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
 
-	n = TWOPI/per;	// mean motion
+	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
 	
 	for(i = 0; i < dims[0]; i++)
@@ -46,7 +43,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 			f = acos(a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc);
 			if(fabs((a*(1.0 - ecc*ecc)/(r*ecc) -1.0/ecc) - 1.0) < eps) f = 0.0;
 		}
-		else f = ((t-t0)/per - (int)((t-t0)/per))*TWOPI;
+		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;
 		d = a*(1.0-ecc*ecc)/(1.0+ecc*cos(f))*sqrt(1.0 - sin(omega+f)*sin(omega+f)*sin(inc)*sin(inc));
 		*(double*)PyArray_GetPtr(zs, &idx) = d;
 	}

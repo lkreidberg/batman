@@ -8,18 +8,15 @@
 #  include <omp.h>
 #endif
 
-#define TWOPI 6.28318531		//FIXME more precise!
-#define PI 3.14159265
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 static PyObject *_nonlinear_ld(PyObject *self, PyObject *args);
 
-double intensity(double r, double u1, double u2, double u3, double u4)
+double intensity(double r, double u1, double u2, double u3, double u4, double norm)
 {
 	if(r > 0.99995) r = 0.99995;
 	double sqrtmu = pow(1.-r*r,0.25);
-	double norm = (-u1/10.-u2/6.-3.*u3/14.-u4/4.+0.5)*TWOPI; 		//calculate norm by integrating I(r)r dr dtheta
 	return (1. - u1*(1.-sqrtmu) - u2*(1. - pow(sqrtmu,2.)) - u3*(1.-pow(sqrtmu, 3.)) - u4*(1.-pow(sqrtmu,4.)))/norm; 	
 }
 
@@ -27,8 +24,8 @@ double area(double d, double r, double R)
 {
 	double arg1 = (d*d+r*r-R*R)/(2.*d*r), arg2 = (d*d+R*R-r*r)/(2.*d*R), arg3 = MAX((-d+r+R)*(d+r-R)*(d-r+R)*(d+r+R), 0.);
 
-	if(r<=R-d) return PI*r*r;
-	else if(r>=R+d) return PI*R*R;
+	if(r<=R-d) return M_PI*r*r;
+	else if(r>=R+d) return M_PI*R*R;
 	else return r*r*acos(arg1) + R*R*acos(arg2) - 0.5*sqrt(arg3);
 }
 
@@ -49,6 +46,8 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
 	#endif
+
+	double norm = (-u1/10.-u2/6.-3.*u3/14.-u4/4.+0.5)*2.*M_PI; 		
 
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
@@ -73,7 +72,7 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			while(r<r_out)
 			{
 				A_f = area(d, r, rprs);
-				I = intensity(r-dr/2.,u1,u2, u3, u4); 
+				I = intensity(r-dr/2.,u1,u2, u3, u4, norm); 
 				delta += (A_f - A_i)*I;
 				dr = fac*acos(r);  
 				r = r+dr;
@@ -82,7 +81,7 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			dr = r_out -r + dr;  
 			r = r_out;
 			A_f = area(d, r, rprs);
-			I = intensity(r-dr/2.,u1,u2, u3, u4); 
+			I = intensity(r-dr/2.,u1,u2, u3, u4, norm); 
 			delta += (A_f - A_i)*I;
 
 		 	*(double*)PyArray_GetPtr(flux, &idx) = 1. - delta;	
