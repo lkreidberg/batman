@@ -15,7 +15,7 @@
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
-double intensity(double r, double u1, double u2, double u3, double u4);
+double intensity(double r, double u1, double u2, double u3, double u4, double u5, double u6);
 
 double area(double d, double r, double R)
 {
@@ -28,39 +28,17 @@ double area(double d, double r, double R)
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, r, I, u1, u2, u3, u4; 
+	double rprs, d, fac, A_i, r, I; 
 	int i, nthreads;
-	double dr, A_f, r_in, r_out, delta;
+	double dr, A_f, r_in, r_out, delta, u1, u2, u3, u4, u5, u6;
 	
 	npy_intp dims[1], idx;
-	PyArrayObject *zs, *flux, *u;
-  	if(!PyArg_ParseTuple(args,"OdOdi", &zs, &rprs, &u, &fac, &nthreads)) return NULL;
+	PyArrayObject *zs, *flux;
+  	if(!PyArg_ParseTuple(args,"Oddddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &u5, &u6, &fac, &nthreads)) return NULL;
 	
 	dims[0] = PyArray_DIMS(zs)[0]; 
 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
-
-	/*for(i = 0; i < (int)PyArray_DIMS(us); i++)
-	{
-		idx0 = (npy_intp)i;
-		u[i] = *(double*)PyArray_GetPtr(us, &idx0);		//stores limb darkening coefficients in an array
-		printf("u = %f\n", u[i]);
-	}*/
-
-	i = 0;
-	idx = (npy_intp)i;
-	u1 = *(double*)PyArray_GetPtr(u, &idx);
-	i = 1;
-	idx = (npy_intp)i;
-	u2 = *(double*)PyArray_GetPtr(u, &idx);
-	i = 2;
-	idx = (npy_intp)i;
-	u3 = *(double*)PyArray_GetPtr(u, &idx);
-	i = 3;
-	idx = (npy_intp)i;
-	u4 = *(double*)PyArray_GetPtr(u, &idx);
-
-
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
@@ -89,7 +67,7 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 			while(r<r_out)
 			{
 				A_f = area(d, r, rprs);
-				I = intensity(r-dr/2.,u1, u2, u3, u4); 
+				I = intensity(r-dr/2.,u1,u2, u3, u4, u5, u6); 
 				delta += (A_f - A_i)*I;
 				dr = fac*acos(r);  
 				r = r+dr;
@@ -98,13 +76,13 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 			dr = r_out -r + dr;  
 			r = r_out;
 			A_f = area(d, r, rprs);
-			I = intensity(r-dr/2.,u1, u2, u3, u4); 
+			I = intensity(r-dr/2.,u1,u2, u3, u4, u5, u6); 
 			delta += (A_f - A_i)*I;
 
 		 	*(double*)PyArray_GetPtr(flux, &idx) = 1. - delta;	
 		}
 	}
-	
+
 	return PyArray_Return(flux);
 } 
 
