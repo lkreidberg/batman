@@ -20,16 +20,14 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 {
 /*	Input: *************************************
  
-	 zs   impact parameter in units of rs
-	 u1   linear    limb-darkening coefficient (gamma_1 in paper)
-	 u2   quadratic limb-darkening coefficient (gamma_2 in paper)
-	 p    occulting star size in units of rs
-	 nz   number of points in the light curve (# elements in zs)
+	 zs   	impact parameter in units of rs
+	 u1   	linear    limb-darkening coefficient (gamma_1 in Mandel & Agol 2002)
+	 u2   	quadratic limb-darkening coefficient (gamma_2)
+	 p    	occulting star size in units of rs
 	
 	 Output: ***********************************
 	
-	 default:  muo1, fraction of flux at each zs for a limb-darkened source
-	 optional:  mu0, fraction of flux at each zs for a uniform source
+	 flux 	fraction of flux at each zs for a limb-darkened source
 	
 	 Limb darkening has the form:
 	 I(r)=[1-u1*(1-sqrt(1-(r/rs)^2))-u2*(1-sqrt(1-(r/rs)^2))^2]/(1-u1/3-u2/6)/pi
@@ -38,7 +36,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	double u1, u2, p, *mu, *mu0,  *lambdad, *etad, \
 		*lambdae, lam, pi, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
-	PyArrayObject *zs, *muo1;
+	PyArrayObject *zs, *flux;
 	npy_intp dims[1], idx;
 
   	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
@@ -53,7 +51,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	mu0 = (double *)malloc(nz*sizeof(double));
 
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
-	muo1 = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
 
 	omega=1.0-u1/3.0-u2/6.0;
 	pi=acos(-1.0);
@@ -80,7 +78,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -89,9 +87,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 		{
 			//printf("zone 2\n");
 			lambdad[i] = 0.0;
-			etad[i] = 0.5;		//error in Fortran code corrected here, following Eastman's python code
+			etad[i] = 0.5;		//error in Fortran code corrected here, following Jason Eastman's python code
 			lambdae[i] = 1.0;
-			 *(double*)PyArray_GetPtr(muo1, &idx)= 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega;
+			 *(double*)PyArray_GetPtr(flux, &idx)= 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega;
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -120,7 +118,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				//printf("zone 6\n");
 				lambdad[i] = 1.0/3.0-4.0/pi/9.0;
 				etad[i] = 3.0/32.0;
-				*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+				*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
@@ -146,11 +144,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0+2.0/9.0/pi*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p+2.0*z*z);
-				*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+				*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
-			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -171,7 +169,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			if(z < p) lambdad[i] += 2.0/3.0;
 			etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
-			*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+			*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -195,7 +193,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			}
 			etad[i] = p*p/2.0*(p*p+2.0*z*z);
 		}
-		*(double*)PyArray_GetPtr(muo1, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
+		*(double*)PyArray_GetPtr(flux, &idx) = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 		mu0[i] = 1.0-lambdae[i];
 	}
 	free(lambdae);
@@ -204,7 +202,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	free(mu);
 	free(mu0);
 
-	return PyArray_Return(muo1);
+	return PyArray_Return(flux);
 }
 double min(double a, double b)
 {
@@ -410,8 +408,7 @@ double rf(double x, double y, double z)
 	return rf;
 }
 
-
-static char _quadratic_ld_doc[] = "LK 9/12/12";
+static char _quadratic_ld_doc[] = "This extension module returns a limb darkened light curve for a quadratic stellar intensity profile.";
 
 static PyMethodDef _quadratic_ld_methods[] = {
   {"_quadratic_ld", _quadratic_ld,METH_VARARGS,_quadratic_ld_doc},{NULL}};

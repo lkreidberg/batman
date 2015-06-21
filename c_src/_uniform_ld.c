@@ -15,10 +15,10 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	PyArrayObject *zs, *flux;
 	npy_intp dims[1], idx;
 	
-  	if(!PyArg_ParseTuple(args,"Odi", &zs, &p, &nthreads)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odi", &zs, &p, &nthreads)) return NULL;		//parses function input
 
 	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));		//creates numpy array to store output flux values
 	
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
@@ -34,10 +34,10 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 		idx = (npy_intp)i;
 		z = *(double*)PyArray_GetPtr(zs, &idx);
 		
-		if(z >= 1.+p) *(double*)PyArray_GetPtr(flux, &idx) = 1.;
-		if(p >= 1. && z <= p - 1.) *(double*)PyArray_GetPtr(flux, &idx) = 0.;
-		else if(z <= 1.-p) *(double*)PyArray_GetPtr(flux, &idx) = 1.-p*p;
-		else	
+		if(z >= 1.+p) *(double*)PyArray_GetPtr(flux, &idx) = 1.;		//no overlap
+		if(p >= 1. && z <= p - 1.) *(double*)PyArray_GetPtr(flux, &idx) = 0.;	//total eclipse of the star
+		else if(z <= 1.-p) *(double*)PyArray_GetPtr(flux, &idx) = 1.-p*p;	//planet is fully in transit
+		else									//planet is crossing the limb
 		{
 			kap1=acos(fmin((1.-p*p+z*z)/2./z,1.));
 			kap0=acos(fmin((p*p+z*z-1.)/2./p/z,1.));
@@ -49,7 +49,7 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 }
 
 
-static char _uniform_ld_doc[] = "LK 05/2015";
+static char _uniform_ld_doc[] = "This extension module returns a limb darkened light curve for a uniform stellar intensity profile.";
 
 static PyMethodDef _uniform_ld_methods[] = {
   {"_uniform_ld", _uniform_ld, METH_VARARGS, _uniform_ld_doc},{NULL}};

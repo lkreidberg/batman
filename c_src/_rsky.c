@@ -5,7 +5,7 @@
 
 static PyObject *_rsky(PyObject *self, PyObject *args);
 
-double getE(double M, double e)	//determines the eccentric anomaly (Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
+double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
 	double E = M, eps = 1.0e-7;
 	
@@ -18,6 +18,13 @@ double getE(double M, double e)	//determines the eccentric anomaly (Seager Exopl
 
 static PyObject *_rsky(PyObject *self, PyObject *args)
 {
+	/*
+		This module computes the distance between the centers of the 
+		star and the planet in the plane of the sky.  This parameter is 
+		denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book 
+		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol 
+		(2002) paper, this quantity is denoted d.
+	*/
 	double ecc, E, inc, a, r, d, f, omega, per, M, n, t0, eps, t;
 	int i;
 	npy_intp dims[1], idx;
@@ -35,7 +42,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		idx = (npy_intp)i;
 		t = *(double*)PyArray_GetPtr(ts, &idx);
 
-		if(ecc != 0.)
+		if(ecc > 1.e-5)						//calculates f for eccentric orbits
 		{
 			M = n*(t - t0);
 			E = getE(M, ecc);
@@ -43,14 +50,14 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 			f = acos(a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc);
 			if(fabs((a*(1.0 - ecc*ecc)/(r*ecc) -1.0/ecc) - 1.0) < eps) f = 0.0;
 		}
-		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;
-		d = a*(1.0-ecc*ecc)/(1.0+ecc*cos(f))*sqrt(1.0 - sin(omega+f)*sin(omega+f)*sin(inc)*sin(inc));
+		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;	//calculates f for a circular orbit
+		d = a*(1.0-ecc*ecc)/(1.0+ecc*cos(f))*sqrt(1.0 - sin(omega+f)*sin(omega+f)*sin(inc)*sin(inc));	//calculates separation of centers 
 		*(double*)PyArray_GetPtr(zs, &idx) = d;
 	}
 	return PyArray_Return(zs);
 } 
 
-static char _rsky_doc[] = """ This code computes the distance between the centers of the \
+static char _rsky_doc[] = """ This module computes the distance between the centers of the \
 star and the planet in the plane of the sky.  This parameter is \
 denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book \
 (see the section by Murray, and Winn eq. 5).  In the Mandel & Agol (2002) paper, \

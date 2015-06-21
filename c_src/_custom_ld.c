@@ -15,11 +15,11 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
 double intensity(double r, double u1, double u2, double u3, double u4, double u5, double u6);
 
-/*
-	Returns area of overlapping circles with radii r and R; separated by a distance d
-*/
 double area(double d, double r, double R)
 {
+	/*
+	Returns area of overlapping circles with radii r and R; separated by a distance d
+	*/
 	double arg1 = (d*d+r*r-R*R)/(2.*d*r), arg2 = (d*d+R*R-r*r)/(2.*d*R), arg3 = MAX((-d+r+R)*(d+r-R)*(d-r+R)*(d+r+R), 0.);
 
 	if(r<=R-d) return M_PI*r*r;						//planet completely overlaps stellar circle
@@ -81,7 +81,6 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 		 	*(double*)PyArray_GetPtr(flux, &idx) = 1. - delta;	//flux equals 1 - \int I dA
 		}
 	}
-
 	return PyArray_Return(flux);
 } 
 
