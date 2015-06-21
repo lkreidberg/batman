@@ -3,6 +3,8 @@
 Installation
 ============
 
+FIXME: make tarball of master http://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
+
 Download the source directory from https://github.com/lkreidberg/batman/archive/master.zip.
 
 Unpack the distribution with:

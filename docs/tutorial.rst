@@ -23,7 +23,7 @@ Initializing the model
 	t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
 	m = batman.TransitModel(params, t)      #initializes model
 
-The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for models calculated with the integrator rather than analytically).
+The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "nonlinear" and "custom" limb darkening). 
 
 
 Calculating light curves
@@ -48,7 +48,7 @@ Now that the model has been set up, we can change the transit parameters and rec
 
 Limb darkening options
 ----------------------
-The ``batman`` package currently supports the following limb darkening options: "nonlinear", "quadratic", "linear", and "uniform".  The limb darkening options assume the following form for the stellar intensity profile:
+The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", and "nonlinear".  These options assume the following form for the stellar intensity profile:
 
 .. math::
 
@@ -75,15 +75,66 @@ To illustrate the usage for these different options, here's a calculation of lig
 		params.u = ld_coefficients[i]	                 #updates limb darkening coefficients
 		m = batman.TransitModel(params, t)	         #initializes the model
 		flux = m.LightCurve(params)		         #calculates light curve
-		plt.plot(t., flux, label = ld_options[i])
+		plt.plot(t, flux, label = ld_options[i])
 
 The limb darkening coefficients are provided as a list of the form :math:`[u_1, ..., u_n]` where :math:`n` depends on the limb darkening model. 
 
 .. image:: lightcurves.png
 
+
+Custom limb darkening
+---------------------
+``batman`` also supports the definition of custom limb darkening.  To create a custom limb darkening law, you'll have to perform a new installation of ``batman`` and write a very wee bit of C code. 
+
+First, download the package again (following the :ref:`installation` instructions).
+
+To define your stellar intensity profile, edit the ``intensity`` function in the file ``c_src/_custom_intensity.c``.  This function returns the intensity at a given radial value, :math:`I(r)`.  Its arguments are :math:`r` (the normalized radial coordinate; :math:`0\le r \le 1`) and six limb darkening coefficients, :math:`u_1, ..., u_6`. 
+
+The code provides an example intensity profile to work from:
+
+.. math::
+
+	I(r)  = I_0\left[1 - u_1(1 - \sqrt{1-r^2}) - u_2\ln{\left(\frac{\sqrt{1-r^2}+u_3}{1 + u_3}\right)}\right]
+
+(N.B.: This profile provides a better fit to stellar models than the quadratic law, but uses fewer coefficients than the nonlinear law. Thanks to Eric Agol for suggesting it!).
+
+This function can be replaced with another of your choosing, so long as it satistifies the following conditions:
+
+- The integrated intensity over the stellar disk must be unity: 
+
+.. math::
+
+	\int_0^{2\pi} \int_0^1 I(r)r dr d\theta = 1
+
+- The intensity must also be defined on the interval :math:`0\le r \le 1`.  To avoid issues relating to numerical stability, I would recommend including::
+
+	if(r < 0.00005) r = 0.00005;
+	if(r > 0.99995) r = 0.99995;
+
+
+To re-install ``batman`` with your custom limb darkening law, navigate back to the source root directory, run the setup script, and clean up:
+
+::
+
+	$ sudo python setup.py install
+	$ cd ..
+	$ sudo rm -rf  FIXME
+
+To calculate a model light curve with your custom limb darkening profile, use:
+
+::
+
+	params.limb_dark = "custom"
+	params.u = [u1, u2, u3, u4, u5, u6]
+
+with any unused limb darkening coefficients set equal to 0.
+
+
+And that's it!
+
 Error tolerance
 ---------------
-For models calculated with brute force integration, we can specify the maximum allowed error in the light curve is with the ``max_err`` parameter:  
+For models calculated with brute force integration ("nonlinear" and "custom" profiles), we can specify the maximum allowed error in the light curve is with the ``max_err`` parameter:  
 
 ::
 

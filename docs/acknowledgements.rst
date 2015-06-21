@@ -7,4 +7,5 @@ Acknowledgements
 - Geert Jan Talens
 - Thomas Beatty
 - Brett Morris
+- Eric Agol
 
