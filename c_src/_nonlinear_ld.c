@@ -2,7 +2,6 @@
 #include <Python.h>
 #include<numpy/arrayobject.h>
 #include<math.h>
-#include<stdio.h>
 
 #if defined (_OPENMP)
 #  include <omp.h>
@@ -99,9 +98,26 @@ static char _nonlinear_ld_doc[] = "This extension module returns a limb darkened
 static PyMethodDef _nonlinear_ld_methods[] = {
   {"_nonlinear_ld", _nonlinear_ld, METH_VARARGS, _nonlinear_ld_doc},{NULL}};
 
-void init_nonlinear_ld(void)
-{
-  Py_InitModule("_nonlinear_ld", _nonlinear_ld_methods);
-  import_array();
-}
+#if PY_MAJOR_VERSION >= 3
+	static struct PyModuleDef _nonlinear_ld_module = {
+		PyModuleDef_HEAD_INIT,
+		"_nonlinear_ld",
+		_nonlinear_ld_doc,
+		-1, 
+		_nonlinear_ld_methods
+	};
+
+	PyMODINIT_FUNC
+	PyInit__nonlinear_ld(void)
+	{
+		return PyModule_Create(&_nonlinear_ld_module);
+	}
+#else
+
+	void init_nonlinear_ld(void)
+	{
+	  Py_InitModule("_nonlinear_ld", _nonlinear_ld_methods);
+	  import_array();
+	}
+#endif
 

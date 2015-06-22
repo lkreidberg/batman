@@ -54,9 +54,26 @@ static char _uniform_ld_doc[] = "This extension module returns a limb darkened l
 static PyMethodDef _uniform_ld_methods[] = {
   {"_uniform_ld", _uniform_ld, METH_VARARGS, _uniform_ld_doc},{NULL}};
 
-void init_uniform_ld(void)
-{
-  Py_InitModule("_uniform_ld", _uniform_ld_methods);
-  import_array();
-}
+#if PY_MAJOR_VERSION >= 3
+	static struct PyModuleDef _uniform_ld_module = {
+		PyModuleDef_HEAD_INIT,
+		"_uniform_ld",
+		_uniform_ld_doc,
+		-1, 
+		_uniform_ld_methods
+	};
+
+	PyMODINIT_FUNC
+	PyInit__uniform_ld(void)
+	{
+		return PyModule_Create(&_uniform_ld_module);
+	}
+#else
+
+	void init_uniform_ld(void)
+	{
+	  Py_InitModule("_uniform_ld", _uniform_ld_methods);
+	  import_array();
+	}
+#endif
 

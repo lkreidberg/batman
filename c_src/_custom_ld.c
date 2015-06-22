@@ -11,6 +11,23 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
+#if PY_MAJOR_VERSION >= 3
+  #define MOD_ERROR_VAL NULL
+  #define MOD_SUCCESS_VAL(val) val
+  #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          static struct PyModuleDef moduledef = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          ob = PyModule_Create(&moduledef);
+#else
+  #define MOD_ERROR_VAL
+  #define MOD_SUCCESS_VAL(val)
+  #define MOD_INIT(name) void init##name(void)
+  #define MOD_DEF(ob, name, doc, methods) \
+          ob = Py_InitModule3(name, methods, doc);
+#endif
+
+
 static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
 double intensity(double r, double u1, double u2, double u3, double u4, double u5, double u6);
@@ -86,12 +103,30 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 
 static char _custom_ld_doc[] = "This extension module returns a limb darkened light curve for a custom stellar intensity profile.";
 
+
 static PyMethodDef _custom_ld_methods[] = {
   {"_custom_ld", _custom_ld, METH_VARARGS, _custom_ld_doc},{NULL}};
 
-void init_custom_ld(void)
-{
-  Py_InitModule("_custom_ld", _custom_ld_methods);
-  import_array();
-}
+#if PY_MAJOR_VERSION >= 3
+	static struct PyModuleDef _custom_ld_module = {
+		PyModuleDef_HEAD_INIT,
+		"_custom_ld",
+		_custom_ld_doc,
+		-1, 
+		_custom_ld_methods
+	};
+
+	PyMODINIT_FUNC
+	PyInit__custom_ld(void)
+	{
+		return PyModule_Create(&_custom_ld_module);
+	}
+#else
+
+	void init_custom_ld(void)
+	{
+	  Py_InitModule("_custom_ld", _custom_ld_methods);
+	  import_array();
+	}
+#endif
 

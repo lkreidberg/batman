@@ -411,11 +411,28 @@ double rf(double x, double y, double z)
 static char _quadratic_ld_doc[] = "This extension module returns a limb darkened light curve for a quadratic stellar intensity profile.";
 
 static PyMethodDef _quadratic_ld_methods[] = {
-  {"_quadratic_ld", _quadratic_ld,METH_VARARGS,_quadratic_ld_doc},{NULL}};
+  {"_quadratic_ld", _quadratic_ld, METH_VARARGS, _quadratic_ld_doc},{NULL}};
 
-void init_quadratic_ld(void)
-{
-  Py_InitModule("_quadratic_ld", _quadratic_ld_methods);
-  import_array();
-}
+#if PY_MAJOR_VERSION >= 3
+	static struct PyModuleDef _quadratic_ld_module = {
+		PyModuleDef_HEAD_INIT,
+		"_quadratic_ld",
+		_quadratic_ld_doc,
+		-1, 
+		_quadratic_ld_methods
+	};
+
+	PyMODINIT_FUNC
+	PyInit__quadratic_ld(void)
+	{
+		return PyModule_Create(&_quadratic_ld_module);
+	}
+#else
+
+	void init_quadratic_ld(void)
+	{
+	  Py_InitModule("_quadratic_ld", _quadratic_ld_methods);
+	  import_array();
+	}
+#endif
 

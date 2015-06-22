@@ -33,6 +33,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	dims[0] = PyArray_DIMS(ts)[0]; 
 
 	zs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
+	printf("in rsky, created object\n");
 
 	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
@@ -41,6 +42,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	{
 		idx = (npy_intp)i;
 		t = *(double*)PyArray_GetPtr(ts, &idx);
+		printf("t = %f\n",t);
 
 		if(ecc > 1.e-5)						//calculates f for eccentric orbits
 		{
@@ -67,9 +69,27 @@ LK 4/27/12 """;
 static PyMethodDef _rsky_methods[] = {
   {"_rsky", _rsky,METH_VARARGS,_rsky_doc},{NULL}};
 
-void init_rsky(void)
-{
-  Py_InitModule("_rsky", _rsky_methods);
-  import_array();
-}
+
+#if PY_MAJOR_VERSION >= 3
+	static struct PyModuleDef _rsky_module = {
+		PyModuleDef_HEAD_INIT,
+		"_rsky",
+		_rsky_doc,
+		-1, 
+		_rsky_methods
+	};
+
+	PyMODINIT_FUNC
+	PyInit__rsky(void)
+	{
+		return PyModule_Create(&_rsky_module);
+	}
+#else
+
+	void init_rsky(void)
+	{
+	  Py_InitModule("_rsky", _rsky_methods);
+	  import_array();
+	}
+#endif
 
