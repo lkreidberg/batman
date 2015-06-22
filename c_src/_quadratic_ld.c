@@ -431,7 +431,6 @@ static PyMethodDef _quadratic_ld_methods[] = {
 	void init_quadratic_ld(void)
 	{
 	  Py_InitModule("_quadratic_ld", _quadratic_ld_methods);
-	  import_array();
 	}
 #endif
 

@@ -83,7 +83,6 @@ static PyMethodDef _rsky_methods[] = {
 	void init_rsky(void)
 	{
 	  Py_InitModule("_rsky", _rsky_methods);
-	  import_array();
 	}
 #endif
 

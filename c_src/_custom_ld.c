@@ -104,7 +104,6 @@ static PyMethodDef _custom_ld_methods[] = {
 	void init_custom_ld(void)
 	{
 	  Py_InitModule("_custom_ld", _custom_ld_methods);
-	  import_array();
 	}
 #endif
 

@@ -113,7 +113,6 @@ static PyMethodDef _nonlinear_ld_methods[] = {
 	void init_nonlinear_ld(void)
 	{
 	  Py_InitModule("_nonlinear_ld", _nonlinear_ld_methods);
-	  import_array();
 	}
 #endif
 

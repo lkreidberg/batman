@@ -70,7 +70,6 @@ static PyMethodDef _uniform_ld_methods[] = {
 	void init_uniform_ld(void)
 	{
 	  Py_InitModule("_uniform_ld", _uniform_ld_methods);
-	  import_array();
 	}
 #endif
 
