@@ -55,7 +55,6 @@ def test():
 		params.limb_dark = ld_options[i]             #specifies the limb darkening profile
 		params.u = ld_coefficients[i]	         #updates limb darkening coefficients
 		m = TransitModel(params, t)	         #initializes the model
-		print("Got to TransitModel !")
 		flux = m.LightCurve(params)		         #calculates light curve
 		plt.plot(t, flux, label = ld_options[i])
 	plt.show()

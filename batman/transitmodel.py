@@ -56,10 +56,7 @@ class TransitModel:
 		self.u = params.u
 		self.max_err = max_err
 		self.limb_dark = params.limb_dark
-		print("before rsky")
 		self.zs= _rsky._rsky(t.tolist(), params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
-	#	print(self.zs)
-		print("after rsky")
 		self.fac = self._get_fac()
 		if nthreads==None: self.nthreads=1
 		elif nthreads <= multiprocessing.cpu_count(): self.nthreads = nthreads
