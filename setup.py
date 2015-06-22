@@ -69,6 +69,7 @@ _quadratic_ld = Extension('batman._quadratic_ld', ['c_src/_quadratic_ld.c'], ext
 _uniform_ld   = Extension('batman._uniform_ld', ['c_src/_uniform_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
+_rsky = Extension('batman._check_parallel', ['c_src/_check_parallel.c'])
 
 setup(	name='batman', 
 	version='1.0.0', 
