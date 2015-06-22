@@ -1,6 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
-#include<numpy/arrayobject.h>
 #include<math.h>
 
 static PyObject *_rsky(PyObject *self, PyObject *args);
@@ -26,25 +24,21 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		(2002) paper, this quantity is denoted d.
 	*/
 	double ecc, E, inc, a, r, d, f, omega, per, M, n, t0, eps, t;
-	int i;
-	npy_intp dims[1], idx;
-	PyArrayObject *zs, *ts;
+	Py_ssize_t i, dims;
+	PyObject *ts, *zs;
   	if(!PyArg_ParseTuple(args,"Odddddd", &ts, &t0, &per, &a, &inc, &ecc, &omega)) return NULL; 
-	dims[0] = PyArray_DIMS(ts)[0]; 
 
-	zs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
-	printf("in rsky, created object\n");
+	dims = PyList_Size(ts);
+	zs = PyList_New(dims);
 
 	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
 	
-	for(i = 0; i < dims[0]; i++)
+	for(i = 0; i < dims; i++)
 	{
-		idx = (npy_intp)i;
-		t = *(double*)PyArray_GetPtr(ts, &idx);
-		printf("t = %f\n",t);
+		t = PyFloat_AsDouble(PyList_GetItem(ts,i));
 
-		if(ecc > 1.e-5)						//calculates f for eccentric orbits
+		if(ecc > 1.e-5)											//calculates f for eccentric orbits
 		{
 			M = n*(t - t0);
 			E = getE(M, ecc);
@@ -52,11 +46,11 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 			f = acos(a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc);
 			if(fabs((a*(1.0 - ecc*ecc)/(r*ecc) -1.0/ecc) - 1.0) < eps) f = 0.0;
 		}
-		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;	//calculates f for a circular orbit
+		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;						//calculates f for a circular orbit
 		d = a*(1.0-ecc*ecc)/(1.0+ecc*cos(f))*sqrt(1.0 - sin(omega+f)*sin(omega+f)*sin(inc)*sin(inc));	//calculates separation of centers 
-		*(double*)PyArray_GetPtr(zs, &idx) = d;
+		PyList_SetItem(zs, i, Py_BuildValue("d", d));
 	}
-	return PyArray_Return(zs);
+	return Py_BuildValue("O", zs);
 } 
 
 static char _rsky_doc[] = """ This module computes the distance between the centers of the \

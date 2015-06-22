@@ -1,6 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
-#include<numpy/arrayobject.h>
 #include<math.h>
 
 #if defined (_OPENMP)
@@ -34,16 +32,15 @@ double area(double d, double r, double R)
 static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 {
 	double rprs, d, fac, A_i, r, I; 
-	int i, nthreads;
+	int nthreads;
+	Py_ssize_t i, dims;
 	double dr, A_f, r_in, r_out, delta, u1, u2, u3, u4;
 	
-	npy_intp dims[1], idx;
-	PyArrayObject *zs, *flux;
+	PyObject *zs, *flux;
   	if(!PyArg_ParseTuple(args,"Oddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &fac, &nthreads)) return NULL;
-	
 
-	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
+	dims = PyList_Size(zs);
+	flux = PyList_New(dims);	//creates numpy array to store return flux values
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
@@ -54,14 +51,13 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
 	#endif
-	for(i = 0; i < dims[0]; i++)
+	for(i = 0; i < dims; i++)
 	{
-		idx = (npy_intp)i;
-		d = *(double*)PyArray_GetPtr(zs, &idx);				//separation of centers
+		d = PyFloat_AsDouble(PyList_GetItem(zs,i)); 
 		r_in = MAX(d - rprs, 0.);					//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
-		if(r_in >= 1.) *(double*)PyArray_GetPtr(flux, &idx) = 1.;	//flux = 1. if the planet is not transiting
+		if(r_in >= 1.) PyList_SetItem(flux, i, Py_BuildValue("d", 1.0));	//flux = 1. if the planet is not transiting
 		else
 		{
 			delta = 0.;						//variable to store the integrated intensity, \int I dA
@@ -86,10 +82,10 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			I = intensity(r-dr/2.,u1,u2, u3, u4, norm); 		//intensity at the midpoint 
 			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 
-		 	*(double*)PyArray_GetPtr(flux, &idx) = 1. - delta;	//flux equals 1 - \int I dA
+			PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-delta));	//flux equals 1 - \int I dA 
 		}
 	}
-	return PyArray_Return(flux);
+	return Py_BuildValue("O", flux); 
 
 } 
 

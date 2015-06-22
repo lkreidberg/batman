@@ -57,7 +57,8 @@ class TransitModel:
 		self.max_err = max_err
 		self.limb_dark = params.limb_dark
 		print("before rsky")
-		self.zs= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		self.zs= _rsky._rsky(t.tolist(), params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+	#	print(self.zs)
 		print("after rsky")
 		self.fac = self._get_fac()
 		if nthreads==None: self.nthreads=1
@@ -74,14 +75,14 @@ class TransitModel:
 
 		"""
 		if self.limb_dark in ["nonlinear", "custom"]:
-			zs = np.linspace(0., 1.1, 500)
+			zs = np.linspace(0., 1.1, 500).tolist()
 			fac_lo = 1.0e-4
 			if self.limb_dark == "nonlinear":
-				f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
-				f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
+				f0 = np.array(_nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads))
+				f = np.array(_nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads))
 			else:
-				f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
-				f =  _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
+				f0 = np.array(_custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads))
+				f =  np.array(_custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads))
 	
 			err = np.max(np.abs(f-f0))*1.0e6
 			if plot == True:
@@ -97,17 +98,17 @@ class TransitModel:
 		if self.limb_dark in ["nonlinear", "custom"]:
 			nthreads = 1
 			fac_lo, fac_hi = 1.0e-4, 1.
-			zs = np.linspace(0., 1.1, 500)
-			if self.limb_dark == "nonlinear": f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
-			else: f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
+			zs = np.linspace(0., 1.1, 500).tolist()
+			if self.limb_dark == "nonlinear": f0 = np.array(_nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads))
+			else: f0 = np.array(_custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads))
 			n = 0
 			err = 0.
 			while(err > self.max_err or err < 0.99*self.max_err):
 				fac = (fac_lo + fac_hi)/2.
-				if self.limb_dark == "nonlinear": f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
-				else: f = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
+				if self.limb_dark == "nonlinear": f = np.array(_nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads))
+				else: f = np.array(_custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads))
 
-				err = np.max(np.abs(f-f0))*1.0e6
+				err = np.max(np.abs(np.array(f)-np.array(f0)))*1.0e6
 				if err> self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
@@ -138,11 +139,11 @@ class TransitModel:
 		self.limb_dark = params.limb_dark
 		
 		if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
-		if self.limb_dark == "quadratic": return _quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], params.u[1], self.nthreads)
-		elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
-		elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], 0., self.nthreads)
-		elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.zs, params.rp, self.nthreads)
-		elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
+		if self.limb_dark == "quadratic": return np.array(_quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], params.u[1], self.nthreads))
+		elif self.limb_dark == "nonlinear": return np.array(_nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads))
+		elif self.limb_dark == "linear": return np.array(_quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], 0., self.nthreads))
+		elif self.limb_dark == "uniform": return np.array(_uniform_ld._uniform_ld(self.zs, params.rp, self.nthreads))
+		elif self.limb_dark == "custom": return np.array(_custom_ld._custom_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads))
 		else: raise Exception("Invalid limb darkening option")
 			
 

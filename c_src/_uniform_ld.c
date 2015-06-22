@@ -1,6 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
-#include <numpy/arrayobject.h>
 #include <math.h>
 
 #if defined (_OPENMP)
@@ -9,16 +7,16 @@
 
 static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 {
-	int i, nthreads;
-	double z, p, kap0, kap1, pi = acos(-1.);
+	int nthreads;
+	double z, p, kap0, kap1;
 
-	PyArrayObject *zs, *flux;
-	npy_intp dims[1], idx;
+	PyObject *zs, *flux;
+	Py_ssize_t i, dims;
 	
   	if(!PyArg_ParseTuple(args,"Odi", &zs, &p, &nthreads)) return NULL;		//parses function input
 
-	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));		//creates numpy array to store output flux values
+	dims = PyList_Size(zs);
+	flux = PyList_New(dims);	//creates numpy array to store return flux values
 	
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
@@ -29,23 +27,22 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(z, kap1, kap0)
 	#endif
-	for(i=0; i<dims[0]; i++)
+	for(i=0; i<dims; i++)
 	{
-		idx = (npy_intp)i;
-		z = *(double*)PyArray_GetPtr(zs, &idx);
+		z = PyFloat_AsDouble(PyList_GetItem(zs,i)); 
 		
-		if(z >= 1.+p) *(double*)PyArray_GetPtr(flux, &idx) = 1.;		//no overlap
-		if(p >= 1. && z <= p - 1.) *(double*)PyArray_GetPtr(flux, &idx) = 0.;	//total eclipse of the star
-		else if(z <= 1.-p) *(double*)PyArray_GetPtr(flux, &idx) = 1.-p*p;	//planet is fully in transit
+		if(z >= 1.+p) PyList_SetItem(flux, i, Py_BuildValue("d", 1.));		//no overlap
+		if(p >= 1. && z <= p - 1.) PyList_SetItem(flux, i, Py_BuildValue("d", 0.));	//total eclipse of the star
+		else if(z <= 1.-p) PyList_SetItem(flux, i, Py_BuildValue("d", 1.-p*p));	//planet is fully in transit
 		else									//planet is crossing the limb
 		{
 			kap1=acos(fmin((1.-p*p+z*z)/2./z,1.));
 			kap0=acos(fmin((p*p+z*z-1.)/2./p/z,1.));
-			*(double*)PyArray_GetPtr(flux, &idx) = 1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/pi;
+			PyList_SetItem(flux, i, Py_BuildValue("d", 1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/M_PI));
 		}
 	}
 
-	return PyArray_Return(flux);
+	return Py_BuildValue("O", flux); 
 }
 
 

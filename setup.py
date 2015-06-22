@@ -1,3 +1,4 @@
+from __future__ import print_function
 from distutils.core import setup
 from distutils.extension import Extension
 import numpy as np
@@ -14,15 +15,15 @@ retrieved 06/15/15
 def detect_openmp():
 	"""Does this compiler support OpenMP parallelization?"""
 	compiler = new_compiler()
-	print "Checking for OpenMP support... "
+	print("Checking for OpenMP support... ")
 	hasopenmp = hasfunction(compiler, 'omp_get_num_threads()')
 	needs_gomp = hasopenmp
 	if not hasopenmp:
 		compiler.add_library('gomp')
 	hasopenmp = hasfunction(compiler, 'omp_get_num_threads()')
 	needs_gomp = hasopenmp
-	if hasopenmp: print "Compiler supports OpenMP"
-	else: print "Did not detect OpenMP support."
+	if hasopenmp: print("Compiler supports OpenMP")
+	else: print( "Did not detect OpenMP support.")
 	return hasopenmp, needs_gomp
 
 def hasfunction(cc, funcname, include=None, extra_postargs=None):
