@@ -5,9 +5,9 @@ from . import _quadratic_ld
 from . import _uniform_ld
 from . import _custom_ld
 from . import _rsky
-from . import _check_parallel
 from math import pi
 import multiprocessing
+from . import detect_openmp
 
 def wrapper(func, *args, **kwargs):
     def wrapped():
@@ -92,9 +92,6 @@ class TransitModel:
 			return err
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 
-	def can_parallelize(self):
-		return _check_parallel._check_parallel()
-	
 	def _get_fac(self):
 		if self.limb_dark in ["nonlinear", "custom"]:
 			nthreads = 1

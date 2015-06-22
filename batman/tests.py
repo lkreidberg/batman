@@ -34,9 +34,6 @@ def test():
 
 	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
 
-
-	print("is parallel?")
-	print(m.can_parallelize())
 	print("Tests finished with " + "{0}".format(failures) + " failures")
 
 	
