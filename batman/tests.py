@@ -3,35 +3,11 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from .transitmodel import *
-import timeit
-
-def wrapper(func, *args, **kwargs):
-    def wrapped():
-        return func(*args, **kwargs)
-    return wrapped
-
 
 def test():
-	"""zs = np.linspace(0., 1., 1000)
-	rp = 0.1
-	u = [0., 0.7, 0.0, -0.3]
-	f = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-2, 4)
-	fhi = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4, 4)
-	fquad = occultquad.occultquad(zs, rp, 0.1, 0.3, 4)
-	#for i in range(len(f)): print "z, fnl, fquad", zs[i], f[i], fquad[i]
-
-	for i in range(1,16):
-		wrapped = wrapper(occultquad.occultquad, zs, rp, 0.1, 0.3, i)
-		t = timeit.timeit(wrapped,number=1)
-		print i, t
-
-	plt.plot(zs, (f - fhi)*1.0e6)
-	plt.plot(zs, (fhi - fquad)*1.0e6, color='r')
-	plt.axvline(0.9)
-	plt.show()"""
-
-
 	print("Starting tests...")
+	failures = 0
+	
 	params = TransitParams()
 	params.t0 = 0.
 	params.per = 1.
@@ -41,61 +17,26 @@ def test():
 	params.ecc = 0.
 	params.w = 90.
 	params.u = np.array([0.0, 0.7, 0.0, -0.3])
+	params.limb_dark = "nonlinear"
 
-	failures = 0
-
-	t = np.linspace(params.t0-params.per/30., params.t0 + params.per/30., 1000)
-	#t = np.linspace(params.t0-params.per/30., params.t0 + params.per/30., 2)
-	err_max = 1.
-
-	ld_options = ["uniform", "linear", "quadratic", "nonlinear", "custom"]
-	ld_coefficients = [[], [0.3], [0.1, 0.3], [0.5, 0.1, 0.1, -0.1], [0.1, -0.3, 0.4, 0., 0., 0.]]
-
-	for i in range(5):
-		params.limb_dark = ld_options[i]             #specifies the limb darkening profile
-		params.u = ld_coefficients[i]	         #updates limb darkening coefficients
-		m = TransitModel(params, t)	         #initializes the model
-		flux = m.LightCurve(params)		         #calculates light curve
-		plt.plot(t, flux, label = ld_options[i])
-	plt.show()
+	t = np.linspace(params.t0+params.per/60., params.t0 + params.per/30., 1000)
+	err_max = 0.5
 	
-	#generates Figure FIXME: max err as a function of function call time
-	"""zs = np.linspace(0., 1., 1000)
-	rp = 0.1
-	u = [0., 0.7, 0.0, -0.3]
-	n = 20
-	ts = []
-	errs = []
-	f_ref = occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], 1.0e-4, 4)
-	fac = np.logspace(-3, -1, n)
-	for i in range(n):
-		wrapped = wrapper(occultnl.occultnl, zs, rp, u[0], u[1], u[2], u[3], fac[i], 12)
-		t = timeit.timeit(wrapped,number=10)/10.
-		ts.append(t)
-		print t
-		f= occultnl.occultnl(zs, rp, u[0], u[1], u[2], u[3], fac[i], 12)
-		err = np.max(np.abs(f - f_ref))
-		errs.append(err)
-	plt.plot(np.array(ts), np.array(errs)*1.0e6)
-	plt.yscale('log')
-	plt.xscale('log')
-	plt.xlabel("Time (s)")
-	plt.ylabel("Max Err (ppm)")
-	plt.show()"""
-	
-	err = m.calc_err(plot = True)
+	m = TransitModel(params, t, err_max)
+	nonlinear_lc = m.LightCurve(params)
+	err = m.calc_err()
 	if err > err_max: failures += 1
 
 	params.limb_dark = "quadratic"
 	params.u = [0.1,0.3]
-	m = TransitModel(params, t, err_max)
+	#m = TransitModel(params, t, err_max)
 	quadratic_lc = m.LightCurve(params)
-
-	#plt.plot(t, (nonlinear_lc - quadratic_lc)*1.0e6)
-	#plt.show()
 
 	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
 
+
+	print("is parallel?")
+	print(m.can_parallelize())
 	print("Tests finished with " + "{0}".format(failures) + " failures")
 
 	

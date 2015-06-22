@@ -5,6 +5,7 @@ from . import _quadratic_ld
 from . import _uniform_ld
 from . import _custom_ld
 from . import _rsky
+from . import _check_parallel
 from math import pi
 import multiprocessing
 
@@ -90,6 +91,10 @@ class TransitModel:
 
 			return err
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
+
+	def can_parallelize(self):
+		if(_check_parallel._check_parallel()): return True
+		else: return False
 	
 	def _get_fac(self):
 		if self.limb_dark in ["nonlinear", "custom"]:
