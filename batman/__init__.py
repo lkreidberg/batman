@@ -1,5 +1,5 @@
-from transitmodel import TransitModel
-from transitmodel import TransitParams
-from tests import test 
+__all__ = ['transitmodel', 'tests']
 
-#FIXME define __all__
+from .transitmodel import *
+from .tests import *
+

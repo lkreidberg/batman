@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from . import occultnl
-from . import occultquad
-from . import occultuniform
-from . import rsky
+from . import _nonlinear_ld
+from . import _quadratic_ld
+from . import _uniform_ld
+from . import _custom_ld
+from . import _rsky
 from math import pi
 import multiprocessing
 
@@ -17,7 +18,7 @@ class TransitModel:
 	Class for generating model transit light curves.	
 
 	:param params:
-		A :attr:`TransitParams` object containing the transit parameters.
+		A :attr:`TransitParams` object containing the physical parameters of the transit
 
 	:param t:
 		Array of times at which to calculate the model.
@@ -37,10 +38,11 @@ class TransitModel:
 			 u = [] for uniform LD\n \
 			 u = [u1] for linear LD\n \
   			 u = [u1, u2] for quadratic LD\n \
-			 u = [u1, u2, u3, u4] for nonlinear LD") 
-		if params.limb_dark not in ["uniform", "linear", "quadratic", "nonlinear"]: 
+			 u = [u1, u2, u3, u4] for nonlinear LD, or\n \
+		         u = [u1, ..., un] for custom LD") 
+		if params.limb_dark not in ["uniform", "linear", "quadratic", "nonlinear", "custom"]: 
 			raise Exception("\""+params.limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
-				uniform, linear, quadratic, nonlinear")
+				uniform, linear, quadratic, nonlinear, custom")
 
 		#initializes model parameters
 		self.t = t
@@ -54,14 +56,13 @@ class TransitModel:
 		self.u = params.u
 		self.max_err = max_err
 		self.limb_dark = params.limb_dark
-		self.zs= rsky.rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		print("before rsky")
+		self.zs= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		print("after rsky")
 		self.fac = self._get_fac()
 		if nthreads==None: self.nthreads=1
 		elif nthreads <= multiprocessing.cpu_count(): self.nthreads = nthreads
 		else: raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
-
-#	def set_fac(self,fac):				#set scale factor manually
-#		self.fac = fac
 
 	def calc_err(self, plot = False):
 		"""
@@ -72,11 +73,16 @@ class TransitModel:
 			If set to ``True``, plots the error in the light curve model as a function of separation of centers.
 
 		"""
-		if self.limb_dark == "nonlinear":
+		if self.limb_dark in ["nonlinear", "custom"]:
 			zs = np.linspace(0., 1.1, 500)
 			fac_lo = 1.0e-4
-			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
-			f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
+			if self.limb_dark == "nonlinear":
+				f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
+				f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
+			else:
+				f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
+				f =  _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
+	
 			err = np.max(np.abs(f-f0))*1.0e6
 			if plot == True:
 				plt.plot(zs, 1.0e6*(f-f0), color='k')
@@ -88,21 +94,24 @@ class TransitModel:
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 	
 	def _get_fac(self):
-		if self.limb_dark == "nonlinear":
+		if self.limb_dark in ["nonlinear", "custom"]:
 			nthreads = 1
 			fac_lo, fac_hi = 1.0e-4, 1.
 			zs = np.linspace(0., 1.1, 500)
-			f0 = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
+			if self.limb_dark == "nonlinear": f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
+			else: f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
 			n = 0
 			err = 0.
 			while(err > self.max_err or err < 0.99*self.max_err):
 				fac = (fac_lo + fac_hi)/2.
-				f = occultnl.occultnl(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
+				if self.limb_dark == "nonlinear": f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
+				else: f = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
+
 				err = np.max(np.abs(f-f0))*1.0e6
 				if err> self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
-				if n>1e3: raise Exception("Convergence failure in calculation of scale factor for occultnl")
+				if n>1e3: raise Exception("Convergence failure in calculation of scale factor for _nonlinear_ld")
 			return fac
 		else: return 0.
 
@@ -114,11 +123,26 @@ class TransitModel:
 			Transit parameter object.
 
 		"""
+		#recalculates rsky and fac if necessary
+		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.zs= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
+		#updates transit params
+		self.t0 = params.t0
+		self.per = params.per
+		self.rp = params.rp
+		self.a = params.a
+		self.inc = params.inc
+		self.ecc = params.ecc
+		self.w = params.w
+		self.u = params.u
+		self.limb_dark = params.limb_dark
+		
 		if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
-		if self.limb_dark == "quadratic": return occultquad.occultquad(self.zs, params.rp, params.u[0], params.u[1], self.nthreads)
-		elif self.limb_dark == "nonlinear": return occultnl.occultnl(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
-		elif self.limb_dark == "linear": return occultquad.occultquad(self.zs, params.rp, params.u[0], 0., self.nthreads)
-		elif self.limb_dark == "uniform": return occultuniform.occultuniform(self.zs, params.rp, self.nthreads)
+		if self.limb_dark == "quadratic": return _quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], params.u[1], self.nthreads)
+		elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+		elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], 0., self.nthreads)
+		elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.zs, params.rp, self.nthreads)
+		elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
 		else: raise Exception("Invalid limb darkening option")
 			
 
@@ -145,13 +169,13 @@ class TransitParams(object):
 		Orbital eccentricity.
 
 	:param w:
-		Longitude of periastron [in degrees]. FIXME
+	 	Argument of periapse [in degrees] (FIXME ask Dan).	
 
 	:param u:
 		List of limb darkening coefficients.
 
 	:param limb_dark:
-		Limb darkening model (choice of "nonlinear", "quadratic", "linear", or "uniform")
+		Limb darkening model (choice of "nonlinear", "quadratic", "linear", "uniform", or "custom")
 
 
 	"""

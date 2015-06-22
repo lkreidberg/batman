@@ -1,10 +1,8 @@
+from __future__ import print_function
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from transitmodel import TransitParams
-from transitmodel import TransitModel
-from . import occultnl 
-from . import occultquad
+from .transitmodel import *
 import timeit
 
 def wrapper(func, *args, **kwargs):
@@ -32,28 +30,34 @@ def test():
 	plt.axvline(0.9)
 	plt.show()"""
 
-	print "Starting tests..."
+
+	print("Starting tests...")
 	params = TransitParams()
 	params.t0 = 0.
 	params.per = 1.
 	params.rp = 0.115
 	params.a = 15.23
-	params.inc = 1.555
+	params.inc = 87.
 	params.ecc = 0.
-	params.w = math.pi/2.
+	params.w = 90.
 	params.u = np.array([0.0, 0.7, 0.0, -0.3])
 
 	failures = 0
 
 	t = np.linspace(params.t0-params.per/30., params.t0 + params.per/30., 1000)
-	err_max = 0.1
-	limb_dark = "nonlinear"
+	#t = np.linspace(params.t0-params.per/30., params.t0 + params.per/30., 2)
+	err_max = 1.
 
-	#for i in range(10): m = TransitModel(params, t, err_max, limb_dark)
-	m = TransitModel(params, t, err_max, limb_dark)
+	ld_options = ["uniform", "linear", "quadratic", "nonlinear", "custom"]
+	ld_coefficients = [[], [0.3], [0.1, 0.3], [0.5, 0.1, 0.1, -0.1], [0.1, -0.3, 0.4, 0., 0., 0.]]
 
-	nonlinear_lc = m.LightCurve(params)
-	plt.plot(t, nonlinear_lc)
+	for i in range(5):
+		params.limb_dark = ld_options[i]             #specifies the limb darkening profile
+		params.u = ld_coefficients[i]	         #updates limb darkening coefficients
+		m = TransitModel(params, t)	         #initializes the model
+		print("Got to TransitModel !")
+		flux = m.LightCurve(params)		         #calculates light curve
+		plt.plot(t, flux, label = ld_options[i])
 	plt.show()
 	
 	#generates Figure FIXME: max err as a function of function call time
@@ -80,12 +84,12 @@ def test():
 	plt.ylabel("Max Err (ppm)")
 	plt.show()"""
 	
-	err = m.calc_err()
+	err = m.calc_err(plot = True)
 	if err > err_max: failures += 1
 
-	limb_dark = "quadratic"
+	params.limb_dark = "quadratic"
 	params.u = [0.1,0.3]
-	m = TransitModel(params, t, err_max, limb_dark)
+	m = TransitModel(params, t, err_max)
 	quadratic_lc = m.LightCurve(params)
 
 	#plt.plot(t, (nonlinear_lc - quadratic_lc)*1.0e6)
@@ -93,7 +97,7 @@ def test():
 
 	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
 
-	print "Tests finished with " + "{0}".format(failures) + " failures"
+	print("Tests finished with " + "{0}".format(failures) + " failures")
 
 	
 
