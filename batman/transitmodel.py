@@ -93,8 +93,7 @@ class TransitModel:
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 
 	def can_parallelize(self):
-		if(_check_parallel._check_parallel()): return True
-		else: return False
+		return _check_parallel._check_parallel()
 	
 	def _get_fac(self):
 		if self.limb_dark in ["nonlinear", "custom"]:
