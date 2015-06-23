@@ -1,4 +1,6 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
+#include "numpy/arrayobject.h"
 #include<math.h>
 
 #if defined (_OPENMP)
@@ -33,14 +35,14 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 {
 	double rprs, d, fac, A_i, r, I; 
 	int nthreads;
-	Py_ssize_t i, dims;
+	npy_intp i, dims[1];
 	double dr, A_f, r_in, r_out, delta, u1, u2, u3, u4;
 	
-	PyObject *zs, *flux;
+	PyArrayObject *zs, *flux;
   	if(!PyArg_ParseTuple(args,"Oddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &fac, &nthreads)) return NULL;
 
-	dims = PyList_Size(zs);
-	flux = PyList_New(dims);	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(zs)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
@@ -51,13 +53,13 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
 	#endif
-	for(i = 0; i < dims; i++)
+	for(i = 0; i < dims[0]; i++)
 	{
-		d = PyFloat_AsDouble(PyList_GetItem(zs,i)); 
+		d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
 		r_in = MAX(d - rprs, 0.);					//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
-		if(r_in >= 1.) PyList_SetItem(flux, i, Py_BuildValue("d", 1.0));	//flux = 1. if the planet is not transiting
+		if(r_in >= 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0));	//flux = 1. if the planet is not transiting
 		else
 		{
 			delta = 0.;						//variable to store the integrated intensity, \int I dA
@@ -82,10 +84,10 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			I = intensity(r-dr/2.,u1,u2, u3, u4, norm); 		//intensity at the midpoint 
 			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 
-			PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-delta));	//flux equals 1 - \int I dA 
+			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-delta));	//flux equals 1 - \int I dA 
 		}
 	}
-	return Py_BuildValue("O", flux); 
+	return PyArray_Return((PyArrayObject *)flux);
 
 } 
 
@@ -106,13 +108,20 @@ static PyMethodDef _nonlinear_ld_methods[] = {
 	PyMODINIT_FUNC
 	PyInit__nonlinear_ld(void)
 	{
-		return PyModule_Create(&_nonlinear_ld_module);
+		PyObject* module = PyModule_Create(&_nonlinear_ld_module);
+		if(!module)
+		{
+			return NULL;
+		}
+		import_array(); 
+		return module;
 	}
 #else
 
 	void init_nonlinear_ld(void)
 	{
-	  Py_InitModule("_nonlinear_ld", _nonlinear_ld_methods);
+	  	Py_InitModule("_nonlinear_ld", _nonlinear_ld_methods);
+		import_array(); 
 	}
 #endif
 

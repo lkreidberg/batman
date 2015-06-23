@@ -1,4 +1,6 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
+#include "numpy/arrayobject.h"
 #include <math.h>
 
 #if defined (_OPENMP)
@@ -32,15 +34,15 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 */
 	int nz, nthreads;
 	double u1, u2, p, *mu, *mu0,  *lambdad, *etad, \
-		*lambdae, lam, pi, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
+		*lambdae, lam, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
-	PyObject *zs, *flux, *item;
-	Py_ssize_t i, dims;
+	PyArrayObject *zs, *flux;
+	npy_intp i, dims[1];
 
   	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
 
-	dims = PyList_Size(zs);
-	flux = PyList_New(dims);	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(zs)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 	nz = (int)dims;
 
 	lambdad = (double *)malloc(nz*sizeof(double));
@@ -52,7 +54,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
 
 	omega=1.0-u1/3.0-u2/6.0;
-	pi=acos(-1.0);
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
@@ -61,9 +62,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(z, x1,x2,x3,n,q,Kk,Ek,Pk,kap0,kap1)
 	#endif
-	for(i = 0; i < dims; i++)
+	for(i = 0; i < dims[0]; i++)
 	{	
-		z = PyFloat_AsDouble(PyList_GetItem(zs,i)); 
+		z = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+		//z = *(double*)PyArray_GetPtr(zs, &i); // separation of centers
 		x1 = pow((p - z), 2.0);
 		x2 = pow((p + z), 2.0);
 		x3 = p*p - z*z;
@@ -75,7 +77,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 
 			mu0[i] = 1.0-lambdae[i];
 			continue;
@@ -87,7 +89,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.5;		//error in Fortran code corrected here, following Jason Eastman's python code
 			lambdae[i] = 1.0;
-			 PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega));
+			 PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -98,7 +100,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			kap1 = acos(min((1.0-p*p+z*z)/2.0/z,1.0));
 			kap0 = acos(min((p*p+z*z-1.0)/2.0/p/z,1.0));
 			lambdae[i] = p*p*kap0+kap1;
-			lambdae[i] = (lambdae[i] - 0.50*sqrt(max(4.0*z*z-pow((1.0+z*z-p*p), 2.0),0.0)))/pi;
+			lambdae[i] = (lambdae[i] - 0.50*sqrt(max(4.0*z*z-pow((1.0+z*z-p*p), 2.0),0.0)))/M_PI;
 		}
 		//occulting object transits the source but doesn't completely cover it:
 		if(z <= 1.0 - p)				
@@ -114,39 +116,39 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			if(p == 0.5)	
 			{
 				//printf("zone 6\n");
-				lambdad[i] = 1.0/3.0-4.0/pi/9.0;
+				lambdad[i] = 1.0/3.0-4.0/M_PI/9.0;
 				etad[i] = 3.0/32.0;
-				PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+				PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
 			else if(z >= 0.5)
 			{
 				//printf("zone 5.1\n");
-				lam = 0.5*pi;
+				lam = 0.5*M_PI;
 				q = 0.5/p;
 				Kk = ellk(q);
 				Ek = ellec(q);
-				lambdad[i] = 1.0/3.0+16.0*p/9.0/pi*(2.0*p*p-1.0)*Ek- \
-				 	 	(32.0*pow(p, 4.0)-20.0*p*p+3.0)/9.0/pi/p*Kk;
-				etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
+				lambdad[i] = 1.0/3.0+16.0*p/9.0/M_PI*(2.0*p*p-1.0)*Ek- \
+				 	 	(32.0*pow(p, 4.0)-20.0*p*p+3.0)/9.0/M_PI/p*Kk;
+				etad[i] = 1.0/2.0/M_PI*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				              	(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
 				continue;
 			}
 			else if(z<0.5)	
 			{
 			//	printf("zone 5.2\n");
-				lam = 0.50*pi;
+				lam = 0.50*M_PI;
 				q = 2.0*p;
 				Kk = ellk(q);
 				Ek = ellec(q);
-				lambdad[i] = 1.0/3.0+2.0/9.0/pi*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
+				lambdad[i] = 1.0/3.0+2.0/9.0/M_PI*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p+2.0*z*z);
-				PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+				PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
-			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -155,19 +157,19 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			&& z < p))
 		{
 			//printf("zone 3.1\n");
-			lam = 0.50*pi;
+			lam = 0.50*M_PI;
 			q = sqrt((1.0-pow((p-z), 2.0))/4.0/z/p);
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = 1.0/x1-1.0;
 			Pk = Kk-n/3.0*rj(0.0,1.0-q*q,1.0,1.0+n);
-			lambdad[i] = 1.0/9.0/pi/sqrt(p*z)*(((1.0-x2)*(2.0*x2+ \
+			lambdad[i] = 1.0/9.0/M_PI/sqrt(p*z)*(((1.0-x2)*(2.0*x2+ \
 			        x1-3.0)-3.0*x3*(x2-2.0))*Kk+4.0*p*z*(z*z+ \
 			        7.0*p*p-4.0)*Ek-3.0*x3/x1*Pk);
 			if(z < p) lambdad[i] += 2.0/3.0;
-			etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
+			etad[i] = 1.0/2.0/M_PI*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
-			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -175,23 +177,23 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 		if(p <= 1.0  && z <= (1.0 - p)*1.0001)	
 		{
 			//printf("zone 4.1\n");
-			lam = 0.50*pi;
+			lam = 0.50*M_PI;
 			q = sqrt((x2-x1)/(1.0-x1));
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = x2/x1-1.0;
 			Pk = Kk-n/3.0*rj(0.0,1.0-q*q,1.0,1.0+n);
-			lambdad[i] = 2.0/9.0/pi/sqrt(1.0-x1)*((1.0-5.0*z*z+p*p+ \
+			lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0-x1)*((1.0-5.0*z*z+p*p+ \
 			         x3*x3)*Kk+(1.0-x1)*(z*z+7.0*p*p-4.0)*Ek-3.0*x3/x1*Pk);
 			if(z < p) lambdad[i] += 2.0/3.0;
 			if(fabs(p+z-1.0) <= 1.0e-4)
 			{
-				lambdad[i] = 2.0/3.0/pi*acos(1.0-2.0*p)-4.0/9.0/pi* \
+				lambdad[i] = 2.0/3.0/M_PI*acos(1.0-2.0*p)-4.0/9.0/M_PI* \
 				            sqrt(p*(1.0-p))*(3.0+2.0*p-8.0*p*p);
 			}
 			etad[i] = p*p/2.0*(p*p+2.0*z*z);
 		}
-		PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+		PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 		mu0[i] = 1.0-lambdae[i];
 	}
 	free(lambdae);
@@ -200,11 +202,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	free(mu);
 	free(mu0);
 
-	item = Py_BuildValue("O", flux);
-	Py_DECREF(flux);
-	return item;
-	//return Py_BuildValue("O", flux); 
-	//return Py_BuildValue("[items]", mu0);
+	return PyArray_Return((PyArrayObject *)flux);
 }
 double min(double a, double b)
 {
@@ -427,13 +425,20 @@ static PyMethodDef _quadratic_ld_methods[] = {
 	PyMODINIT_FUNC
 	PyInit__quadratic_ld(void)
 	{
-		return PyModule_Create(&_quadratic_ld_module);
+		PyObject* module = PyModule_Create(&_quadratic_ld_module);
+		if(!module)
+		{
+			return NULL;
+		}
+		import_array(); 
+		return module;
 	}
 #else
 
 	void init_quadratic_ld(void)
 	{
-	  Py_InitModule("_quadratic_ld", _quadratic_ld_methods);
+	  	Py_InitModule("_quadratic_ld", _quadratic_ld_methods);
+		import_array(); 
 	}
 #endif
 

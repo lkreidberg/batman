@@ -1,4 +1,6 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
+#include "numpy/arrayobject.h"
 #include <math.h>
 
 #if defined (_OPENMP)
@@ -10,13 +12,13 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	int nthreads;
 	double z, p, kap0, kap1;
 
-	PyObject *zs, *flux;
-	Py_ssize_t i, dims;
+	PyArrayObject *zs, *flux;
+	npy_intp i, dims[1];
 	
   	if(!PyArg_ParseTuple(args,"Odi", &zs, &p, &nthreads)) return NULL;		//parses function input
 
-	dims = PyList_Size(zs);
-	flux = PyList_New(dims);	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(zs)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 	
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
@@ -27,22 +29,22 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(z, kap1, kap0)
 	#endif
-	for(i=0; i<dims; i++)
+	for(i=0; i<dims[0]; i++)
 	{
-		z = PyFloat_AsDouble(PyList_GetItem(zs,i)); 
+		z = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
 		
-		if(z >= 1.+p) PyList_SetItem(flux, i, Py_BuildValue("d", 1.));		//no overlap
-		if(p >= 1. && z <= p - 1.) PyList_SetItem(flux, i, Py_BuildValue("d", 0.));	//total eclipse of the star
-		else if(z <= 1.-p) PyList_SetItem(flux, i, Py_BuildValue("d", 1.-p*p));	//planet is fully in transit
+		if(z >= 1.+p) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.));		//no overlap
+		if(p >= 1. && z <= p - 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(0.));	//total eclipse of the star
+		else if(z <= 1.-p) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.-p*p));	//planet is fully in transit
 		else									//planet is crossing the limb
 		{
 			kap1=acos(fmin((1.-p*p+z*z)/2./z,1.));
 			kap0=acos(fmin((p*p+z*z-1.)/2./p/z,1.));
-			PyList_SetItem(flux, i, Py_BuildValue("d", 1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/M_PI));
+			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/M_PI));
 		}
 	}
 
-	return Py_BuildValue("O", flux); 
+	return PyArray_Return((PyArrayObject *)flux);
 }
 
 
@@ -63,13 +65,20 @@ static PyMethodDef _uniform_ld_methods[] = {
 	PyMODINIT_FUNC
 	PyInit__uniform_ld(void)
 	{
-		return PyModule_Create(&_uniform_ld_module);
+		PyObject* module = PyModule_Create(&_uniform_ld_module);
+		if(!module)
+		{
+			return NULL;
+		}
+		import_array(); 
+		return module;
 	}
 #else
 
 	void init_uniform_ld(void)
 	{
-	  Py_InitModule("_uniform_ld", _uniform_ld_methods);
+	  	Py_InitModule("_uniform_ld", _uniform_ld_methods);
+		import_array(); 
 	}
 #endif
 
