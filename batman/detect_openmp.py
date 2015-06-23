@@ -1,4 +1,7 @@
+from __future__ import print_function
 from distutils.ccompiler import new_compiler
+import os
+import sys
 import tempfile
 
 """
