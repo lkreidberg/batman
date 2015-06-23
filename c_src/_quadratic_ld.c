@@ -34,10 +34,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	double u1, u2, p, *mu, *mu0,  *lambdad, *etad, \
 		*lambdae, lam, pi, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
-	PyObject *zs, *flux;
+	PyObject *zs, *flux, *item;
 	Py_ssize_t i, dims;
-	
-
 
   	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
 
@@ -77,7 +75,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -88,7 +87,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.5;		//error in Fortran code corrected here, following Jason Eastman's python code
 			lambdae[i] = 1.0;
-			 PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega));
+			 PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -117,7 +116,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				//printf("zone 6\n");
 				lambdad[i] = 1.0/3.0-4.0/pi/9.0;
 				etad[i] = 3.0/32.0;
-				PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+				PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
@@ -143,11 +142,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0+2.0/9.0/pi*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p+2.0*z*z);
-				PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+				PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 				mu0[i] = 1.0-lambdae[i];
 				continue;
 			}
-			PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -168,7 +167,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			if(z < p) lambdad[i] += 2.0/3.0;
 			etad[i] = 1.0/2.0/pi*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
-			PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
@@ -192,7 +191,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			}
 			etad[i] = p*p/2.0*(p*p+2.0*z*z);
 		}
-		PyList_SetItem(flux, i, Py_BuildValue("d", 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+		PyList_SetItem(flux, i, PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
 		mu0[i] = 1.0-lambdae[i];
 	}
 	free(lambdae);
@@ -201,7 +200,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	free(mu);
 	free(mu0);
 
-	return Py_BuildValue("O", flux); 
+	item = Py_BuildValue("O", flux);
+	Py_DECREF(flux);
+	return item;
+	//return Py_BuildValue("O", flux); 
+	//return Py_BuildValue("[items]", mu0);
 }
 double min(double a, double b)
 {
