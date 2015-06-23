@@ -8,6 +8,7 @@ def test():
 	print("Starting tests...")
 	failures = 0
 	
+
 	params = TransitParams()
 	params.t0 = 0.
 	params.per = 1.
@@ -16,7 +17,7 @@ def test():
 	params.inc = 87.
 	params.ecc = 0.
 	params.w = 90.
-	params.u = np.array([0.0, 0.7, 0.0, -0.3])
+	"""params.u = np.array([0.0, 0.7, 0.0, -0.3])
 	params.limb_dark = "nonlinear"
 
 	t = np.linspace(params.t0+params.per/60., params.t0 + params.per/30., 1000)
@@ -30,9 +31,15 @@ def test():
 	params.limb_dark = "quadratic"
 	params.u = [0.1,0.3]
 	#m = TransitModel(params, t, err_max)
-	quadratic_lc = m.LightCurve(params)
+	for i in range(10000000): quadratic_lc = m.LightCurve(params)
 
-	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
+	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1"""
+
+	t = np.array([0.002])
+	params.u = np.array([0.1, 0.3])
+	params.limb_dark = "quadratic"
+	m = TransitModel(params, t)
+	lc = m.LightCurve(params)
 
 	print("Tests finished with " + "{0}".format(failures) + " failures")
 

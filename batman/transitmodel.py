@@ -7,7 +7,7 @@ from . import _custom_ld
 from . import _rsky
 from math import pi
 import multiprocessing
-from . import detect_openmp
+from . import openmp
 
 def wrapper(func, *args, **kwargs):
     def wrapped():
@@ -31,7 +31,7 @@ class TransitModel:
 		Number of threads to use for parallelization. 
 
 	"""
-	def __init__(self, params, t, max_err=1.0, nthreads = 0):
+	def __init__(self, params, t, max_err=1.0, nthreads = None):
 		#checking for invalid input
 		if (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
 		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "nonlinear" and len(params.u) != 4):
@@ -59,9 +59,13 @@ class TransitModel:
 		self.limb_dark = params.limb_dark
 		self.zs= _rsky._rsky(t.tolist(), params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
 		self.fac = self._get_fac()
-		if nthreads==None: self.nthreads=1
-		elif nthreads <= multiprocessing.cpu_count(): self.nthreads = nthreads
-		else: raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
+		if nthreads==None or nthreads == 1: self.nthreads=1
+		else:
+			if nthreads <= multiprocessing.cpu_count()and nthreads >1 and openmp.detect(): self.nthreads = nthreads
+			else: 
+				if nthreads>multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
+				elif nthreads <= 1: raise Exception("Number of threads must be between 2 and {0:d}".format(multiprocessing.cpu_count()))
+				else: raise Exception("OpenMP not enabled: do not set the nthreads parameter")
 
 	def calc_err(self, plot = False):
 		"""
