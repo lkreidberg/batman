@@ -15,7 +15,7 @@ params.rp = 0.1				#planet radius (in units of stellar radii)
 params.a = 15.				#semi-major axis (in units of stellar radii)
 params.inc = 87.			#orbital inclination (in degrees)	
 params.ecc = 0.				#eccentricity	
-params.w = 90.				#longitude of periastron (in degrees) #FIXME check if this makes sense
+params.w = 90.				#longitude of periastron (in degrees)
 params.limb_dark = "nonlinear"          #limb darkening model
 params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
    

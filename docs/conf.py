@@ -15,7 +15,7 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/'))
+#sys.path.insert(0, os.path.abspath('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/'))
 import batman
 
 # If extensions (or modules to document with autodoc) are in another directory,

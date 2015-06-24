@@ -2,35 +2,25 @@
 
 Installation
 ============
-
-FIXME: make tarball of master http://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
-
-Download the source directory from https://github.com/lkreidberg/batman/archive/master.zip.
-
-Unpack the distribution with:
+pip
+---
+You can install ``batman`` with pip (recommended):
 
 ::
 
-   $ unzip batman-master.zip
+	$ pip install batman-package
 
-To install, navigate to the source root directory and run the setup script:
+From source
+-----------
+You can also install from source, which is available at https://pypi.python.org/pypi/batman-package/.
+
+
+Unpack the distribution with ``tar -xvf`` and navigate to the source root directory.  To install, run the setup script:
 
 ::
 
-   $ cd batman-master
    $ sudo python setup.py install
 
-Finish by cleaning up:
-
-::
-   
-   $ cd ..
-   $ sudo rm -rf batman-master
-
-Now ``batman`` is installed and ready to use! To verify that the installation is working properly, run a few tests with:
-
-::
-
-   $ python -c 'import batman; batman.test()'
+Note that you'll need to ``cd`` out of the source directory **before** you can import ``batman``.
 
 
