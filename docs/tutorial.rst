@@ -84,7 +84,7 @@ The limb darkening coefficients are provided as a list of the form :math:`[u_1, 
 
 Custom limb darkening
 ---------------------
-``batman`` also supports the definition of custom limb darkening.  To create a custom limb darkening law, you'll have to perform a new installation of ``batman`` and write a very wee bit of C code. 
+``batman`` also supports the definition of custom limb darkening.  To create a custom limb darkening law, you'll have to write a very wee bit of C code and perform a new installation of ``batman``. 
 
 First, download the package again (following the :ref:`installation` instructions).
 
