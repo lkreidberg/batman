@@ -6,7 +6,6 @@ from distutils.ccompiler import new_compiler
 import os
 import sys
 import tempfile
-import re
 
 """
 Check for OpenMP based on
@@ -73,16 +72,17 @@ _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
 
 
 setup(	name='batman-package', 
-	version="0.9.0", 
+	version="0.9.1", 
 	author='Laura Kreidberg',
+	author_email = 'laura.kreidberg@uchicago.edu',
 	url = 'https://github.com/lkreidberg/batman',
 	packages =['batman'],
-	license = 'GNU GPLv3',
+	license = ['GNU GPLv3'],
 	description ='Fast transit light curve modeling',
 	classifiers = [
 		'Development Status :: 4 - Beta',
 		'Intended Audience :: Science/Research',
-		'License :: GNU GPLv3',
+		'Topic :: Scientific/Engineering',
 		'Programming Language :: Python'
 		],
 	include_dirs = [np.get_include()],
