@@ -61,4 +61,4 @@ m = batman.TransitModel(params, t, max_err = 0.5)
 plt.clf()
 m.calc_err(plot = True) 
 
-m = TransitParams(params, t, nthreads = 4)
+m = batman.TransitModel(params, t, nthreads = 4)

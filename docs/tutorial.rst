@@ -160,7 +160,7 @@ The default behavior for ``batman`` is no parallelization.  If you want to speed
 
 ::
 
-	m = TransitParams(params, t, nthreads = 4)
+	m = batman.TransitModel(params, t, nthreads = 4)
 
 The parallelization is done at the C level with OpenMP.  ``batman`` will automatically detect whether your default C compiler supports OpenMP, and if not, return an error if you specify ``nthreads``>1 (FIXME TODO). Note for Mac users: the default compiler (clang) does not currently (06/2015) support OpenMP.  If you want to parallelize, you will have to set a different compiler (FIXME by setting environment variable?).  
 
