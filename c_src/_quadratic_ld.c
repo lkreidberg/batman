@@ -33,7 +33,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	 I(r)=[1-u1*(1-sqrt(1-(r/rs)^2))-u2*(1-sqrt(1-(r/rs)^2))^2]/(1-u1/3-u2/6)/pi
 */
 	int nz, nthreads;
-	double u1, u2, p, *mu, *mu0,  *lambdad, *etad, \
+	double u1, u2, p, *mu,  *lambdad, *etad, \
 		*lambdae, lam, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
 	PyArrayObject *zs, *flux;
@@ -45,11 +45,14 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 	nz = (int)dims;
 
+
+	double *f_array = PyArray_DATA(flux);
+	double *z_array = PyArray_DATA(zs);
+
 	lambdad = (double *)malloc(nz*sizeof(double));
 	lambdae = (double *)malloc(nz*sizeof(double));
 	etad = (double *)malloc(nz*sizeof(double));
 	mu = (double *)malloc(nz*sizeof(double));
-	mu0 = (double *)malloc(nz*sizeof(double));
 
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
 
@@ -64,8 +67,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{	
-		z = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
-		//z = *(double*)PyArray_GetPtr(zs, &i); // separation of centers
+		z = z_array[i]; 		// separation of centers
 		x1 = pow((p - z), 2.0);
 		x2 = pow((p + z), 2.0);
 		x3 = p*p - z*z;
@@ -77,9 +79,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
+			f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 
-			mu0[i] = 1.0-lambdae[i];
 			continue;
 		}
 		//source is completely occulted:
@@ -89,8 +90,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.5;		//error in Fortran code corrected here, following Jason Eastman's python code
 			lambdae[i] = 1.0;
-			 PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega));
-			mu0[i] = 1.0-lambdae[i];
+			f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*(lambdad[i] + 2.0/3.0)+u2*etad[i])/omega;
 			continue;
 		}
 		//source is partly occulted and occulting object crosses the limb:
@@ -118,8 +118,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				//printf("zone 6\n");
 				lambdad[i] = 1.0/3.0-4.0/M_PI/9.0;
 				etad[i] = 3.0/32.0;
-				PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
-				mu0[i] = 1.0-lambdae[i];
+				f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 				continue;
 			}
 			else if(z >= 0.5)
@@ -144,12 +143,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0+2.0/9.0/M_PI*(4.0*(2.0*p*p-1.0)*Ek + (1.0-4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p+2.0*z*z);
-				PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
-				mu0[i] = 1.0-lambdae[i];
+				f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 				continue;
 			}
-			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
-			mu0[i] = 1.0-lambdae[i];
+			f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			continue;
 		}
 		//occulting star partly occults the source and crosses the limb:
@@ -169,8 +166,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			if(z < p) lambdad[i] += 2.0/3.0;
 			etad[i] = 1.0/2.0/M_PI*(kap1+p*p*(p*p+2.0*z*z)*kap0- \
 				(1.0+5.0*p*p+z*z)/4.0*sqrt((1.0-x1)*(x2-1.0)));
-			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
-			mu0[i] = 1.0-lambdae[i];
+			f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 			continue;
 		}
 		//occulting star transits the source:
@@ -193,14 +189,12 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			}
 			etad[i] = p*p/2.0*(p*p+2.0*z*z);
 		}
-		PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega));
-		mu0[i] = 1.0-lambdae[i];
+		f_array[i] = 1.0-((1.0-u1-2.0*u2)*lambdae[i]+(u1+2.0*u2)*lambdad[i]+u2*etad[i])/omega;
 	}
 	free(lambdae);
 	free(lambdad);
 	free(etad);
 	free(mu);
-	free(mu0);
 
 	return PyArray_Return((PyArrayObject *)flux);
 }

@@ -44,6 +44,9 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 	dims[0] = PyArray_DIMS(zs)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 
+	double *f_array = PyArray_DATA(flux);
+	double *z_array = PyArray_DATA(zs);
+	
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
 	#endif
@@ -55,11 +58,13 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+		//d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+		d = z_array[i];
 		r_in = MAX(d - rprs, 0.);					//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
-		if(r_in >= 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0));	//flux = 1. if the planet is not transiting
+		//if(r_in >= 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0));	//flux = 1. if the planet is not transiting
+		if(r_in >= 1.) f_array[i] = 1.0;	//flux = 1. if the planet is not transiting
 		else
 		{
 			delta = 0.;						//variable to store the integrated intensity, \int I dA
@@ -84,7 +89,7 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			I = intensity(r-dr/2.,u1,u2, u3, u4, norm); 		//intensity at the midpoint 
 			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 
-			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-delta));	//flux equals 1 - \int I dA 
+			f_array[i] = 1.0-delta;	//flux equals 1 - \int I dA 
 		}
 	}
 	return PyArray_Return((PyArrayObject *)flux);

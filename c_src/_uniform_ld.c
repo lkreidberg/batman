@@ -20,6 +20,9 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	dims[0] = PyArray_DIMS(zs)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 	
+	double *f_array = PyArray_DATA(flux);
+	double *z_array = PyArray_DATA(zs);
+
 	if(fabs(p-0.5)<1.e-3) p = 0.5;
 
 	#if defined (_OPENMP)
@@ -31,16 +34,16 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i=0; i<dims[0]; i++)
 	{
-		z = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+		z = z_array[i]; 				// separation of centers
 		
-		if(z >= 1.+p) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.));		//no overlap
-		if(p >= 1. && z <= p - 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(0.));	//total eclipse of the star
-		else if(z <= 1.-p) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.-p*p));	//planet is fully in transit
+		if(z >= 1.+p) f_array[i] = 1.;			//no overlap
+		if(p >= 1. && z <= p - 1.) f_array[i] = 0.;	//total eclipse of the star
+		else if(z <= 1.-p) f_array[i] = 1.-p*p;		//planet is fully in transit
 		else									//planet is crossing the limb
 		{
 			kap1=acos(fmin((1.-p*p+z*z)/2./z,1.));
 			kap0=acos(fmin((p*p+z*z-1.)/2./p/z,1.));
-			PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/M_PI));
+			f_array[i] = 1. - (p*p*kap0+kap1 -0.5*sqrt(fmax(4.*z*z-pow(1.+z*z-p*p, 2.), 0.)))/M_PI;
 		}
 	}
 

@@ -30,19 +30,20 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	npy_intp i, dims[1];
 	PyArrayObject *ts, *zs;
 
-
   	if(!PyArg_ParseTuple(args,"Odddddd", &ts, &t0, &per, &a, &inc, &ecc, &omega)) return NULL; 
 
 	dims[0] = PyArray_DIMS(ts)[0]; 
 	zs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
 	
+	double *t_array = PyArray_DATA(ts);
+	double *z_array = PyArray_DATA(zs);
 
 	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
 	
 	for(i = 0; i < dims[0]; i++)
 	{
-		t = PyFloat_AsDouble(PyArray_GETITEM(ts, PyArray_GetPtr(ts, &i)));
+		t = t_array[i];
 
 		if(ecc > 1.e-5)											//calculates f for eccentric orbits
 		{
@@ -54,7 +55,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		}
 		else f = ((t-t0)/per - (int)((t-t0)/per))*2.*M_PI;						//calculates f for a circular orbit
 		d = a*(1.0-ecc*ecc)/(1.0+ecc*cos(f))*sqrt(1.0 - sin(omega+f)*sin(omega+f)*sin(inc)*sin(inc));	//calculates separation of centers 
-		PyArray_SETITEM(zs, PyArray_GetPtr(zs, &i), PyFloat_FromDouble(d));
+		z_array[i] = d;
 	}
 	return PyArray_Return((PyArrayObject *)zs);
 } 
