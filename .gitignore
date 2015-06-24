@@ -3,3 +3,6 @@
 build/*
 *~
 
+dist
+MANIFEST
+batman-package.egg-info
