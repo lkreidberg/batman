@@ -127,7 +127,7 @@ class TransitModel:
 
 		"""
 		#recalculates rsky and fac if necessary
-		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.zs= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.zs= _rsky._rsky(self.t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 		#updates transit params
 		self.t0 = params.t0
@@ -172,7 +172,7 @@ class TransitParams(object):
 		Orbital eccentricity.
 
 	:param w:
-	 	Argument of periapse [in degrees] (FIXME ask Dan).	
+	 	Argument of periapse [in degrees]
 
 	:param u:
 		List of limb darkening coefficients.
