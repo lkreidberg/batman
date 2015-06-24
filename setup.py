@@ -6,6 +6,7 @@ from distutils.ccompiler import new_compiler
 import os
 import sys
 import tempfile
+import re
 
 """
 Check for OpenMP based on
@@ -70,11 +71,21 @@ _uniform_ld   = Extension('batman._uniform_ld', ['c_src/_uniform_ld.c'], extra_c
 _custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
 
-setup(	name='batman', 
-	version='1.0.0', 
+
+setup(	name='batman-package', 
+	version="0.9.0", 
 	author='Laura Kreidberg',
+	url = 'https://github.com/lkreidberg/batman',
 	packages =['batman'],
+	license = 'GNU GPLv3',
 	description ='Fast transit light curve modeling',
+	classifiers = [
+		'Development Status :: 4 - Beta',
+		'Intended Audience :: Science/Research',
+		'License :: GNU GPLv3',
+		'Programming Language :: Python'
+		],
 	include_dirs = [np.get_include()],
+	install_requires = ['numpy'],
 	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _custom_ld, _rsky]
 )

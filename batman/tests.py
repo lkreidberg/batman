@@ -11,7 +11,6 @@ def test():
 	params = TransitParams()
 	params.t0 = 0.
 	params.per = 1.0
-	#params.rp = 0.115
 	params.rp = 0.1
 	params.a = 15.23
 	params.inc = 1.555*180./math.pi
@@ -20,9 +19,8 @@ def test():
 	params.u = np.array([0.0, 0.7, 0.0, -0.3])
 	params.limb_dark = "nonlinear"
 
-	t = np.linspace(0.01, 0.02, 1000)
-	#t = np.linspace(0.0, 0.015, 1000)
-	err_max = 0.5
+	t = np.linspace(0.01, 0.05, 1000)
+	err_max = 0.7
 	
 	m = TransitModel(params, t, err_max)
 	nonlinear_lc = m.LightCurve(params)
