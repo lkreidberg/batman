@@ -31,7 +31,7 @@ class TransitModel:
 		Number of threads to use for parallelization. 
 
 	"""
-	def __init__(self, params, t, max_err=1.0, nthreads = None):
+	def __init__(self, params, t, max_err=1.0, nthreads = 1):
 		#checking for invalid input
 		if (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
 		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "nonlinear" and len(params.u) != 4):
