@@ -5,4 +5,4 @@ build/*
 
 dist
 MANIFEST
-batman-package.egg-info
+batman_package.egg-info
