@@ -8,20 +8,20 @@ Initializing the model
 ----------------------
 ::
 
-	params = batman.TransitParams()	        #object to store transit parameters
-	params.t0 = 0. 				#time of periastron passage (for eccentric orbits), OR
-						#mid-transit time (for circular orbits)
-	params.per = 1.				#orbital period	
-	params.rp = 0.1				#planet radius (in units of stellar radii)
-	params.a = 15.				#semi-major axis (in units of stellar radii)
-	params.inc = 87.			#orbital inclination (in degrees)	
-	params.ecc = 0.				#eccentricity	
-	params.w = 90.				#longitude of periastron (in degrees) 
-	params.limb_dark = "nonlinear"          #limb darkening model
-   	params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
+	params = batman.TransitParams()	      #object to store transit parameters
+	params.t0 = 0. 			      #time of periastron (for eccentric orbits), OR
+					      #mid-transit time (for circular orbits)
+	params.per = 1.			      #orbital period	
+	params.rp = 0.1			      #planet radius (in units of stellar radii)
+	params.a = 15.		              #semi-major axis (in units of stellar radii)
+	params.inc = 87.	              #orbital inclination (in degrees)	
+	params.ecc = 0.			      #eccentricity	
+	params.w = 90.			      #longitude of periastron (in degrees) 
+	params.limb_dark = "nonlinear"        #limb darkening model
+   	params.u = [0.5, 0.1, 0.1, -0.1]      #limb darkening coefficients
 	   
-	t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
-	m = batman.TransitModel(params, t)      #initializes model
+	t = np.linspace(-0.025, 0.025, 1000)  #times at which to calculate light curve	
+	m = batman.TransitModel(params, t)    #initializes model
 
 The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "nonlinear" and "custom" limb darkening). 
 
@@ -33,7 +33,7 @@ To make a model light curve, we use the ``LightCurve`` function:
 
 ::
 
-	flux = m.LightCurve(params)	                #calculates light curve
+	flux = m.LightCurve(params)	      		#calculates light curve
 
 Now that the model has been set up, we can change the transit parameters and recalculate the light curve **without** reinitializing the model.  For example, we can make light curves for a range of planet radii like so:
 
@@ -41,8 +41,8 @@ Now that the model has been set up, we can change the transit parameters and rec
 
 	radii = np.linspace(0.09, 0.11, 20)
 	for r in radii:
-		params.rp = r		                #updates planet radius
-		new_flux = m.LightCurve(params)	        #recalculates light curve
+		params.rp = r		        	#updates planet radius
+		new_flux = m.LightCurve(params)  	#recalculates light curve
 
 .. image:: change_rp.png				
 
@@ -72,10 +72,10 @@ To illustrate the usage for these different options, here's a calculation of lig
 	plt.figure()
 
 	for i in range(4):
-		params.limb_dark = ld_options[i]                 #specifies the limb darkening profile
-		params.u = ld_coefficients[i]	                 #updates limb darkening coefficients
-		m = batman.TransitModel(params, t)	         #initializes the model
-		flux = m.LightCurve(params)		         #calculates light curve
+		params.limb_dark = ld_options[i]          #specifies the LD profile
+		params.u = ld_coefficients[i]	          #updates LD coefficients
+		m = batman.TransitModel(params, t)	  #initializes the model
+		flux = m.LightCurve(params)		  #calculates light curve
 		plt.plot(t, flux, label = ld_options[i])
 
 The limb darkening coefficients are provided as a list of the form :math:`[u_1, ..., u_n]` where :math:`n` depends on the limb darkening model. 

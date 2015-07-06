@@ -3,7 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-batman: Bad-Ass Transit Model cAlculatioN
+.. |br| raw:: html
+
+   <br />
+
+batman: |br| Bad-Ass Transit Model cAlculatioN
 =========================================
 
 The ``batman`` package for Python makes super fast calculation of transit light curves easy.  
