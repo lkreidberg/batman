@@ -1,0 +1,106 @@
+\documentclass[12pt,preprint]{aastex} 
+%\documentclass[apjl]{emulateapj}
+\usepackage{amsmath}
+\usepackage{color}
+
+\newcommand*{\blue}{\textcolor{blue}}
+%\slugcomment{Draft version August 26, 2012}
+
+\shortauthors{Kreidberg}
+
+\begin{document}
+
+\title{BATMAN}
+
+\author{Laura Kreidberg\altaffilmark{1,2}}
+
+\email{E-mail: laura.kreidberg@uchicago.edu}
+
+\altaffiltext{1}{Department of Astronomy and Astrophysics, University of Chicago, 5640 S.~Ellis Ave, Chicago, IL 60637, USA}
+\altaffiltext{2}{National Science Foundation Graduate Research Fellow}
+
+\begin{abstract}
+BATMAN is the best super-hero.
+\end{abstract}
+
+
+\keywords{planets and satellites: atmospheres --- planets and satellites:  composition --- planets and satellites: individual: WASP-12b}
+
+\section{Introduction}
+Previous methods --
+
+Mandel and Agol 2002 - analytic, but uses brute force integration for nonlinear
+Giminez 2006 -
+Pal 2008 - 
+Kipping 2011 -
+Pal 2011 - multiple bodies, possibly lacking radial symmetry
+	basically same as Mandel and Agol for linear/quadratic; more complex LD not implemented; code available (see discussion)
+Abubekerov 
+Kjurkchieva - brute force; radially symmetric; 
+PyTransit
+
+\section{Algorithm}
+The light curve for a planet transiting a star can be described by the function $F(x,y)$, where $F$ is the relative flux of the system when the planet's center is a distance $(x,y)$ away from the stellar center.  $F$ is given by:
+
+\begin{equation}
+F = 1 - \int_S{I dS}
+\end{equation}
+where the stellar intensity $I$ is normalized such that the integrated intensity over the whole stellar surface is unity. 
+
+For a radially symmetric limb darkening profile, this surface integral can be reduced to a one-dimensional problem. The intensity is just $I(r)$. Everything in terms of $d = \sqrt{x^2+y^2}$. 
+
+There are three cases:\\
+case 1: the planet center directly overlaps the stellar center ($d = 0$)\\
+case 2: the planet eclipses the star but the centers do not directly overlap ($0<d<1$)\\
+case 3: the planet does not eclipse the star ($d>=1$)
+
+
+First case: planet center overlaps stellar center
+\begin{equation}
+F(0) = 1 - \int_0^{2\pi}{\int_0^{r_p}{I(r)r dr d\theta}}
+\end{equation}
+
+For the second case, where the center of the planet does not overlap the center of the star ($0<d<1$), I make use of the formula for the area of two overlapping circles with radii $r$ and $R$, with centers separated by a distance $d$:
+
+\begin{equation}
+A(r, R, d) = r^2\arccos{u} + R^2\arccos{v} - 0.5\sqrt{w}
+\end{equation}
+where
+\begin{eqnarray}
+u &=& (d^2+r^2-R^2)/(2dr)\\
+v &=& (d^2 + R^2 -r^2)/(2dR) \\
+w &=& (-d+r+R)(d+r-R)(d-r+R)(d+r+R)
+\end{eqnarray}
+
+Using this expression for the overlapping area, I approximate the integral in FIXME as
+\begin{equation}
+F(d) = 1 - \sum_{i=0}^{n-1}{\bar{I}(r_i, r_{i+1}) [A(r_{i+1}, r_p, d) - A(r_i, r_p, d)]}
+\end{equation}
+
+where $r_0 = d - r_p$ and $r_n = \textrm{MIN}(d+r_p, 1)$.  Works for negative $r$ because $\mu$ is still positive.
+
+The area element is illustrated in Figure FIXME.
+
+
+To make the sum more efficient, I make the distance $r_i+1 - r_i \propto \arccos{r_i}$  and use Simpson's rule to compute intensity over the area.
+
+
+\section{Performance}
+
+\section{Discussion}
+
+
+
+TODO:
+check performance of my alg relative to dA = r*dr*dtheta
+xx check whether Simpson's rule is actually faster -- IT ISN'T
+
+
+\acknowledgments
+Props to Robin.
+
+\bibliographystyle{apj}
+\bibliography{ms.bib}
+
+\end{document}
+
