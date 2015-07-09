@@ -36,11 +36,13 @@ double area(double d, double r, double R)
 	/*
 	Returns area of overlapping circles with radii r and R; separated by a distance d
 	*/
-	double arg1 = (d*d+r*r-R*R)/(2.*d*r), arg2 = (d*d+R*R-r*r)/(2.*d*R), arg3 = MAX((-d+r+R)*(d+r-R)*(d-r+R)*(d+r+R), 0.);
+	double arg1 = (d * d + r * r - R * R) / (2. * d * r);
+	double arg2 = (d * d + R * R - r * r) / (2. * d * R); 
+	double arg3 = MAX((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R), 0.);
 
-	if(r<=R-d) return M_PI*r*r;						//planet completely overlaps stellar circle
-	else if(r>=R+d) return M_PI*R*R;					//stellar circle completely overlaps planet
-	else return r*r*acos(arg1) + R*R*acos(arg2) - 0.5*sqrt(arg3);		//partial overlap
+	if(r <= R - d) return M_PI * r * r;						//planet completely overlaps stellar circle
+	else if(r >= R + d) return M_PI * R * R;					//stellar circle completely overlaps planet
+	else return r * r * acos(arg1) + R * R * acos(arg2) - 0.5 * sqrt(arg3);		//partial overlap
 }
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args)
@@ -68,38 +70,36 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		//d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+		//d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 	// separation of centers
 		d = z_array[i];
-		r_in = MAX(d - rprs, 0.);					//lower bound for integration
-		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
+		r_in = MAX(d - rprs, 0.);						//lower bound for integration
+		r_out = MIN(d + rprs, 1.0);						//upper bound for integration
 
-		//if(r_in >= 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0));	//flux = 1. if the planet is not transiting
-		if(r_in >= 1.) f_array[i] = 1.0;	//flux = 1. if the planet is not transiting
+		if(r_in >= 1.) f_array[i] = 1.0;					//flux = 1. if the planet is not transiting
 		else
 		{
-			delta = 0.;						//variable to store the integrated intensity, \int I dA
+			delta = 0.;							//variable to store the integrated intensity, \int I dA
 
-			r = r_in;						//starting radius for integration
-			dr = fac*acos(r); 					//initial step size 
-			r += dr;						//first step
-			A_i = 0.;						//initial area
+			r = r_in;							//starting radius for integration
+			dr = fac * acos(r); 						//initial step size 
+			r += dr;							//first step
+			A_i = 0.;							//initial area
 	
-			while(r<r_out)
+			while(r < r_out)
 			{
-				A_f = area(d, r, rprs);				//calculates area of overlapping circles
-				I = intensity(r-dr/2.,u1,u2, u3, u4, u5, u6); 	//intensity at the midpoint
-				delta += (A_f - A_i)*I;				//increase in transit depth for this integration step
-				dr = fac*acos(r);  				//updating step size
-				r = r+dr;					//stepping to next element
-				A_i = A_f;					//storing area
+				A_f = area(d, r, rprs);					//calculates area of overlapping circles
+				I = intensity(r - dr / 2.,u1,u2, u3, u4, u5, u6); 	//intensity at the midpoint
+				delta += (A_f - A_i) * I;				//increase in transit depth for this integration step
+				dr = fac * acos(r);  					//updating step size
+				r = r + dr;						//stepping to next element
+				A_i = A_f;						//storing area
 			}
-			dr = r_out -r + dr;  					//calculating change in radius for last step
-			r = r_out;						//final radius for integration
-			A_f = area(d, r, rprs);					//area for last integration step
-			I = intensity(r-dr/2.,u1,u2, u3, u4, u5, u6); 		//intensity at the midpoint 
-			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
-			//PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0-delta));	//flux equals 1 - \int I dA 
-			f_array[i] = 1.0-delta;	//flux equals 1 - \int I dA 
+			dr = r_out - r + dr;  						//calculating change in radius for last step
+			r = r_out;							//final radius for integration
+			A_f = area(d, r, rprs);						//area for last integration step
+			I = intensity(r - dr / 2.,u1,u2, u3, u4, u5, u6); 		//intensity at the midpoint 
+			delta += (A_f - A_i) * I;					//increase in transit depth for this integration step
+			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
 		}
 	}
 	return PyArray_Return((PyArrayObject *)flux);
