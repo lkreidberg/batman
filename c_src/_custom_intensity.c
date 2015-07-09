@@ -28,7 +28,7 @@
 double intensity(double r, double u1, double u2, double u3, double u4, double u5, double u6) 
 {
 	if(r > 0.99995) r = 0.99995;
-	double mu = sqrt(1.-r * r);
-	double norm = 2. * M_PI * (-u1 / 6. - u2 * u3 / 2. + u2 / 4. + 0.5 + u2 * u3 * u3 * log(1. + 1. / u3) / 2.); 
-	return (1. - u1 * (1. - mu) - u2 * log((mu + u3) / (1. + u3))) / norm;
+	double mu = sqrt(1. - r*r);
+	double norm = 2.*M_PI*(-u1/6. - u2*u3/2. + u2/4. + 0.5 + u2*u3*u3*log(1. + 1./u3)/2.); 
+	return (1. - u1*(1. - mu) - u2*log((mu + u3)/(1. + u3)))/norm;
 }

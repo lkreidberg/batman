@@ -26,9 +26,9 @@ double getE(double M, double e)	//calculates the eccentric anomaly (see Seager E
 {
 	double E = M, eps = 1.0e-7;
 	
-	while(fabs(E - e * sin(E) - M) > eps)
+	while(fabs(E - e*sin(E) - M) > eps)
 	{
-		E = E - (E - e * sin(E) - M) / (1.0 - e * cos(E));
+		E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
 	}
 	return E;
 }
@@ -54,7 +54,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	double *t_array = PyArray_DATA(ts);
 	double *z_array = PyArray_DATA(zs);
 
-	n = 2. * M_PI / per;	// mean motion
+	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
 	
 	for(i = 0; i < dims[0]; i++)
@@ -63,14 +63,14 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 
 		if(ecc > 1.e-5)						//calculates f for eccentric orbits
 		{
-			M = n * (t - t0);
+			M = n*(t - t0);
 			E = getE(M, ecc);
-			r = a * (1.0 - ecc * cos(E));
-			f = acos(a * (1.0 - ecc * ecc) / (r * ecc) - 1.0 / ecc);
-			if(fabs((a * (1.0 - ecc * ecc) / (r * ecc) - 1.0 / ecc) - 1.0) < eps) f = 0.0;
+			r = a*(1.0 - ecc*cos(E));
+			f = acos(a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc);
+			if(fabs((a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc) - 1.0) < eps) f = 0.0;
 		}
-		else f = ((t - t0) / per - (int)((t - t0) / per)) * 2. * M_PI;		//calculates f for a circular orbit
-		d = a * (1.0 - ecc * ecc) / (1.0 + ecc * cos(f)) * sqrt(1.0 - sin(omega + f) * sin(omega + f) * sin(inc) * sin(inc));	//calculates separation of centers 
+		else f = ((t - t0)/per - (int)((t - t0)/per))*2.*M_PI;		//calculates f for a circular orbit
+		d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers 
 		z_array[i] = d;
 	}
 	return PyArray_Return((PyArrayObject *)zs);
