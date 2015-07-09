@@ -57,9 +57,21 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	dims[0] = PyArray_DIMS(zs)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 
-
 	double *f_array = PyArray_DATA(flux);
 	double *z_array = PyArray_DATA(zs);
+
+	/*
+		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
+		Here we use a trick for faster access and more convenient access, where we set a pointer to the 
+		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
+		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
+		If you run into trouble along these lines, I recommend changing the array access to something like:
+			d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 
+		where zs is a numpy array object.
+
+
+		Laura Kreidberg 07/2015
+	*/
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
@@ -70,7 +82,6 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		//d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 	// separation of centers
 		d = z_array[i];
 		r_in = MAX(d - rprs, 0.);						//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);						//upper bound for integration

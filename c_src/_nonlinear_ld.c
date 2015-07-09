@@ -41,7 +41,9 @@ double area(double d, double r, double R)
 	/*
 	Returns area of overlapping circles with radii r and R; separated by a distance d
 	*/
-	double arg1 = (d * d + r * r - R * R) / (2. * d * r), arg2 = (d * d + R * R - r * r) / (2. * d * R), arg3 = MAX((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R), 0.);
+	double arg1 = (d * d + r * r - R * R) / (2. * d * r); 	
+	double arg2 = (d * d + R * R - r * r) / (2. * d * R); 
+	double arg3 = MAX((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R), 0.);
 
 	if(r <= R - d) return M_PI * r * r;						//planet completely overlaps stellar circle
 	else if(r >= R + d) return M_PI * R * R;					//stellar circle completely overlaps planet
@@ -63,7 +65,19 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 
 	double *f_array = PyArray_DATA(flux);
 	double *z_array = PyArray_DATA(zs);
-	//d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); // separation of centers
+
+	/*
+		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
+		Here we use a trick for faster access and more convenient access, where we set a pointer to the 
+		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
+		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
+		If you run into trouble along these lines, I recommend changing the array access to something like:
+			d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 
+		where zs is a numpy array object.
+
+
+		Laura Kreidberg 07/2015
+	*/
 	
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
@@ -80,8 +94,7 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 		r_in = MAX(d - rprs, 0.);					//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
-		//if(r_in >= 1.) PyArray_SETITEM(flux, PyArray_GetPtr(flux, &i), PyFloat_FromDouble(1.0));	//flux = 1. if the planet is not transiting
-		if(r_in >= 1.) f_array[i] = 1.0;	//flux = 1. if the planet is not transiting
+		if(r_in >= 1.) f_array[i] = 1.0;				//flux = 1. if the planet is not transiting
 		else
 		{
 			delta = 0.;							//variable to store the integrated intensity, \int I dA
