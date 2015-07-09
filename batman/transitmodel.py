@@ -79,14 +79,14 @@ class TransitModel:
 		else:
 			if nthreads <= multiprocessing.cpu_count()and nthreads >1 and openmp.detect(): self.nthreads = nthreads
 			else: 
-				if nthreads>multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
+				if nthreads > multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
 				elif nthreads <= 1: raise Exception("Number of threads must be between 2 and {0:d}".format(multiprocessing.cpu_count()))
 				else: raise Exception("OpenMP not enabled: do not set the nthreads parameter")
 
 	def calc_err(self, plot = False):
 		"""
 
-		Returns maximum error (in parts per million) for transit light curve calculation.
+		Calculate maximum error (in parts per million) for transit light curve calculation.
 			
 		:param plot: 
 			If set to ``True``, plots the error in the light curve model as a function of separation of centers.
@@ -130,13 +130,13 @@ class TransitModel:
 				if err> self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
-				if n>1e3: raise Exception("Convergence failure in calculation of scale factor for _nonlinear_ld")
+				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for _nonlinear_ld")
 			return fac
 		else: return 0.
 
 	def LightCurve(self, params):
 		"""
-		Calculates a model light curve.
+		Return a model light curve.
 
 		:param params:
 			Transit parameter object.
@@ -167,7 +167,7 @@ class TransitModel:
 
 class TransitParams(object):
 	"""
-	An object that stores the physical parameters of the transit.
+	Object to store the physical parameters of the transit.
 
 	:param t0:
 		Time of periastron passage (for eccentric orbits) or time of central transit (for circular orbits).
