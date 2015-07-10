@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-plt.figure(figsize = (4,4))
+plt.figure(figsize = (6,6))
 theta = np.linspace(0, 2*math.pi, 1000)
 
 r = 0.15
@@ -27,13 +27,16 @@ plt.plot(x,y, color='k')
 r1 = rs[5]
 r2 = rs[6]
 
-xb = x[(x>=r1)&(x<=r2)&(y<0.)] 
-yb = y[(x>=r1)&(x<=r2)&(y<0.)] 
-xt = x[(x>=r1)&(x<=r2)&(y>=0.)] 
-yt = y[(x>=r1)&(x<=r2)&(y>=0.)] 
+xmin = (d**2 + r1**2 - r**2)/(2.*d)
+xmax = (d**2 + r2**2 - r**2)/(2.*d)
+
+xb = x[(x>=xmin)&(x<xmax)&(y<0.)] 
+yb = y[(x>=xmin)&(x<xmax)&(y<0.)] 
+xt = x[(x>=xmin)&(x<xmax)&(y>0.)] 
+yt = y[(x>=xmin)&(x<xmax)&(y>0.)] 
 xl = r1*np.cos(theta)
 yl = r1*np.sin(theta)
-ind = (yl<=yt[0])&(yl>=yb[0])&(xl>=0.)
+ind = (yl<yt[0])&(yl>yb[0])&(xl>0.)
 xl = xl[ind]
 yl = yl[ind]
 ind0 = np.argsort(yl)
@@ -53,6 +56,14 @@ ind2 = np.argsort(yr)
 yr = yr[ind2]
 xr= xr[ind2]
 
+"""plt.clf()
+plt.plot(xb, yb, label="b")
+plt.plot(xr, yr, label="r")
+plt.plot(xt, yt, label="t")
+plt.plot(xl, yl, label="l")
+plt.legend()
+plt.show()"""
+
 xfill = np.append(xb,xr)
 yfill = np.append(yb,yr)
 xfill = np.append(xfill, xt)
@@ -60,7 +71,7 @@ yfill = np.append(yfill, yt)
 xfill = np.append(xfill, xl)
 yfill = np.append(yfill, yl)
 
-for i in range(len(xfill)): print(xfill[i], yfill[i])
+#for i in range(len(xfill)): print(xfill[i], yfill[i])
 #for i in range(len(xr)): print(xr[i], yr[i])
 
 plt.fill(xfill,yfill, color='orange')
@@ -68,6 +79,8 @@ plt.fill(xfill,yfill, color='orange')
 
 plt.xlim((0., 1.0))
 plt.ylim((-0.5, 0.5))
-plt.axhline(0., color='0.5', zorder=-5, linestyle = 'dashed')
+plt.axhline(0., color='0.5', zorder=5, linestyle = 'dashed')
+plt.xlabel("x (stellar radii)")
+plt.ylabel("y (stellar radii)")
 
 plt.show()
