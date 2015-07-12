@@ -5,6 +5,7 @@ build/*
 *.pdf
 *.log
 *.aux
+*.out
 
 dist
 MANIFEST
