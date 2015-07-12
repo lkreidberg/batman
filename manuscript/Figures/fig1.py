@@ -1,12 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+from pylab import *
+
+rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
 
 plt.figure(figsize = (6,6))
 theta = np.linspace(0, 2*math.pi, 1000)
 
 r = 0.15
-fac = 7.0e-2 
+fac = 7.7e-2 
 rs = []
 
 while r < 1.0: 
@@ -23,6 +26,7 @@ d = 0.64
 x = r*np.cos(theta) + d
 y = r*np.sin(theta)
 plt.plot(x,y, color='k')
+
 
 r1 = rs[5]
 r2 = rs[6]
@@ -77,10 +81,27 @@ yfill = np.append(yfill, yl)
 plt.fill(xfill,yfill, color='orange')
 
 
-plt.xlim((0., 1.0))
-plt.ylim((-0.5, 0.5))
-plt.axhline(0., color='0.5', zorder=5, linestyle = 'dashed')
+r = 1.0
+x = r*np.cos(theta)
+y = r*np.sin(theta)
+
+plt.plot(x,y, color='k')
+
+plt.xlim((-0.06, 1.0))
+plt.ylim((-0.53, 0.53))
+
+plt.axhline(0., color='k', zorder=5, linestyle = 'dashed')
+plt.axvline(0., color='k', zorder=5, linestyle = 'dashed')
+
+plt.plot([0., d],[0., 0.], color='k', linewidth=1.5, zorder=6)
+plt.plot(0., 0., ms= 5, marker='o', color='k')
+plt.plot(d, 0., ms= 5, marker='o', color='k')
+plt.gca().text(0.3,0.04, "d", fontsize=16, weight='bold')
+#plt.gca().annotate("", xy = (0.05, 0.03), xycoords='data', xytext =  (0.6, 0.03), arrowprops = dict(arrowstyle="->", fc="0.4", ec="0.4"))
+#plt.gca().annotate("", xy = (0.05, 0.03), xycoords='data', xytext =  (0.6, 0.03), arrowprops = dict(arrowstyle="<-", fc="0.4", ec = "0.4"))
+
 plt.xlabel("x (stellar radii)")
 plt.ylabel("y (stellar radii)")
 
+plt.savefig("f1.pdf", dpi=300)
 plt.show()
