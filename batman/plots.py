@@ -22,6 +22,7 @@ from .transitmodel import *
 from . import _quadratic_ld
 from . import _nonlinear_ld
 import timeit
+import batman
 
 def wrapper(func, *args, **kwargs):
     def wrapped():
