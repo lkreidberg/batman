@@ -5,6 +5,8 @@ from pylab import *
 from matplotlib import rc
 import matplotlib.gridspec as gridspec
 
+print(batman.__file__)
+
 rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
 matplotlib.rcParams.update({'font.size':14})
 
@@ -44,8 +46,6 @@ plt.ylabel("Error (ppm)")
 plt.xlim((-0.5, 0.5))
 plt.ylim((-1.1,0.1))
 
-plt.show()
-
-
 plt.savefig("f2.pdf", dpi=300)
+plt.show()
 
