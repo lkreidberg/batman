@@ -133,6 +133,9 @@ class TransitModel:
 				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for _nonlinear_ld")
 			return fac
 		else: return 0.
+	
+	def _set_fac(self, fac):
+		self.fac = fac
 
 	def LightCurve(self, params):
 		"""
@@ -199,12 +202,12 @@ class TransitParams(object):
 
 	"""
 	def __init__(self):
-		self.t0 = 0.
-		self.per = 0.
-		self.rp = 0.
-		self.a = 0.
-		self.inc = 0.
-		self.ecc = 0.
-		self.w = 0. 
-		self.u = []
-		self.limb_dark = ""
+		self.t0 = None
+		self.per = None
+		self.rp = None
+		self.a = None
+		self.inc = None
+		self.ecc = None
+		self.w = None
+		self.u = None
+		self.limb_dark = None
