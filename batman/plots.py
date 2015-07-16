@@ -24,6 +24,7 @@ from . import _nonlinear_ld
 import timeit
 import batman
 
+
 def wrapper(func, *args, **kwargs):
     def wrapped():
         return func(*args, **kwargs)
@@ -72,7 +73,8 @@ def make_plots():
 		f= _nonlinear_ld._nonlinear_ld(zs, rp, u[0], u[1], u[2], u[3], fac[i], 12)
 		err = np.max(np.abs(f - f_ref))
 		errs.append(err)
-	plt.plot(np.array(ts), np.array(errs)*1.0e6)
+	plt.plot(np.array(ts), np.array(errs)*1.0e6, color='k')
+	plt.xlim((1.0e-3, 1.0e-1))
 	plt.yscale('log')
 	plt.xscale('log')
 	plt.xlabel("Time (s)")
