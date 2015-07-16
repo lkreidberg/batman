@@ -27,7 +27,7 @@ m = batman.TransitModel(params, t)      #initializes model
 
 flux = m.LightCurve(params)		#calculates light curve
 
-m._set_fac(1.0e-4)
+m.set_fac(1.0e-4)
 flux_precise = m.LightCurve(params)
 
 gs = gridspec.GridSpec(2, 1, height_ratios =[3,1], hspace=0.05)
