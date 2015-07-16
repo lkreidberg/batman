@@ -40,26 +40,36 @@ params.a = 15.				#semi-major axis (in units of stellar radii)
 params.inc = 87.			#orbital inclination (in degrees)	
 params.ecc = 0.				#eccentricity	
 params.w = 90.				#longitude of periastron (in degrees)
+   
+t = np.linspace(-0.013, 0.013, 100)  	#times at which to calculate light curve	
+
+params.limb_dark = "quadratic"          #limb darkening model
+params.u = [0.1, 0.3]       	#limb darkening coefficients
+m = batman.TransitModel(params, t)      #initializes model
+wrapped = wrapper(m.LightCurve, params)
+time = timeit.timeit(wrapped,number=100)/100.
+plt.axvline(time, color='0.5', linestyle='dashed')
+#print(t)
+
 params.limb_dark = "nonlinear"          #limb darkening model
 params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
-   
-t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
 m = batman.TransitModel(params, t)      #initializes model
-
 flux = m.LightCurve(params)		#calculates light curve
+#plt.plot(t, flux)
+#plt.show()
 
 #generates Figure FIXME: max err as a function of function call time
-zs = np.linspace(0., 1., 1000)
 rp = 0.1
 u = [0., 0.7, 0.0, -0.3]
 n = 20
 ts = []
 errs = []
-fac = np.logspace(-3, -1, n)
+fac = np.logspace(-2.2, 0.3, n)
 for i in range(n):
 	m.set_fac(fac[i])
 	wrapped = wrapper(m.LightCurve, params)
-	t = timeit.timeit(wrapped,number=10)/10.
+	if i<10: t = timeit.timeit(wrapped,number=200)/200.
+	else: t = timeit.timeit(wrapped,number=1000)/1000.
 	ts.append(t)
 	print(t)
 	err = m.calc_err() 
@@ -67,8 +77,13 @@ for i in range(n):
 plt.plot(np.array(ts), np.array(errs), color='k')
 print(np.min(errs), np.max(errs))
 print(np.max(ts), np.min(ts))
-plt.xlim((1.0e-3, 5.0e-2))
-plt.ylim((1.0e-3, 10.))
+
+
+plt.gca().tick_params('both', length=8, width=1.2, which='major')
+plt.gca().tick_params('both', length=4, width=0.8, which='minor')
+
+plt.xlim((1.0e-5, 2.0e-3))
+plt.ylim((1.0e-1, 300.))
 plt.yscale('log')
 plt.xscale('log')
 plt.xlabel("Execution time (s)")
