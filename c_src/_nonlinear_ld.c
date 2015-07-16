@@ -114,7 +114,7 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 				r = r + dr;					//stepping to next element
 				A_i = A_f;					//storing area
 			}
-			dr = r_out - r - dr;  					//calculating change in radius for last step  FIXME
+			dr = r_out - r + dr;  					//calculating change in radius for last step  FIXME
 			r = r_out;						//final radius for integration
 			A_f = area(d, r, rprs);					//area for last integration step
 			I = intensity(r - dr/2.,u1,u2, u3, u4, norm); 		//intensity at the midpoint 
