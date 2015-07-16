@@ -20,24 +20,24 @@
 \altaffiltext{2}{National Science Foundation Graduate Research Fellow}
 
 \begin{abstract}
-BATMAN is the best super-hero.
+Batman -- the best super-hero.
 \end{abstract}
 
 
 \keywords{planets and satellites: atmospheres --- planets and satellites:  composition --- planets and satellites: individual: WASP-12b}
 
 \section{Introduction}
-Previous methods --
+%Previous methods --
 
-Mandel and Agol 2002 - analytic, but uses brute force integration for nonlinear
-Giminez 2006 -
-Pal 2008 - 
-Kipping 2011 -
-Pal 2011 - multiple bodies, possibly lacking radial symmetry
-	basically same as Mandel and Agol for linear/quadratic; more complex LD not implemented; code available (see discussion)
-Abubekerov 
-Kjurkchieva - brute force; radially symmetric; 
-PyTransit
+%Mandel and Agol 2002 - analytic, but uses brute force integration for nonlinear
+%Giminez 2006 -
+%Pal 2008 - 
+%Kipping 2011 -
+%Pal 2011 - multiple bodies, possibly lacking radial symmetry
+%	basically same as Mandel and Agol for linear/quadratic; more complex LD not implemented; code available (see discussion)
+%Abubekerov 
+%Kjurkchieva - brute force; radially symmetric; 
+%PyTransit
 
 \section{Algorithm}
 \label{section:algorithm}
@@ -73,9 +73,9 @@ The advantage of this integration scheme is that the only error introduced is du
 
 To further optimize the integration, I use a nonuniform step size.  Typical stellar intensity profiles have larger gradients near the limb of the star than at the center \citep[e.g.][]{claret00}, so smaller steps are required at larger $x$ values to achieve the same accuracy.  I adopt the following step-size scaling: 
 $$
-x_i - x_{i-1} \propto \cos^{-1}\left(x_{i-1}\right)
+x_i - x_{i-1}  = f\cos^{-1}\left(x_{i-1}\right)
 $$  
-which is fast to compute and well-behaved at the limits $x=0$ and $x=1$.
+where $f$ is a constant scale factor. This prescription is fast to compute and well-behaved at the limits $x=0$ and $x=1$.
 
 See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of the integration. 
 
@@ -83,12 +83,6 @@ See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of t
 \resizebox{\hsize}{!}{\includegraphics{f1.pdf}}
 \caption{Schematic illustration of the integration scheme. The star (large black circle; partially visible) has a radius of 1 and is centered in the plane of the sky at ($x$, $y$) = (0, 0). The planet (smaller black circle) is separated from the center of the stellar disk by a distance $d$ (marked by the solid black line).  The star is partitioned into concentric circles (dotted lines) in order to calculate the integral over the planet disk.  A single integration element $\Delta A$ is shaded in orange. The integration step size illustrated here is larger than for a typical calculation for visual clarity.}
 \label{fig:integration}
-\end{figure}
-
-\begin{figure}
-\resizebox{\hsize}{!}{\includegraphics{f2.pdf}}
-\caption{An example transit light curve for a nonlinear stellar intensity profile (top panel) and the error in the calculation (bottom panel).  The error tolerance parameter \texttt{max\_err} was set to 1.0 parts per million.  The error increases with distance from the center of the star up to around $\pm0.2$ hours from the time of mid-transit, because the stellar intensity gradient is larger at larger radii. The error decreases again during ingress and egress as the planet eclipses a smaller fraction of the stellar disk.}
-\label{fig:transit}
 \end{figure}
 
 \section{The \texttt{batman} package}
@@ -102,24 +96,33 @@ I wrote a Python package, \texttt{batman}, to calculate model transit light curv
   I(\mu) &= I_0[1 - u_1(1 - \mu) - u_2(1-\mu)^2]                                        & &\text{(quadratic)}           \\
   I(\mu) &= I_0[1 - u_1(1-\mu^{1/2}) - u_2(1- \mu) - u_3(1-\mu^{3/2}) - u_4(1-\mu^2)]   & &\text{(nonlinear)}
 \end{align}
-where $\mu = \sqrt{1-x^2}$.  A template is available in the source distribution for the creation of custom limb darkening profiles for any radially symmetric function.  The nonlinear and custom models are calculated with the brute force integration scheme described in \S\,\ref{section:algorithm}, whereas models for quadratic and linear profiles are calculated analytically based on the widely-used formalism from \cite{mandel02}.  
+where $\mu = \sqrt{1-x^2}$.  A template is available in the source distribution for the creation of custom profiles for any radially symmetric function.  The nonlinear and custom models are calculated with the brute force integration scheme described in \S\,\ref{section:algorithm}, whereas models for quadratic and linear profiles are calculated analytically based on the widely-used formalism from \cite{mandel02}.  
 
-For models calculated by integration, the user can specify the maximum allowable error with the \texttt{max\_err} parameter.  When a transit model is initialized, the integration step size is tuned such that the difference between the model and a template calculated with a fine step size (FIXME) is below the specified tolerance.  Computation time increases FIXME with precision (see FIXME), so .  FIXME lower limit on precision. Figure\,\ref{fig:transit} shows an example transit light curve with errors FIXME.
+For models calculated by integration, the user can specify the maximum allowable truncation error with the \texttt{max\_err} parameter.  When a transit model is initialized, the integration step size is tuned such that the difference between the model and a high-accuracy template (calculated with scale factor $f = 10^{-4}$) is below the specified tolerance.  The lower limit on achievable accuracy with this method is below $10^{-10}$ for typical limb darkening profiles. Figure\,\ref{fig:transit} shows an example transit light curve and its truncation error.
 
+\begin{figure}
+\resizebox{\hsize}{!}{\includegraphics{f2.pdf}}
+\caption{An example transit light curve for a nonlinear stellar intensity profile (top panel) and truncation error for the calculation (bottom panel).  The error tolerance parameter \texttt{max\_err} was set to 1.0 parts per million.  The truncation error increases with distance from the center of the star up to around $\pm0.2$ hours from the time of mid-transit, because the stellar intensity gradient is larger at larger radii. The error decreases again during ingress and egress as the planet eclipses a smaller fraction of the stellar disk.}
+\label{fig:transit}
+\end{figure}
 
-FIXME this needs work. One of the free parameters in the transit models is the separation of centers $d$ between the star and the planet.  \texttt{batman} computes $d$ automatically from the following set of user-specified parameters: planet semi-major axis, orbital inclination, eccentricity, longitude of periastron, orbital period, and time of periastron/mid-transit time (for eccentric/circular orbits). The separation $d$ is calculated with equation (5) from Chapter FIXME and FIXME of \citep{seager10}. 
+One of the required inputs for a transit model is the separation of centers $d$ between the star and the planet.  \texttt{batman} computes $d$ automatically from the following set of user-specified parameters: planet semi-major axis, orbital inclination, eccentricity, longitude of periastron, orbital period, and time of periastron/mid-transit time (for eccentric/circular orbits). FIXME add refs to eqns in Seager 10. 
 
-The computationally intensive sections of the code are written as C extension modules with the Python/C API, which improves the performance by roughly two orders of magnitude over a pure Python implementation.  For all limb darkening models, the calculation can be parallelized at the C level with OpenMP. The number of processors is specified by the user with the parameter \texttt{nthreads}.  \texttt{batman} will raise an exception if users attempt to parallelize a calculation on a system where OpenMP is not supported.
-
+The computationally intensive sections of the code (including all of the transit model calculation) are written as C extension modules with the Python/C API, which improves the performance by roughly two orders of magnitude over a pure Python implementation.  The code also includes the option to parallelize at the C level with OpenMP, which further speeds up the calculation. The number of processors is specified by the user with the parameter \texttt{nthreads}.  \texttt{batman} will raise an exception if the user attempts to parallelize a calculation on a system where OpenMP is not supported.
 
 
 \subsection{Performance}
+\begin{figure}
+\resizebox{\hsize}{!}{\includegraphics{f3.pdf}}
+\caption{Execution time as a function of truncation error tolerance.}
+\label{fig:timing}
+\end{figure}
+
 \subsection{Comparison with other codes}
 
 \section{Discussion}
 
 \acknowledgments
-Props to Robin.
 
 \bibliographystyle{apj}
 \bibliography{ms.bib}
