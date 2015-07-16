@@ -134,7 +134,13 @@ class TransitModel:
 			return fac
 		else: return 0.
 	
-	def _set_fac(self, fac):
+	def set_fac(self, fac):
+		"""
+		Set scale factor for integration step size.
+
+		:params fac:
+			Scale factor.
+		"""
 		self.fac = fac
 
 	def LightCurve(self, params):
