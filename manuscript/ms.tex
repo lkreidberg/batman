@@ -52,7 +52,7 @@ On the other hand, if the stellar intensity profile is radially symmetric, the t
 \begin{equation}
 \delta = \sum_{i=1}^{n} I\left(\frac{x_i+x_{i-1}}{2}\right) \left[A(x_{i}, r_p, d) - A(x_{i-1}, r_p, d)\right]
 \end{equation}
-where $I(x)$ is the 1D stellar intensity profile, $r_p$ is the planetary radius, $d$ is the separation of centers between the star and the planet, and $A(x, r_p, d)$ is the area of intersection between two circles of radii $x$ and $r_p$, separated by a distance $d$.  The sum is carried out over the range $x_0 = d - r_p$ to $x_n = \textrm{MIN}(d + r_p, r_s)$, where $r_s$ is the stellar radius.  The intersecting area is given by:
+where $x$ is the normalized radial coordinate $0 < x < 1$, $I(x)$ is the 1D stellar intensity profile, $r_p$ is the planetary radius, $d$ is the separation of centers between the star and the planet, and $A(x, r_p, d)$ is the area of intersection between two circles of radii $x$ and $r_p$, separated by a distance $d$.  The sum is carried out over the range $x_0 = d - r_p$ to $x_n = \textrm{MIN}(d + r_p, r_s)$, where $r_s$ is the stellar radius.  The intersecting area is given by:
 
 \begin{equation}
 A(x, r_p, d) = 
@@ -66,12 +66,16 @@ where
 \begin{eqnarray}
 u &=& (d^2+x^2-r_p^2)/(2dx)\\
 v &=& (d^2 + r_p^2 -x^2)/(2dr_p) \\
-w &=& (-d+x+r_p)(d+x-r_p)(d-x+r_p)(d+x+r_p)
+w &=& (-d+x+r_p)(d+x-r_p)(d-x+r_p)(d+x+r_p).
 \end{eqnarray}
 
 The advantage of this integration scheme is that the only error introduced is due to approximating the stellar intensity as constant over the differential area element $\Delta A = A(x_i, r_p, d) - A(x_{i-1}, r_p, d)$.  Computation of $\Delta A$ is expensive, but it needs to be calculated relatively few times ($<<10^{6}$ for sub-ppm accuracy). This makes the integration faster than one with a simpler area element (e.g., $\Delta A = \Delta x \Delta y$), that requires a much smaller step size to achieve the same accuracy.
 
-To further optimize the integration, I use a nonuniform step size.  Typical stellar intensity profiles have larger gradients near the limb of the star than at the center (FIXME ref), so I choose a smaller steps at larger $x$ values: $x_i - x_{i-1} \propto \cos^{-1}{x_{i-1}}$.  An alternative choice would be to make the step-size proportional to the intensity gradient; however, this is more expensive to compute and does not save time??.
+To further optimize the integration, I use a nonuniform step size.  Typical stellar intensity profiles have larger gradients near the limb of the star than at the center \citep[e.g.][]{claret00}, so smaller steps are required at larger $x$ values to achieve the same accuracy.  I adopt the following step-size scaling: 
+$$
+x_i - x_{i-1} \propto \cos^{-1}\left(x_{i-1}\right)
+$$  
+which is fast to compute and well-behaved at the limits $x=0$ and $x=1$.
 
 See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of the integration. 
 
@@ -83,31 +87,30 @@ See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of t
 
 \begin{figure}
 \resizebox{\hsize}{!}{\includegraphics{f2.pdf}}
-\caption{Transit and error.}
+\caption{An example transit light curve for a nonlinear stellar intensity profile (top panel) and the error in the calculation (bottom panel).  The error tolerance parameter \texttt{max\_err} was set to 1.0 parts per million.  The error increases with distance from the center of the star up to around $\pm0.2$ hours from the time of mid-transit, because the stellar intensity gradient is larger at larger radii. The error decreases again during ingress and egress as the planet eclipses a smaller fraction of the stellar disk.}
 \label{fig:transit}
 \end{figure}
 
 \section{The \texttt{batman} package}
-I wrote a Python package, \texttt{batman}, that implements the algorithm described in \S\,\ref{section:algorithm} to calculate model transit light curves. \texttt{batman} is being developed on GitHub and full documentation is available at \blue{\url{https://github.com/lkreidberg/batman}}.
-\section{The \texttt{batman} package}
-I wrote a Python package, \texttt{batman}, that implements the algorithm described in \S\,\ref{section:algorithm} to calculate model transit light curves. \texttt{batman} is being developed on GitHub and full documentation is available at \blue{\url{https://github.com/lkreidberg/batman}}.
+I wrote a Python package, \texttt{batman}, to calculate model transit light curves.  \texttt{batman} is an open source project and is being developed on GitHub.  Full documentation is available at \blue{\url{https://github.com/lkreidberg/batman}}, but I summarize the main capabilities of the package here.
 
-In brief, \texttt{batman} supports calculation of light curves for the following stellar intensity profiles:
-
+\subsection{Features}
+\texttt{batman} supports calculation of exoplanet transit light curves for uniform, linear, quadratic, nonlinear, and custom stellar intensity profiles:
 \begin{align}
   I(\mu) &= I_0                                                                         & &\text{(uniform)}             \\
   I(\mu) &= I_0[1 - u_1(1-\mu)]                                                         & &\text{(linear)}              \\
   I(\mu) &= I_0[1 - u_1(1 - \mu) - u_2(1-\mu)^2]                                        & &\text{(quadratic)}           \\
   I(\mu) &= I_0[1 - u_1(1-\mu^{1/2}) - u_2(1- \mu) - u_3(1-\mu^{3/2}) - u_4(1-\mu^2)]   & &\text{(nonlinear)}
 \end{align}
+where $\mu = \sqrt{1-x^2}$.  A template is available in the source distribution for the creation of custom limb darkening profiles for any radially symmetric function.  The nonlinear and custom models are calculated with the brute force integration scheme described in \S\,\ref{section:algorithm}, whereas models for quadratic and linear profiles are calculated analytically based on the widely-used formalism from \cite{mandel02}.  
 
-as well as the option to define a custom profile.
+For models calculated by integration, the user can specify the maximum allowable error with the \texttt{max\_err} parameter.  When a transit model is initialized, the integration step size is tuned such that the difference between the model and a template calculated with a fine step size (FIXME) is below the specified tolerance.  Computation time increases FIXME with precision (see FIXME), so .  FIXME lower limit on precision. Figure\,\ref{fig:transit} shows an example transit light curve with errors FIXME.
 
-The code calculates the separation of centers between the star and the planet based on physical parameters of the transit (e.g., planet-to-star radius ratio, planet orbital period). (FIXME add ref to winn)
 
--parallelized with OpenMP with a user-specified number of processors (automatically detects whether supported and fails gracefully)
-- compatible with Python 2-3.
-- listed on PyPI
+FIXME this needs work. One of the free parameters in the transit models is the separation of centers $d$ between the star and the planet.  \texttt{batman} computes $d$ automatically from the following set of user-specified parameters: planet semi-major axis, orbital inclination, eccentricity, longitude of periastron, orbital period, and time of periastron/mid-transit time (for eccentric/circular orbits). The separation $d$ is calculated with equation (5) from Chapter FIXME and FIXME of \citep{seager10}. 
+
+The computationally intensive sections of the code are written as C extension modules with the Python/C API, which improves the performance by roughly two orders of magnitude over a pure Python implementation.  For all limb darkening models, the calculation can be parallelized at the C level with OpenMP. The number of processors is specified by the user with the parameter \texttt{nthreads}.  \texttt{batman} will raise an exception if users attempt to parallelize a calculation on a system where OpenMP is not supported.
+
 
 
 \subsection{Performance}
