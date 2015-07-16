@@ -6,6 +6,9 @@ build/*
 *.log
 *.aux
 *.out
+*.dvi
+*.bbl
+*.blg
 
 dist
 MANIFEST
