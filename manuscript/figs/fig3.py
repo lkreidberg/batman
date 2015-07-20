@@ -49,19 +49,18 @@ m = batman.TransitModel(params, t)      #initializes model
 wrapped = wrapper(m.LightCurve, params)
 time = timeit.timeit(wrapped,number=100)/100.
 plt.axvline(time, color='0.5', linestyle='dashed')
-#print(t)
+print("quadratic", time)
 
 params.limb_dark = "nonlinear"          #limb darkening model
-params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
+params.u = [0.0, 0.7, 0.0, -0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
 flux = m.LightCurve(params)		#calculates light curve
 #plt.plot(t, flux)
 #plt.show()
 
 #generates Figure FIXME: max err as a function of function call time
-rp = 0.1
-u = [0., 0.7, 0.0, -0.3]
-n = 20
+#u = [0., 0.7, 0.0, -0.3]
+n = 100
 ts = []
 errs = []
 fac = np.logspace(-2.2, 0.3, n)
@@ -71,8 +70,8 @@ for i in range(n):
 	if i<10: t = timeit.timeit(wrapped,number=200)/200.
 	else: t = timeit.timeit(wrapped,number=1000)/1000.
 	ts.append(t)
-	print(t)
 	err = m.calc_err() 
+	print(t, err)
 	errs.append(err)
 plt.plot(np.array(ts), np.array(errs), color='k')
 print(np.min(errs), np.max(errs))

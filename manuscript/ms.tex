@@ -27,16 +27,26 @@ Batman -- the best super-hero.
 \keywords{planets and satellites: atmospheres --- planets and satellites:  composition --- planets and satellites: individual: WASP-12b}
 
 \section{Introduction}
+When an extrasolar planet transits in front of its host star, a small fraction of the stellar flux is blocked by the planet.  Precise monitoring of stellar brightness as a function of time can therefore reveal transiting planets, and thousands of planets have been discovered with this technique (FIXME refs).  The transit light curves can be used to characterize the planets in detail, enabling measurements of planetary radius, orbital period, and even atmospheric temperature structure and composition (FIXME refs).  %This characterization depends on a foundation of accurate transit light curve models. 
+
+Even though transit light curve models are a very basic part of the toolkit for exoplanet characterization, they are not trivial to compute.  The model must account for the planet's size and position on the sky, as well as stellar limb darkening, a phenomenon that causes the apparent brightness of the stellar disk to decrease from center to edge \citep{milne21}.  
+
+Transit light curve models can be calculated analytically for several limb darkening profiles.  \citep{mandel02} presented analytic solutions for quadratic and nonlinear limb darkening laws.  \citep{gimenez06} present Other limb darkening profiles do not have analytic solutions, and transit models must be calculated by numeric integration of the stellar intensity over the disk of the planet. Gimenez.
+
+
+These methods are implemented in several software packages.
+
+ 
 %Previous methods --
 
-%Mandel and Agol 2002 - analytic, but uses brute force integration for nonlinear
+%Mandel and Agol 2002 - analytic, but uses numeric integration for nonlinear
 %Giminez 2006 -
 %Pal 2008 - 
 %Kipping 2011 -
 %Pal 2011 - multiple bodies, possibly lacking radial symmetry
 %	basically same as Mandel and Agol for linear/quadratic; more complex LD not implemented; code available (see discussion)
 %Abubekerov 
-%Kjurkchieva - brute force; radially symmetric; 
+%Kjurkchieva - numeric; radially symmetric; 
 %PyTransit
 
 \section{Algorithm}
@@ -69,7 +79,7 @@ v &=& (d^2 + r_p^2 -x^2)/(2dr_p) \\
 w &=& (-d+x+r_p)(d+x-r_p)(d-x+r_p)(d+x+r_p).
 \end{eqnarray}
 
-The advantage of this integration scheme is that the only error introduced is due to approximating the stellar intensity as constant over the differential area element $\Delta A = A(x_i, r_p, d) - A(x_{i-1}, r_p, d)$.  Computation of $\Delta A$ is expensive, but it needs to be calculated relatively few times ($<<10^{6}$ for sub-ppm accuracy). This makes the integration faster than one with a simpler area element (e.g., $\Delta A = \Delta x \Delta y$), that requires a much smaller step size to achieve the same accuracy.
+See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of the integration.  The advantage of this integration scheme is that the only error introduced is due to approximating the stellar intensity as constant over the differential area element $\Delta A = A(x_i, r_p, d) - A(x_{i-1}, r_p, d)$.  Computation of $\Delta A$ is expensive, but it needs to be calculated relatively few times ($<<10^{6}$ for sub-ppm accuracy). This makes the integration faster than one with a simpler area element (e.g., $\Delta A = \Delta x \Delta y$), that requires a much smaller step size to achieve the same accuracy.
 
 To further optimize the integration, I use a nonuniform step size.  Typical stellar intensity profiles have larger gradients near the limb of the star than at the center \citep[e.g.][]{claret00}, so smaller steps are required at larger $x$ values to achieve the same accuracy.  I adopt the following step-size scaling: 
 $$
@@ -77,16 +87,15 @@ x_i - x_{i-1}  = f\cos^{-1}\left(x_{i-1}\right)
 $$  
 where $f$ is a constant scale factor. This prescription is fast to compute and well-behaved at the limits $x=0$ and $x=1$.
 
-See Figure\,\ref{fig:integration} for a schematic illustrating the geometry of the integration. 
 
 \begin{figure}
 \resizebox{\hsize}{!}{\includegraphics{f1.pdf}}
-\caption{Schematic illustration of the integration scheme. The star (large black circle; partially visible) has a radius of 1 and is centered in the plane of the sky at ($x$, $y$) = (0, 0). The planet (smaller black circle) is separated from the center of the stellar disk by a distance $d$ (marked by the solid black line).  The star is partitioned into concentric circles (dotted lines) in order to calculate the integral over the planet disk.  A single integration element $\Delta A$ is shaded in orange. The integration step size illustrated here is larger than for a typical calculation for visual clarity.}
+\caption{Schematic illustration of the integration scheme. The star (large black circle; partially visible) has a radius of 1 and is centered in the plane of the sky at ($x$, $y$) = (0, 0). The planet (smaller black circle) is separated from the center of the stellar disk by a distance $d$ (marked by the solid black line).  The star is partitioned into concentric circles (dotted lines) in order to calculate the integral over the planet disk.  A single integration element $\Delta A$ is shaded in orange. The integration step size illustrated here is larger than for a typical calculation for visual clarity.  Note that because the stellar intensity profile is radially symmetric, the coordinate system can be chosen such that the planet lies on the x-axis as shown.}
 \label{fig:integration}
 \end{figure}
 
 \section{The \texttt{batman} package}
-I wrote a Python package, \texttt{batman}, to calculate model transit light curves.  \texttt{batman} is an open source project and is being developed on GitHub.  Full documentation is available at \blue{\url{https://github.com/lkreidberg/batman}}, but I summarize the main capabilities of the package here.
+I wrote a Python package, \texttt{batman}, to calculate model transit light curves.  \texttt{batman} is an open source project and is being developed on GitHub.  Full documentation is available at \blue{\url{https://github.com/lkreidberg/batman}}. I summarize the main capabilities of the package here.
 
 \subsection{Features}
 \texttt{batman} supports calculation of exoplanet transit light curves for uniform, linear, quadratic, nonlinear, and custom stellar intensity profiles:
@@ -96,7 +105,9 @@ I wrote a Python package, \texttt{batman}, to calculate model transit light curv
   I(\mu) &= I_0[1 - u_1(1 - \mu) - u_2(1-\mu)^2]                                        & &\text{(quadratic)}           \\
   I(\mu) &= I_0[1 - u_1(1-\mu^{1/2}) - u_2(1- \mu) - u_3(1-\mu^{3/2}) - u_4(1-\mu^2)]   & &\text{(nonlinear)}
 \end{align}
-where $\mu = \sqrt{1-x^2}$.  A template is available in the source distribution for the creation of custom profiles for any radially symmetric function.  The nonlinear and custom models are calculated with the brute force integration scheme described in \S\,\ref{section:algorithm}, whereas models for quadratic and linear profiles are calculated analytically based on the widely-used formalism from \cite{mandel02}.  
+where $\mu = \sqrt{1-x^2}$ and $u_1, ..., u_n$ are limb darkening coefficients.  The four-parameter nonlinear law provides a better fit to stellar models than simpler parameterizations \citep{claret00}.  The \texttt{batman} source distribution also includes a template for the creation of a custom profile for any radially symmetric function, such as the logarithmic law of \cite{klinglesmith70} or the exponential law from \cite{claret03}.
+
+A template is available in the source distribution for the creation of custom profiles for any radially symmetric function.  The nonlinear and custom models are calculated with the numeric integration scheme described in \S\,\ref{section:algorithm}, whereas models for quadratic and linear profiles are calculated analytically based on the widely-used formalism from \cite{mandel02}.  
 
 For models calculated by integration, the user can specify the maximum allowable truncation error with the \texttt{max\_err} parameter.  When a transit model is initialized, the integration step size is tuned such that the difference between the model and a high-accuracy template (calculated with scale factor $f = 10^{-4}$) is below the specified tolerance.  The lower limit on achievable accuracy with this method is below $10^{-10}$ for typical limb darkening profiles. Figure\,\ref{fig:transit} shows an example transit light curve and its truncation error.
 
@@ -114,13 +125,20 @@ The computationally intensive sections of the code (including all of the transit
 \subsection{Performance}
 \begin{figure}
 \resizebox{\hsize}{!}{\includegraphics{f3.pdf}}
-\caption{Execution time as a function of truncation error tolerance.}
-\label{fig:timing}
+\caption{Execution time as a function of truncation error tolerance for a nonlinear model (black curve), compared to the execution time for a quadratic model (dashed gray line). FIXME finish.}
+\label{fig:performance}
 \end{figure}
+I tested \texttt{batman}'s performance over a range of typical use cases using a 1.7 GHz Intel Core i5 processor.  In Figure\,\ref{fig:performance}, I show the execution time versus error tolerance for a single transit light curve calculation using a nonlinear intensity profile, compared to the execution time for a quadratic model computed analytically.  The test case consists of 100 points evenly sampled in time during the planet's transit. I used physical parameters from the GJ 1214b system \citep{kreidberg14a}. The stellar intensity profile is the same for the nonlinear and quadratic models: the nonlinear limb darkening coefficients are $[0.0, 0.7, 0.0, -0.3]$ and the quadratic coefficients are $[0.1, 0.3]$.  For this case, reaching a truncation error of 1.0 ppm via integration is just 2.5 times slower than the analytic calculation. FIXME add what the power law relation for timing is.
 
-\subsection{Comparison with other codes}
+\subsection{Comparison with Analytic Models for Nonlinear Limb Darkening}
+I explored using an analytic model to calculate transit light curves for nonlinear limb darkening profiles.  The analytic solution for nonlinear limb darkening was presented in \cite{mandel02}, but it is not used in any published software packages; the original code provided by \cite{mandel02} uses numeric integration.   I tested a Python/C implementation of the \cite{mandel02} algorithm and found that the new integration scheme in \S\,\ref{section:algorithm} is over 20 times faster (for a truncation error tolerance of 1 ppm).
 
-\section{Discussion}
+The analytic solution is challenging to compute because it uses the Appell F1 hypergeometric function.  This function is only convergent for certain regions of parameter space and must be calculated with analytic continuation for other cases. \cite{colavecchia04} provide a Fortran library for computing Appell F1.  I used this library to implement the analytic model for nonlinear limb darkening but did not achieve good results. The returned Appell F1 values are not accurate for all input parameters (based on a comparison with \texttt{Mathematica} and the pure Python library \texttt{mpmath}).  Even for cases where F1 is correct, the computation is FIXME times slower than numeric integration (for an error tolerance of FIXME).  I concluded that integration is a faster and easier solution than analytic models for nonlinear limb darkening.
+
+\section{Summary}
+%In this paper I introduced the \texttt{batman} package.
+%in preparation for ultra-precise light curves from future telescopes.
+%now have transit model that is good enough for JWST
 
 \acknowledgments
 
