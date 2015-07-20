@@ -19,8 +19,11 @@ import matplotlib.pyplot as plt
 from . import _nonlinear_ld
 from . import _quadratic_ld
 from . import _uniform_ld
+from . import _logarithmic_ld
+from . import _exponential_ld
 from . import _custom_ld
 from . import _rsky
+#from . import _mandelagol_nonlinear_ld
 from math import pi
 import multiprocessing
 from . import openmp
@@ -49,17 +52,19 @@ class TransitModel:
 	"""
 	def __init__(self, params, t, max_err=1.0, nthreads = 1):
 		#checking for invalid input
-		if (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
-		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "nonlinear" and len(params.u) != 4):
+		if  (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
+		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "logarithmic" and len(params.u) != 2) or \
+		    (params.limb_dark == "exponential" and len(params.u) != 2) or (params.limb_dark == "squareroot" and len(params.u) != 2) or \
+		    (params.limb_dark == "nonlinear" and len(params.u) != 4):
 			raise Exception("Incorrect number of coefficients for " +params.limb_dark + " limb darkening; u should have the form:\n \
 			 u = [] for uniform LD\n \
 			 u = [u1] for linear LD\n \
-  			 u = [u1, u2] for quadratic LD\n \
+  			 u = [u1, u2] for quadratic, logarithmic, exponential, and squareroot LD\n \
 			 u = [u1, u2, u3, u4] for nonlinear LD, or\n \
 		         u = [u1, ..., un] for custom LD") 
-		if params.limb_dark not in ["uniform", "linear", "quadratic", "nonlinear", "custom"]: 
+		if params.limb_dark not in ["uniform", "linear", "quadratic", "logarithmic", "exponential", "squareroot", "nonlinear", "custom"]: 
 			raise Exception("\""+params.limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
-				uniform, linear, quadratic, nonlinear, custom")
+				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, custom")
 
 		#initializes model parameters
 		self.t = t
@@ -92,12 +97,21 @@ class TransitModel:
 			If set to ``True``, plots the error in the light curve model as a function of separation of centers.
 
 		"""
-		if self.limb_dark in ["nonlinear", "custom"]:
+		if self.limb_dark in ["logarithmic", "exponential", "nonlinear", "squareroot", "custom"]:
 			zs = np.linspace(0., 1.1, 500)
 			fac_lo = 1.0e-4
 			if self.limb_dark == "nonlinear":
 				f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
 				f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
+			elif self.limb_dark == "squareroot":
+				f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, self.nthreads)
+				f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[1], self.u[0], 0., 0., self.fac, self.nthreads)
+			elif self.limb_dark == "exponential":
+				f0 = _exponential_ld._exponential_ld(zs, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+				f = _exponential_ld._exponential_ld(zs, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "logarithmic":
+				f0 = _logarithmic_ld._logarithmic_ld(zs, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+				f = _logarithmic_ld._logarithmic_ld(zs, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
 			else:
 				f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
 				f =  _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
@@ -113,26 +127,33 @@ class TransitModel:
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 
 	def _get_fac(self):
-		if self.limb_dark in ["nonlinear", "custom"]:
+		if self.limb_dark in ["logarithmic", "exponential", "squareroot", "nonlinear", "custom"]:
 			nthreads = 1
 			fac_lo, fac_hi = 1.0e-4, 1.
 			zs = np.linspace(0., 1.1, 500)
 			if self.limb_dark == "nonlinear": f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
+			elif self.limb_dark == "squareroot": f0 = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, nthreads)
+			elif self.limb_dark == "exponential": f0 = _exponential_ld._exponential_ld(zs, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
+			elif self.limb_dark == "logarithmic": f0 = _logarithmic_ld._logarithmic_ld(zs, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
 			else: f0 = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
+
 			n = 0
 			err = 0.
 			while(err > self.max_err or err < 0.99*self.max_err):
 				fac = (fac_lo + fac_hi)/2.
 				if self.limb_dark == "nonlinear": f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
+				elif self.limb_dark == "squareroot": f = _nonlinear_ld._nonlinear_ld(zs, self.rp, self.u[1], self.u[0], 0., 0., fac, nthreads)
+				elif self.limb_dark == "exponential": f = _exponential_ld._exponential_ld(zs, self.rp, self.u[0], self.u[1], fac, nthreads)
+				elif self.limb_dark == "logarithmic": f = _logarithmic_ld._logarithmic_ld(zs, self.rp, self.u[0], self.u[1], fac, nthreads)
 				else: f = _custom_ld._custom_ld(zs, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
 
 				err = np.max(np.abs(f-f0))*1.0e6
 				if err> self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
-				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for _nonlinear_ld")
+				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for integration step size")
 			return fac
-		else: return 0.
+		else: return None
 	
 	def set_fac(self, fac):
 		"""
@@ -167,10 +188,14 @@ class TransitModel:
 		
 		if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
 		if self.limb_dark == "quadratic": return (_quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], params.u[1], self.nthreads))
-		elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
 		elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.zs, params.rp, params.u[0], 0., self.nthreads)
+		elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+		elif self.limb_dark == "squareroot": return _nonlinear_ld._nonlinear_ld(self.zs, params.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
 		elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.zs, params.rp, self.nthreads)
+		elif self.limb_dark == "logarithmic": return (_logarithmic_ld._logarithmic_ld(self.zs, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
+		elif self.limb_dark == "exponential": return (_exponential_ld._exponential_ld(self.zs, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
 		elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.zs, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
+		#elif self.limb_dark == "mandelagol": return _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.zs, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.zs))
 		else: raise Exception("Invalid limb darkening option")
 			
 
@@ -203,7 +228,7 @@ class TransitParams(object):
 		List of limb darkening coefficients.
 
 	:param limb_dark:
-		Limb darkening model (choice of "nonlinear", "quadratic", "linear", "uniform", or "custom")
+		Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom")
 
 
 	"""
