@@ -85,7 +85,6 @@ static PyObject *_exponential_ld(PyObject *self, PyObject *args)
 	#endif
 
 	double norm = 2.*M_PI*(0.5 - 0.1666666667*u1 + 0.77750463*u2); 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
-	printf("NEWBIE\n");
 
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
