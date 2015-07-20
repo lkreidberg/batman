@@ -42,7 +42,7 @@ static PyObject *_mandelagol_nonlinear_ld(PyObject *self, PyObject *args)
 
 	double pi = acos(-1.);
 	double c1, c2, c3, c4, p;
-  	if(!PyArg_ParseTuple(args,"Odddddi", &z0, &c1, &c2, &c3, & c4, &p, &nz)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odddddi", &z0, &c1, &c2, &c3, &c4, &p, &nz)) return NULL;
 	rl = p;
 
 	dims[0] = z0->dimensions[0];
@@ -89,8 +89,8 @@ static PyObject *_mandelagol_nonlinear_ld(PyObject *self, PyObject *args)
 	nr=2;
 	dmumax=1.;
 
-//	while(dmumax > fac*1.e-3)
-	while(dmumax > fac*3.7e-5)
+	while(dmumax > fac*2.e-4)
+	//while(dmumax > fac*3.7e-5)
 	{
 		//printf("%0.10f\n", dmumax);
 		for(i = i1; i <= i2; i++) mulimbp[i] = mulimb[i];	
