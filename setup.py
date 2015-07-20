@@ -67,9 +67,10 @@ parallel_libraries = ['gomp'] if needs_gomp else []
 _nonlinear_ld = Extension('batman._nonlinear_ld', ['c_src/_nonlinear_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _quadratic_ld = Extension('batman._quadratic_ld', ['c_src/_quadratic_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _uniform_ld   = Extension('batman._uniform_ld', ['c_src/_uniform_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_logarithmic_ld   = Extension('batman._logarithmic_ld', ['c_src/_logarithmic_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_exponential_ld   = Extension('batman._exponential_ld', ['c_src/_exponential_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
-
 
 setup(	name='batman-package', 
 	version="0.9.1", 
@@ -87,5 +88,5 @@ setup(	name='batman-package',
 		],
 	include_dirs = [np.get_include()],
 	install_requires = ['numpy'],
-	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _custom_ld, _rsky]
+	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _custom_ld, _rsky]
 )
