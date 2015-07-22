@@ -332,13 +332,32 @@ double rj(double x, double y, double z, double p)
 	return rj;  
 }
 	
+/*
+
+   Computes the complete elliptical integral of the third kind using
+   the algorithm of Bulirsch (1965):
+
+   Bulirsch 1965, Numerische Mathematik, 7, 78
+   Bulirsch 1965, Numerische Mathematik, 7, 353
+
+ INPUTS:
+
+    n,k - int(dtheta/((1-n*sin(theta)^2)*sqrt(1-k^2*sin(theta)^2)),0, pi/2)
+
+ RESULT:
+
+    The complete elliptical integral of the third kind
+
+ -- translated from the ellpic_bulirsch.pro routine from EXOFAST
+ -- Eastman et al. 2013, PASP 125, 83
+*/
+
 double ellpic_bulirsch(double n, double k)
 {
 	double kc = sqrt(1.-k*k);	
-	double p = n + 1.;
+	double p = sqrt(n + 1.);
 	double m0 = 1.;
 	double c = 1.;
-	p = sqrt(p);
 	double d = 1./p;
 	double e = kc;
 	double f, g;
