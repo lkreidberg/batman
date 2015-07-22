@@ -29,6 +29,7 @@
 
 double rc(double x, double y);
 double rj(double x, double y, double z, double p);
+double ellpic_bulirsch(double n, double k);
 double ellec(double k);
 double ellk(double k);
 double rf(double x, double y, double z);
@@ -177,7 +178,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = 1.0/x1 - 1.0;
-			Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
+			//Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
+			Pk = ellpic_bulirsch(n, q);
 			lambdad[i] = 1.0/9.0/M_PI/sqrt(p*z)*(((1.0 - x2)*(2.0*x2 +  \
 			        x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*z*(z*z +  \
 			        7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
@@ -196,7 +198,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = x2/x1 - 1.0;
-			Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
+			//Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
+			Pk = ellpic_bulirsch(n, q);
+			
 			lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*z*z + p*p +  \
 			         x3*x3)*Kk + (1.0 - x1)*(z*z + 7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
 			if(z < p) lambdad[i] += 2.0/3.0;
@@ -328,6 +332,44 @@ double rj(double x, double y, double z, double p)
 	return rj;  
 }
 	
+double ellpic_bulirsch(double n, double k)
+{
+	double kc = sqrt(1.-k*k);	
+	double p = n + 1.;
+	double m0 = 1.;
+	double c = 1.;
+	p = sqrt(p);
+	double d = 1./p;
+	double e = kc;
+	double f, g;
+
+	int nit = 0;
+
+	while(nit < 10000)
+	{
+		f = c;
+		c = d/p + c;
+		g = e/p;
+		d = 2.*(f*g + d);
+		p = g + p;
+		g = m0;
+		m0 = kc + m0;
+		if(fabs(1.-kc/g) > 1.0e-8)
+		{
+			kc = 2.*sqrt(e);
+			e = kc*m0;
+		}
+		else
+		{
+			return 0.5*M_PI*(c*m0+d)/(m0*(m0+p));
+		}
+		//printf("nit %i\n", nit);
+		nit++;
+	}
+	printf("Convergence failure in ellpic_bulirsch\n");
+	return 0;
+}
+
 double ellec(double k)
 {
 	double m1, a1, a2, a3, a4, b1, b2, b3, b4, ee1, ee2, ellec;
