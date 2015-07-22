@@ -29,7 +29,7 @@
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
-double intensity(double r, double u1, double u2, double u3, double u4, double u5, double u6);
+double intensity(double r, double c1, double c2, double c3, double c4, double c5, double c6);
 
 double area(double d, double r, double R)
 {
@@ -47,12 +47,12 @@ double area(double d, double r, double R)
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, r, I, dr, A_f, r_in, r_out, delta, u1, u2, u3, u4, u5, u6;
+	double rprs, d, fac, A_i, r, I, dr, A_f, r_in, r_out, delta, c1, c2, c3, c4, c5, c6;
 	int nthreads;
 	npy_intp i, dims[1];
 	PyArrayObject *zs, *flux;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddddi", &zs, &rprs, &u1, &u2, &u3, &u4, &u5, &u6, &fac, &nthreads)) return NULL; //parses input arguments
+  	if(!PyArg_ParseTuple(args,"Oddddddddi", &zs, &rprs, &c1, &c2, &c3, &c4, &c5, &c6, &fac, &nthreads)) return NULL; //parses input arguments
 	
 	dims[0] = PyArray_DIMS(zs)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
@@ -99,7 +99,7 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 			while(r < r_out)
 			{
 				A_f = area(d, r, rprs);					//calculates area of overlapping circles
-				I = intensity(r - dr/2.,u1,u2, u3, u4, u5, u6); 	//intensity at the midpoint
+				I = intensity(r - dr/2.,c1,c2, c3, c4, c5, c6); 	//intensity at the midpoint
 				delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 				dr = fac*acos(r);  					//updating step size
 				r = r + dr;						//stepping to next element
@@ -108,7 +108,7 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 			dr = r_out - r + dr;  						//calculating change in radius for last step
 			r = r_out;							//final radius for integration
 			A_f = area(d, r, rprs);						//area for last integration step
-			I = intensity(r - dr/2., u1, u2, u3, u4, u5, u6); 		//intensity at the midpoint 
+			I = intensity(r - dr/2., c1, c2, c3, c4, c5, c6); 		//intensity at the midpoint 
 			delta += (A_f - A_i)*I;						//increase in transit depth for this integration step
 			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
 		}

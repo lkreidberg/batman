@@ -40,8 +40,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 /*	Input: *************************************
  
 	 zs   	impact parameter in units of rs
-	 u1   	linear    limb-darkening coefficient (gamma_1 in Mandel & Agol 2002)
-	 u2   	quadratic limb-darkening coefficient (gamma_2)
+	 c1   	linear    limb-darkening coefficient (gamma_1 in Mandel & Agol 2002)
+	 c2   	quadratic limb-darkening coefficient (gamma_2)
 	 p    	occulting star size in units of rs
 	
 	 Output: ***********************************
@@ -49,16 +49,16 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	 flux 	fraction of flux at each zs for a limb-darkened source
 	
 	 Limb darkening has the form:
-	 I(r) = [1 - u1 * (1 - sqrt(1 - (r/rs)^2)) - u2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - u1/3 - u2/6)/pi
+	 I(r) = [1 - c1 * (1 - sqrt(1 - (r/rs)^2)) - c2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - c1/3 - c2/6)/pi
 */
 	int nz, nthreads;
-	double u1, u2, p, *mu,  *lambdad, *etad, \
+	double c1, c2, p, *mu,  *lambdad, *etad, \
 		*lambdae, lam, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
 	PyArrayObject *zs, *flux;
 	npy_intp i, dims[1];
 
-  	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &u1, &u2, &nthreads)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &c1, &c2, &nthreads)) return NULL;
 
 	dims[0] = PyArray_DIMS(zs)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
@@ -75,7 +75,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
 
-	omega = 1.0 - u1/3.0 - u2/6.0;
+	omega = 1.0 - c1/3.0 - c2/6.0;
 
 	#if defined (_OPENMP)
 	omp_set_num_threads(nthreads);
@@ -98,7 +98,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.0;
 			lambdae[i] = 0.0;
-			f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+			f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 
 			continue;
 		}
@@ -109,7 +109,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdad[i] = 0.0;
 			etad[i] = 0.5;		//error in Fortran code corrected here, following Jason Eastman's python code
 			lambdae[i] = 1.0;
-			f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*(lambdad[i] + 2.0/3.0) + u2*etad[i])/omega;
+			f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*(lambdad[i] + 2.0/3.0) + c2*etad[i])/omega;
 			continue;
 		}
 		//source is partly occulted and occulting object crosses the limb:
@@ -137,7 +137,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				//printf("zone 6\n");
 				lambdad[i] = 1.0/3.0 - 4.0/M_PI/9.0;
 				etad[i] = 3.0/32.0;
-				f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+				f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 				continue;
 			}
 			else if(z >= 0.5)
@@ -162,10 +162,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0 + 2.0/9.0/M_PI*(4.0*(2.0*p*p - 1.0)*Ek + (1.0 - 4.0*p*p)*Kk);
 				etad[i] = p*p/2.0*(p*p + 2.0*z*z);
-				f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+				f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 				continue;
 			}
-			f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+			f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 			continue;
 		}
 		 //occulting star partly occults the source and crosses the limb:
@@ -186,7 +186,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			if(z < p) lambdad[i] += 2.0/3.0;
 			etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*z*z)*kap0 -  \
 				(1.0 + 5.0*p*p + z*z)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
-			f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+			f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 			continue;
 		}
 		//occulting star transits the source:
@@ -211,7 +211,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			}
 			etad[i] = p*p/2.0*(p*p + 2.0*z*z);
 		}
-		f_array[i] = 1.0 - ((1.0 - u1 - 2.0*u2)*lambdae[i] + (u1 + 2.0*u2)*lambdad[i] + u2*etad[i])/omega;
+		f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 	}
 	free(lambdae);
 	free(lambdad);
