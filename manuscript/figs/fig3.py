@@ -28,7 +28,7 @@ def wrapper(func, *args, **kwargs):
     return wrapped
 
 rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
-#matplotlib.rcParams.update({'font.size':14})
+matplotlib.rcParams.update({'font.size':11})
 plt.figure(figsize=(4,4))
 
 params = batman.TransitParams()	        #object to store transit parameters
@@ -48,22 +48,21 @@ params.u = [0.1, 0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
 wrapped = wrapper(m.LightCurve, params)
 time = timeit.timeit(wrapped,number=100)/100.
-plt.axvline(time, color='0.5', linestyle='dashed')
+#plt.axvline(time, color='0.5', linestyle='dashed')
+plt.gca().annotate("", xy=(time, .1), xycoords='data', xytext=(time, 2), textcoords='data', arrowprops=dict(arrowstyle="->")) 
+
 print("quadratic", time)
 
 params.limb_dark = "nonlinear"          #limb darkening model
 params.u = [0.0, 0.7, 0.0, -0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
 flux = m.LightCurve(params)		#calculates light curve
-#plt.plot(t, flux)
-#plt.show()
 
 #generates Figure FIXME: max err as a function of function call time
-#u = [0., 0.7, 0.0, -0.3]
 n = 100
 ts = []
 errs = []
-fac = np.logspace(-2.2, 0.3, n)
+fac = np.logspace(-2, 0.3, n)
 for i in range(n):
 	m.set_fac(fac[i])
 	wrapped = wrapper(m.LightCurve, params)
@@ -81,7 +80,7 @@ print(np.max(ts), np.min(ts))
 plt.gca().tick_params('both', length=8, width=1.2, which='major')
 plt.gca().tick_params('both', length=4, width=0.8, which='minor')
 
-plt.xlim((1.0e-5, 2.0e-3))
+plt.xlim((2.0e-5, 1.0e-3))
 plt.ylim((1.0e-1, 300.))
 plt.yscale('log')
 plt.xscale('log')
