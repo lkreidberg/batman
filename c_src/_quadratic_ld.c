@@ -349,7 +349,7 @@ double rj(double x, double y, double z, double p)
     The complete elliptical integral of the third kind
 
  -- translated from the ellpic_bulirsch.pro routine from EXOFAST
- -- Eastman et al. 2013, PASP 125, 83
+    (Eastman et al. 2013, PASP 125, 83) by Laura Kreidberg (7/22/15)
 */
 
 double ellpic_bulirsch(double n, double k)
