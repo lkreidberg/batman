@@ -49,7 +49,7 @@ m = batman.TransitModel(params, t)      #initializes model
 wrapped = wrapper(m.LightCurve, params)
 time = timeit.timeit(wrapped,number=100)/100.
 #plt.axvline(time, color='0.5', linestyle='dashed')
-plt.gca().annotate("", xy=(time, .1), xycoords='data', xytext=(time, 2), textcoords='data', arrowprops=dict(arrowstyle="->")) 
+plt.gca().annotate("", xy=(time, .1), xycoords='data', xytext=(time, 1), textcoords='data', arrowprops=dict(arrowstyle="->")) 
 
 print("quadratic", time)
 
