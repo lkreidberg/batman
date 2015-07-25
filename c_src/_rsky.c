@@ -25,11 +25,8 @@ static PyObject *_rsky(PyObject *self, PyObject *args);
 double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
 	double E = M, eps = 1.0e-7;
-	
-	while(fabs(E - e*sin(E) - M) > eps)
-	{
-		E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
-	}
+
+	while(fabs(E - e*sin(E) - M) > eps) E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
 	return E;
 }
 
@@ -42,17 +39,17 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol 
 		(2002) paper, this quantity is denoted d.
 	*/
-	double ecc, E, inc, a, r, d, f, omega, per, M, n, t0, eps, t;
+	double ecc, E, inc, a, d, f, omega, per, M, n, t0, eps, t, BIGD = 100.;
 	npy_intp i, dims[1];
-	PyArrayObject *ts, *zs;
+	PyArrayObject *ts, *ds;
 
   	if(!PyArg_ParseTuple(args,"Odddddd", &ts, &t0, &per, &a, &inc, &ecc, &omega)) return NULL; 
 
 	dims[0] = PyArray_DIMS(ts)[0]; 
-	zs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
+	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
 	
 	double *t_array = PyArray_DATA(ts);
-	double *z_array = PyArray_DATA(zs);
+	double *d_array = PyArray_DATA(ds);
 
 	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
@@ -61,19 +58,21 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	{
 		t = t_array[i];
 
-		if(ecc > 1.e-5)						//calculates f for eccentric orbits
+		if(ecc < 1.0e-5)
+		{
+			f = ((t - t0)/per - (int)((t - t0)/per))*2.*M_PI;			//calculates f for a circular orbit
+		}
+		else
 		{
 			M = n*(t - t0);
 			E = getE(M, ecc);
-			r = a*(1.0 - ecc*cos(E));
-			f = acos(a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc);
-			if(fabs((a*(1.0 - ecc*ecc)/(r*ecc) - 1.0/ecc) - 1.0) < eps) f = 0.0;
+			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
 		}
-		else f = ((t - t0)/per - (int)((t - t0)/per))*2.*M_PI;		//calculates f for a circular orbit
-		d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers 
-		z_array[i] = d;
+		if ((omega+fabs(f)) >= M_PI && (omega+fabs(f)) <= 2.*M_PI) d = BIGD; 						// removes secondary transits
+		else d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers 
+		d_array[i] = d;
 	}
-	return PyArray_Return((PyArrayObject *)zs);
+	return PyArray_Return((PyArrayObject *)ds);
 } 
 
 static char _rsky_doc[] = """ This module computes the distance between the centers of the \
