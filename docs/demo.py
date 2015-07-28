@@ -39,10 +39,10 @@ t = np.linspace(-0.02, 0.02, 1000)           #times at which to calculate light 
 
 m = batman.TransitModel(params, t)
 
-flux = m.LightCurve(params)
+flux = m.light_curve(params)
 
 params.rp = 0.11                             #updates the planet radius
-new_flux = m.LightCurve(params)              #recalculates model light curve
+new_flux = m.light_curve(params)              #recalculates model light curve
 
 plt.plot(t*24., flux, label = "rp = 0.1")
 plt.plot(t*24., new_flux, label = "rp = 0.11")
@@ -62,7 +62,7 @@ for i in range(4):
 	params.limb_dark = ld_options[i]             #specifies the limb darkening profile
        	params.u = ld_coefficients[i]		     #updates limb darkening coefficients
 	m = batman.TransitModel(params, t)  	     #initializes model with new limb darkening
-	flux = m.LightCurve(params)		     #calculates light curve
+	flux = m.light_curve(params)		     #calculates light curve
 	plt.plot(t*24., flux, label = ld_options[i])
 
 plt.xlim((-0.3, 0.3))

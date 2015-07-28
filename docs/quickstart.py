@@ -38,7 +38,7 @@ params.limb_dark = "quadratic"          #limb darkening model
    
 t = np.linspace(-0.025, 0.025, 1000)    	#times at which to calculate light curve	
 m = batman.TransitModel(params, t)	        #initializes model
-flux = m.LightCurve(params)
+flux = m.light_curve(params)
 
 plt.plot(t, flux)
 plt.xlabel("Time from central transit (days)")

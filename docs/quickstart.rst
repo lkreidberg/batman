@@ -39,7 +39,7 @@ Using these parameters, we initialize the model and calculate a model light curv
 ::
 
 	m = batman.TransitModel(params, t)    #initializes model
-	flux = m.LightCurve(params)	      #calculates light curve
+	flux = m.light_curve(params)	      #calculates light curve
 
 
 Voilà!  Here's a figure showing the light curves:

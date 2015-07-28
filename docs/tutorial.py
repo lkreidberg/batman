@@ -38,12 +38,12 @@ params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
 t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
 m = batman.TransitModel(params, t)      #initializes model
 
-flux = m.LightCurve(params)		#calculates light curve
+flux = m.light_curve(params)		#calculates light curve
 
 radii = np.linspace(0.09, 0.11, 20)
 for r in radii:
 	params.rp = r				#updates planet radius
-	new_flux = m.LightCurve(params)         #recalculates light curve
+	new_flux = m.light_curve(params)        #recalculates light curve
 	plt.plot(t, new_flux)
 
 plt.xlabel("Time from central transit (days)")
@@ -59,10 +59,10 @@ ld_coefficients = [[], [0.3], [0.1, 0.3], [0.5, 0.1, 0.1, -0.1]]
 plt.figure()
 
 for i in range(4):
-	params.limb_dark = ld_options[i]             #specifies the limb darkening profile
-	params.u = ld_coefficients[i]	         #updates limb darkening coefficients
-	m = batman.TransitModel(params, t)	         #initializes the model
-	flux = m.LightCurve(params)		         #calculates light curve
+	params.limb_dark = ld_options[i]             	#specifies the limb darkening profile
+	params.u = ld_coefficients[i]	         	#updates limb darkening coefficients
+	m = batman.TransitModel(params, t)	        #initializes the model
+	flux = m.light_curve(params)		        #calculates light curve
 	plt.plot(t, flux, label = ld_options[i])
 
 plt.xlim((-0.025, 0.025))

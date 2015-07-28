@@ -29,11 +29,11 @@ The initialization step calculates the separation of centers between the star an
 Calculating light curves
 ------------------------------
 
-To make a model light curve, we use the ``LightCurve`` function: 
+To make a model light curve, we use the ``light_curve`` method: 
 
 ::
 
-	flux = m.LightCurve(params)	      		#calculates light curve
+	flux = m.light_curve(params)	      		#calculates light curve
 
 Now that the model has been set up, we can change the transit parameters and recalculate the light curve **without** reinitializing the model.  For example, we can make light curves for a range of planet radii like so:
 
@@ -42,7 +42,7 @@ Now that the model has been set up, we can change the transit parameters and rec
 	radii = np.linspace(0.09, 0.11, 20)
 	for r in radii:
 		params.rp = r		        	#updates planet radius
-		new_flux = m.LightCurve(params)  	#recalculates light curve
+		new_flux = m.light_curve(params)  	#recalculates light curve
 
 .. image:: change_rp.png				
 
@@ -75,7 +75,7 @@ To illustrate the usage for these different options, here's a calculation of lig
 		params.limb_dark = ld_options[i]          #specifies the LD profile
 		params.u = ld_coefficients[i]	          #updates LD coefficients
 		m = batman.TransitModel(params, t)	  #initializes the model
-		flux = m.LightCurve(params)		  #calculates light curve
+		flux = m.light_curve(params)		  #calculates light curve
 		plt.plot(t, flux, label = ld_options[i])
 
 The limb darkening coefficients are provided as a list of the form :math:`[u_1, ..., u_n]` where :math:`n` depends on the limb darkening model. 
