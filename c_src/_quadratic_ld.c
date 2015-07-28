@@ -136,10 +136,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			lambdae[i] = p*p;
 		}
 		//edge of the occulting star lies at the origin
-		if(fabs(d - p) < 1.0e-3*(d + p))		
+		if(fabs(d - p) < 1.0e-4*(d + p))		
 		{
 			d = p;
-		//	printf("zone 5\n");
+			//printf("zone 5\n");
 			if(p == 0.5)	
 			{
 				//printf("zone 6\n");
@@ -159,11 +159,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				 	 	(32.0*pow(p, 4.0) - 20.0*p*p + 3.0)/9.0/M_PI/p*Kk;
 				etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
 				              	(1.0 + 5.0*p*p + d*d)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
-				continue;
+			//	continue;
 			}
 			else if(d<0.5)	
 			{
-			//	printf("zone 5.2\n");
+				//printf("zone 5.2\n");
 				lam = 0.50*M_PI;
 				q = 2.0*p;
 				Kk = ellk(q);
@@ -278,7 +278,6 @@ double ellpic_bulirsch(double n, double k)
 		{
 			return 0.5*M_PI*(c*m0+d)/(m0*(m0+p));
 		}
-		//printf("nit %i\n", nit);
 		nit++;
 	}
 	printf("Convergence failure in ellpic_bulirsch\n");
