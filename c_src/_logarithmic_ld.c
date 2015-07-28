@@ -86,7 +86,7 @@ static PyObject *_logarithmic_ld(PyObject *self, PyObject *args)
 	double norm = (-3.*c1 + 2.*c2 + 9.)*M_PI/9.0; 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
 
 	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, x_in, x_out, delta, r, dx, A_i, A_f, I)
+	#pragma omp parallel for private(d, x_in, x_out, delta, x, dx, A_i, A_f, I)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
