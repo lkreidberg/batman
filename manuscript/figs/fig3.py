@@ -46,7 +46,7 @@ t = np.linspace(-0.013, 0.013, 100)  	#times at which to calculate light curve
 params.limb_dark = "quadratic"          #limb darkening model
 params.u = [0.1, 0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
-wrapped = wrapper(m.LightCurve, params)
+wrapped = wrapper(m.light_curve, params)
 time = timeit.timeit(wrapped,number=100)/100.
 #plt.axvline(time, color='0.5', linestyle='dashed')
 plt.gca().annotate("", xy=(time, .1), xycoords='data', xytext=(time, 1), textcoords='data', arrowprops=dict(arrowstyle="->")) 
@@ -56,16 +56,16 @@ print("quadratic", time)
 params.limb_dark = "nonlinear"          #limb darkening model
 params.u = [0.0, 0.7, 0.0, -0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
-flux = m.LightCurve(params)		#calculates light curve
+flux = m.light_curve(params)		#calculates light curve
 
-#generates Figure FIXME: max err as a function of function call time
+#generates Figure 3: max err as a function of function call time
 n = 100
 ts = []
 errs = []
 fac = np.logspace(-2, 0.3, n)
 for i in range(n):
-	m.set_fac(fac[i])
-	wrapped = wrapper(m.LightCurve, params)
+	m.fac = fac[i]
+	wrapped = wrapper(m.light_curve, params)
 	if i<10: t = timeit.timeit(wrapped,number=200)/200.
 	else: t = timeit.timeit(wrapped,number=1000)/1000.
 	ts.append(t)

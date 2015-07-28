@@ -25,10 +25,10 @@ params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
 t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
 m = batman.TransitModel(params, t)      #initializes model
 
-flux = m.LightCurve(params)		#calculates light curve
+flux = m.light_curve(params)		#calculates light curve
 
-m.set_fac(1.0e-4)
-flux_precise = m.LightCurve(params)
+m.fac = 1.0e-4
+flux_precise = m.light_curve(params)
 
 gs = gridspec.GridSpec(2, 1, height_ratios =[3,1], hspace=0.05)
 
