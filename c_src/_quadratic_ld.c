@@ -27,12 +27,9 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-double rc(double x, double y);
-double rj(double x, double y, double z, double p);
 double ellpic_bulirsch(double n, double k);
 double ellec(double k);
 double ellk(double k);
-double rf(double x, double y, double z);
 static PyObject *_quadratic_ld(PyObject *self, PyObject *args);
 
 static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
@@ -64,9 +61,20 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
 	nz = (int)dims;
 
-
 	double *f_array = PyArray_DATA(flux);
 	double *z_array = PyArray_DATA(zs);
+
+	/*
+		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
+		Here we use a trick for faster access and more convenient access, where we set a pointer to the 
+		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
+		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
+		If you run into trouble along these lines, I recommend changing the array access to something like:
+			d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 
+		where zs is a numpy array object.
+		Laura Kreidberg 07/2015
+	*/
+
 
 	lambdad = (double *)malloc(nz*sizeof(double));
 	lambdae = (double *)malloc(nz*sizeof(double));
@@ -178,7 +186,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = 1.0/x1 - 1.0;
-			//Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
 			Pk = ellpic_bulirsch(n, q);
 			lambdad[i] = 1.0/9.0/M_PI/sqrt(p*z)*(((1.0 - x2)*(2.0*x2 +  \
 			        x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*z*(z*z +  \
@@ -198,7 +205,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = x2/x1 - 1.0;
-			//Pk = Kk - n/3.0*rj(0.0, 1.0 - q*q, 1.0, 1.0 + n);
 			Pk = ellpic_bulirsch(n, q);
 			
 			lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*z*z + p*p +  \
@@ -221,116 +227,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	return PyArray_Return((PyArrayObject *)flux);
 }
 
-double rc(double x, double y)
-{
-	double rc, ERRTOL, TINY, SQRTNY, BIG, TNBG, COMP1, COMP2, THIRD, C1, C2,  C3, C4;
-	ERRTOL = 0.04; TINY = 1.69e-38; SQRTNY = 1.3e-19; BIG = 3.0e37;
-	TNBG = TINY*BIG; COMP1 = 2.236/SQRTNY; COMP2 = TNBG*TNBG/25.0;
-	THIRD = 1.0/3.0; C1 = 0.3; C2 = 1.0/7.0; C3 = 0.375; C4 = 9.0/22.0;
-
-	double alamb, ave, s, w, xt, yt;
-	if(x < 0.0 || y == 0.0 || (x + fabs(y)) < TINY || (x + fabs(y)) > BIG || (y < -COMP1 && x > 0 && x < COMP2)){
-		printf("Invalid argument(s) in rc\n");
-		return 0;
-	}
-	if(y > 0.0)
-	{
-		xt = x;
-		yt = y;
-		w = 1.0;
-	}
-	else
-	{
-		xt = x - y;
-		yt =  - y;
-		w = sqrt(x)/sqrt(xt);
-	}
-	s = ERRTOL*10.0;
-	while(fabs(s) > ERRTOL)
-	{
-		alamb = 2.0*sqrt(xt)*sqrt(yt) + yt;
-		xt = 0.25*(xt + alamb);
-		yt = 0.25*(yt + alamb);
-		ave = THIRD*(xt + yt + yt);
-		s = (yt - ave)/ave;
-	}
-	rc = w*(1.0 + s*s*(C1 + s*(C2 + s*(C3 + s*C4))))/sqrt(ave);
-	return rc;
-}
-
-double rj(double x, double y, double z, double p)
-{
-	double rj, ERRTOL, TINY, BIG, C1, C2, C3, C4, C5, C6, C7, C8, tempmax;
-	
-	ERRTOL = 0.05; TINY = 2.5e-13; BIG = 9.0e11; C1 = 3.0/14.0;
-	C2 = 1.0/3.0; C3 = 3.0/22.0; C4 = 3.0/26.0; C5 = .750*C3;
-     	C6 = 1.50*C4; C7 = .50*C2; C8 = C3 + C3;
-	
-	double  a = 0.0, alamb, alpha, ave, b = 0.0, beta, delp, delx, dely, delz, ea, eb, ec, ed, ee, \
-     		fac, pt, rcx = 0.0, rho, sqrtx, sqrty, sqrtz, sum, tau, xt, yt, zt;
-      
-	if(x < 0.0 || y < 0.0 || z < 0.0 || (x + y) < TINY || (x + z) < TINY || (y + z) < TINY || fabs(p) < TINY \
-		|| x > BIG || y > BIG || z > BIG || fabs(p) > BIG)
-	{
-		return 0;
-	}
-	sum = 0.0;
-	fac = 1.0;
-	if(p > 0.0)
-	{
-		xt = x;
-		yt = y;
-		zt = z;
-		pt = p;
-	}
-	else
-	{
-		xt = MIN(x, y);
-		xt = MIN(xt, z);
-		zt = MAX(x, y);
-		zt = MAX(zt, z);
-		yt = x + y + z - xt - zt;
-		a = 1.0/(yt - p);
-		b = a*(zt - yt)*(yt - xt);
-		pt = yt + b;
-		rho = xt*zt/yt;
-		tau = p*pt/yt;
-		rcx = rc(rho, tau);
-	}
-	tempmax = ERRTOL*10.0;
-	while(tempmax > ERRTOL)
-	{
-		sqrtx = sqrt(xt);
-		sqrty = sqrt(yt);
-		sqrtz = sqrt(zt);
-		alamb = sqrtx*(sqrty + sqrtz) + sqrty*sqrtz;
-		alpha = pow((pt*(sqrtx + sqrty + sqrtz) + sqrtx*sqrty*sqrtz), 2.0);
-		beta = pt*(pt + alamb)*(pt + alamb);
-		sum = sum + fac*rc(alpha, beta);
-		fac = 0.25*fac;
-		xt = 0.25*(xt + alamb);
-		yt = 0.25*(yt + alamb);
-		zt = 0.250*(zt + alamb);
-		pt = 0.25*(pt + alamb);
-		ave = 0.2*(xt + yt + zt + pt + pt);
-		delx = (ave - xt)/ave;
-		dely = (ave - yt)/ave;
-		delz = (ave - zt)/ave;
-		delp = (ave - pt)/ave;
-		tempmax = MAX(fabs(delx), fabs(dely));
-		tempmax = MAX(tempmax, fabs(delz));
-		tempmax = MAX(tempmax, fabs(delp));
-	}
-	ea = delx*(dely + delz) + dely*delz;
-	eb = delx*dely*delz;
-	ec = delp*delp;
-	ed = ea - 3.0*ec;
-	ee = eb + 2.0*delp*(ea - ec);
-	rj = 3.0*sum + fac*(1.0 + ed*(-C1 + C5*ed - C6*ee) + eb*(C7 + delp*(-C8 + delp*C4))  + \
-		delp*ea*(C2 - delp*C3) - C2*delp*ec)/(ave*sqrt(ave));
-	if(p < 0.0) rj = a*(b*rj + 3.0*(rcx - rf(xt, yt, zt)));
-	return rj;  
-}
 	
 /*
 
@@ -429,46 +325,6 @@ double ellk(double k)
 	ek2 = (b0 + m1*(b1 + m1*(b2 + m1*(b3 + m1*b4))))*log(m1);
 	ellk = ek1 - ek2;
 	return ellk;
-}
-
-double rf(double x, double y, double z)
-{
-	double rf, ERRTOL, TINY, BIG, THIRD, C1, C2, C3, C4, tempmax;
-	
-	ERRTOL = 0.08; TINY = 1.5e-38; BIG = 3.0e37; THIRD = 1.0/3.0;
-	C1 = 1.0/24.0; C2 = 0.1; C3 = 3.0/44.0; C4 = 1.0/14.0;
-	
-	double alamb, ave, delx, dely, delz, e2, e3, sqrtx, sqrty, sqrtz, xt, yt, zt;
-
-	if(MIN(x, y) < 0.0 || z < 0.0 || MIN(x + y, x + z) < TINY || y + z < TINY || MAX(x, y) > BIG || z > BIG)
-	{
-		printf("Invalid argument(s) in rf\n");
-		return 0;
-	}
-	xt = x;
-	yt = y;
-	zt = z;
-	tempmax  =  ERRTOL*10.0;
-	while(tempmax > ERRTOL)
-	{
-		sqrtx = sqrt(xt);
-		sqrty = sqrt(yt);
-		sqrtz = sqrt(zt);
-		alamb = sqrtx*(sqrty + sqrtz) + sqrty*sqrtz;
-		xt = 0.25*(xt + alamb);
-		yt = 0.25*(yt + alamb);
-		zt = 0.25*(zt + alamb);
-		ave = THIRD*(xt + yt + zt);
-		delx = (ave - xt)/ave;
-		dely = (ave - yt)/ave;
-		delz = (ave - zt)/ave;
-		tempmax = MAX(fabs(delx), fabs(dely));
-		tempmax = MAX(tempmax, fabs(delz));
-	}
-	e2 = delx*dely - delz*delz;
-	e3 = delx*dely*delz;
-	rf = (1.0 + (C1*e2 - C2 - C3*e3)*e2 + C4*e3)/sqrt(ave);
-	return rf;
 }
 
 static char _quadratic_ld_doc[] = "This extension module returns a limb darkened light curve for a quadratic stellar intensity profile.";
