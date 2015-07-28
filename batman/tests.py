@@ -18,42 +18,83 @@ from __future__ import print_function
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import timeit
 from .transitmodel import *
+from .openmp import *
+
+def wrapper(func, *args, **kwargs):
+    def wrapped():
+        return func(*args, **kwargs)
+    return wrapped
 
 def test():
-	print("Starting tests...")
+	print("\nStarting tests...\n")
 	failures = 0
 
 	params = TransitParams()
 	params.t0 = 0.
 	params.per = 1.0
 	params.rp = 0.1
-	params.a = 15.23
-	params.inc = 1.555*180./math.pi
+	params.a = 15.0
+	params.inc = 90.
 	params.ecc = 0.
 	params.w = 90. 
+	t = np.linspace(-0.01, 0.01, 1000)
+
+	u = [[], [0.1], [0.1,0.3], [0.1,-0.3], [0.1,-0.03], [0.0, 0.7, 0.0, -0.3]]
+	ld = ["uniform", "linear", "quadratic", "exponential", "logarithmic", "nonlinear"]
+	
+	#Testing different limb darkening models
+	for i in range(len(u)):
+		params.u = u[i]
+		params.limb_dark = ld[i]
+		print("Testing "+ld[i]+" limb darkening model...\t")
+		m = TransitModel(params, t)
+		lc = m.light_curve(params)
+		if np.min(lc) <= 1.-params.rp**2: print("\ttest passed")
+		else: 
+			print("test failed")
+			failures += 1
+
+	#Testing truncation error tolerance
+	params.u = [0.1, 0.3]
+	params.limb_dark = "quadratic"
+	m = TransitModel(params, t)
+	f_ref = m.light_curve(params)
+
 	params.u = np.array([0.0, 0.7, 0.0, -0.3])
 	params.limb_dark = "nonlinear"
 
-	t = np.linspace(0.01, 0.05, 1000)
-	err_max = 0.7
-	
-	m = TransitModel(params, t, err_max)
-	nonlinear_lc = m.LightCurve(params)
-	err = m.calc_err()
-	if err > err_max: failures += 1
+	print("\nTesting error tolerance...")
+	max_err = np.logspace(1, -2, 4) 
+	for i in range(len(max_err)):
+		m = TransitModel(params, t, max_err = max_err[i])
+		f = m.light_curve(params)
+		if np.max(1.0e6*(abs(f-f_ref)) < max_err[i]): print("\t"+str(max_err[i])+ " ppm passed")
+		else: 
+			print(str(max_err[i]) + " failed")
+			failures += 1
 
-	params.limb_dark = "quadratic"
-	params.u = [0.1,0.3]
-	m = TransitModel(params, t, err_max)
-	quadratic_lc = m.LightCurve(params)
+	print("\nTesting multithreading...")
+	if openmp.detect():
+		params.u = [0.1, 0.3]
+		params.limb_dark = "quadratic"
+		m = TransitModel(params, t, nthreads = 1)
+		wrapped = wrapper(m.light_curve, params)
+		t1 = timeit.timeit(wrapped,number=100)
+		m = TransitModel(params, t, nthreads = 2)
+		wrapped = wrapper(m.light_curve, params)
+		t2 = timeit.timeit(wrapped,number=100)
+		if(t1 < 0.6*t2): print("\ttest passed")
+		else:
+			print("\ttest failed")
+			failures +=1
+	else: print("\tOpenMP not supported; test ignored")
 
-	if np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6 > err_max: failures += 1
-#	print(np.max(np.abs(quadratic_lc-nonlinear_lc))*1.0e6)
-#	plt.plot((quadratic_lc - nonlinear_lc)*1.0e6)
-#	plt.show()
-
-	print("Tests finished with " + "{0}".format(failures) + " failures")
+	if failures == 0: 
+		print("\nCongratulations! all tests passed")
+		print("  ____       ____\n  )   \     /   (\n   )_  \_V_/  _(\n     )__   __(\n        `-'")
+	else: print("Uh oh; tests finished with " + "{0}".format(failures) + " failures")
 
 	
 
