@@ -29,34 +29,34 @@
 
 static PyObject *_exponential_ld(PyObject *self, PyObject *args);
 
-double intensity(double r, double c1, double c2, double norm)
+double intensity(double x, double c1, double c2, double norm)
 {
-	if(r > 0.99995) r = 0.99995;
-	if(r < 0.00005) r = 0.00005;
-	double mu = sqrt(1. - r*r);
+	if(x > 0.99995) x = 0.99995;
+	if(x < 0.00005) x = 0.00005;
+	double mu = sqrt(1. - x*x);
 	return (1. - c1*(1. - mu) - c2/(1. - exp(mu)))/norm; 
 }
 
-double area(double d, double r, double R)
+double area(double d, double x, double R)
 {
 	/*
 	Returns area of overlapping circles with radii r and R; separated by a distance d
 	*/
-	double arg1 = (d*d + r*r - R*R)/(2.*d*r); 	
-	double arg2 = (d*d + R*R - r*r)/(2.*d*R); 
-	double arg3 = MAX((-d + r + R)*(d + r - R)*(d - r + R)*(d + r + R), 0.);
+	double arg1 = (d*d + x*x - R*R)/(2.*d*x); 	
+	double arg2 = (d*d + R*R - x*x)/(2.*d*R); 
+	double arg3 = MAX((-d + x + R)*(d + x - R)*(d - x + R)*(d + x + R), 0.);
 
-	if(r <= R - d) return M_PI*r*r;						//planet completely overlaps stellar circle
-	else if(r >= R + d) return M_PI*R*R;					//stellar circle completely overlaps planet
-	else return r*r*acos(arg1) + R*R*acos(arg2) - 0.5*sqrt(arg3);		//partial overlap
+	if(x <= R - d) return M_PI*x*x;						//planet completely overlaps stellar circle
+	else if(x >= R + d) return M_PI*R*R;					//stellar circle completely overlaps planet
+	else return x*x*acos(arg1) + R*R*acos(arg2) - 0.5*sqrt(arg3);		//partial overlap
 }
 
 static PyObject *_exponential_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, r, I; 
+	double rprs, d, fac, A_i, x, I; 
 	int nthreads;
 	npy_intp i, dims[1];
-	double dr, A_f, r_in, r_out, delta, c1, c2;
+	double dx, A_f, x_in, x_out, delta, c1, c2;
 	
 	PyArrayObject *ds, *flux;
   	if(!PyArg_ParseTuple(args,"Oddddi", &ds, &rprs, &c1, &c2, &fac, &nthreads)) return NULL;
@@ -87,38 +87,38 @@ static PyObject *_exponential_ld(PyObject *self, PyObject *args)
 	double norm = 2.*M_PI*(0.5 - 0.1666666667*c1 + 0.77750463*c2); 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
 
 	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, r_in, r_out, delta, r, dr, A_i, A_f, I)
+	#pragma omp parallel for private(d, x_in, x_out, delta, r, dx, A_i, A_f, I)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
 		d = d_array[i];
-		r_in = MAX(d - rprs, 0.);					//lower bound for integration
-		r_out = MIN(d + rprs, 1.0);					//upper bound for integration
+		x_in = MAX(d - rprs, 0.);					//lower bound for integration
+		x_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
-		if(r_in >= 1.) f_array[i] = 1.0;				//flux = 1. if the planet is not transiting
+		if(x_in >= 1.) f_array[i] = 1.0;				//flux = 1. if the planet is not transiting
 		else
 		{
 			delta = 0.;						//variable to store the integrated intensity, \int I dA
-			r = r_in;						//starting radius for integration
-			dr = fac*acos(r); 					//initial step size 
+			x = x_in;						//starting radius for integration
+			dx = fac*acos(x); 					//initial step size 
 
-			r += dr;						//first step
+			x += dx;						//first step
 
 			A_i = 0.;						//initial area
 	
-			while(r < r_out)
+			while(x < x_out)
 			{
-				A_f = area(d, r, rprs);				//calculates area of overlapping circles
-				I = intensity(r - dr/2., c1, c2, norm); 	//intensity at the midpoint
+				A_f = area(d, x, rprs);				//calculates area of overlapping circles
+				I = intensity(x - dx/2., c1, c2, norm); 	//intensity at the midpoint
 				delta += (A_f - A_i)*I;				//increase in transit depth for this integration step
-				dr = fac*acos(r);  				//updating step size
-				r = r + dr;					//stepping to next element
+				dx = fac*acos(x);  				//updating step size
+				x = x + dx;					//stepping to next element
 				A_i = A_f;					//storing area
 			}
-			dr = r_out - r + dr;  					//calculating change in radius for last step  
-			r = r_out;						//final radius for integration
-			A_f = area(d, r, rprs);					//area for last integration step
-			I = intensity(r - dr/2., c1, c2, norm); 		//intensity at the midpoint 
+			dx = x_out - x + dx;  					//calculating change in radius for last step  
+			x = x_out;						//final radius for integration
+			A_f = area(d, x, rprs);					//area for last integration step
+			I = intensity(x - dx/2., c1, c2, norm); 		//intensity at the midpoint 
 			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 
 			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
