@@ -50,15 +50,15 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	double rprs, d, fac, A_i, r, I, dr, A_f, r_in, r_out, delta, c1, c2, c3, c4, c5, c6;
 	int nthreads;
 	npy_intp i, dims[1];
-	PyArrayObject *zs, *flux;
+	PyArrayObject *ds, *flux;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddddi", &zs, &rprs, &c1, &c2, &c3, &c4, &c5, &c6, &fac, &nthreads)) return NULL; //parses input arguments
+  	if(!PyArg_ParseTuple(args,"Oddddddddi", &ds, &rprs, &c1, &c2, &c3, &c4, &c5, &c6, &fac, &nthreads)) return NULL; //parses input arguments
 	
-	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(ds)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
 
 	double *f_array = PyArray_DATA(flux);
-	double *z_array = PyArray_DATA(zs);
+	double *d_array = PyArray_DATA(ds);
 
 	/*
 		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
@@ -66,8 +66,8 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
 		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
 		If you run into trouble along these lines, I recommend changing the array access to something like:
-			d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 
-		where zs is a numpy array object.
+			d = PyFloat_AsDouble(PyArray_GETITEM(ds, PyArray_GetPtr(ds, &i))); 
+		where ds is a numpy array object.
 
 
 		Laura Kreidberg 07/2015
@@ -82,7 +82,7 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		d = z_array[i];
+		d = d_array[i];
 		r_in = MAX(d - rprs, 0.);						//lower bound for integration
 		r_out = MIN(d + rprs, 1.0);						//upper bound for integration
 

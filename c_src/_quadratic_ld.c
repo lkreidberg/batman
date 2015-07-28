@@ -36,33 +36,33 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 {
 /*	Input: *************************************
  
-	 zs   	impact parameter in units of rs
+	 ds   	array of impact parameters in units of rs
 	 c1   	linear    limb-darkening coefficient (gamma_1 in Mandel & Agol 2002)
 	 c2   	quadratic limb-darkening coefficient (gamma_2)
 	 p    	occulting star size in units of rs
 	
 	 Output: ***********************************
 	
-	 flux 	fraction of flux at each zs for a limb-darkened source
+	 flux 	fraction of flux at each ds for a limb-darkened source
 	
 	 Limb darkening has the form:
 	 I(r) = [1 - c1 * (1 - sqrt(1 - (r/rs)^2)) - c2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - c1/3 - c2/6)/pi
 */
 	int nz, nthreads;
 	double c1, c2, p, *mu,  *lambdad, *etad, \
-		*lambdae, lam, x1, x2, x3, z, omega, kap0 = 0.0, kap1 = 0.0, \
+		*lambdae, lam, x1, x2, x3, d, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
-	PyArrayObject *zs, *flux;
+	PyArrayObject *ds, *flux;
 	npy_intp i, dims[1];
 
-  	if(!PyArg_ParseTuple(args,"Odddi", &zs, &p, &c1, &c2, &nthreads)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Odddi", &ds, &p, &c1, &c2, &nthreads)) return NULL;
 
-	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(ds)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
 	nz = (int)dims;
 
 	double *f_array = PyArray_DATA(flux);
-	double *z_array = PyArray_DATA(zs);
+	double *d_array = PyArray_DATA(ds);
 
 	/*
 		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
@@ -70,8 +70,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
 		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
 		If you run into trouble along these lines, I recommend changing the array access to something like:
-			d = PyFloat_AsDouble(PyArray_GETITEM(zs, PyArray_GetPtr(zs, &i))); 
-		where zs is a numpy array object.
+			d = PyFloat_AsDouble(PyArray_GETITEM(ds, PyArray_GetPtr(ds, &i))); 
+		where ds is a numpy array object.
 		Laura Kreidberg 07/2015
 	*/
 
@@ -90,17 +90,17 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	#endif
 
 	#if defined (_OPENMP)
-	#pragma omp parallel for private(z, x1, x2, x3, n, q, Kk, Ek, Pk, kap0, kap1)
+	#pragma omp parallel for private(d, x1, x2, x3, n, q, Kk, Ek, Pk, kap0, kap1)
 	#endif
 	for(i = 0; i < dims[0]; i++)
 	{	
-		z = z_array[i]; 		// separation of centers
-		x1 = pow((p - z), 2.0);
-		x2 = pow((p + z), 2.0);
-		x3 = p*p - z*z;
+		d = d_array[i]; 		// separation of centers
+		x1 = pow((p - d), 2.0);
+		x2 = pow((p + d), 2.0);
+		x3 = p*p - d*d;
 
 		//source is unocculted:
-		if(z >= 1.0 + p)					
+		if(d >= 1.0 + p)					
 		{
 			//printf("zone 1\n");
 			lambdad[i] = 0.0;
@@ -111,7 +111,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			continue;
 		}
 		//source is completely occulted:
-		if(p >= 1.0 && z <= p - 1.0)			
+		if(p >= 1.0 && d <= p - 1.0)			
 		{
 			//printf("zone 2\n");
 			lambdad[i] = 0.0;
@@ -121,24 +121,24 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			continue;
 		}
 		//source is partly occulted and occulting object crosses the limb:
-		if(z >= fabs(1.0 - p) && z <= 1.0 + p)	
+		if(d >= fabs(1.0 - p) && d <= 1.0 + p)	
 		{				
 			//printf("zone 3\n");
-			kap1 = acos(MIN((1.0 - p*p + z*z)/2.0/z, 1.0));
-			kap0 = acos(MIN((p*p + z*z - 1.0)/2.0/p/z, 1.0));
+			kap1 = acos(MIN((1.0 - p*p + d*d)/2.0/d, 1.0));
+			kap0 = acos(MIN((p*p + d*d - 1.0)/2.0/p/d, 1.0));
 			lambdae[i] = p*p*kap0 + kap1;
-			lambdae[i] = (lambdae[i] - 0.50*sqrt(MAX(4.0*z*z - pow((1.0 + z*z - p*p), 2.0), 0.0)))/M_PI;
+			lambdae[i] = (lambdae[i] - 0.50*sqrt(MAX(4.0*d*d - pow((1.0 + d*d - p*p), 2.0), 0.0)))/M_PI;
 		}
 		//occulting object transits the source but doesn't completely cover it:
-		if(z <= 1.0 - p)				
+		if(d <= 1.0 - p)				
 		{					
 			//printf("zone 4\n");
 			lambdae[i] = p*p;
 		}
 		//edge of the occulting star lies at the origin
-		if(fabs(z - p) < 1.0e-3*(z + p))		
+		if(fabs(d - p) < 1.0e-3*(d + p))		
 		{
-			z = p;
+			d = p;
 		//	printf("zone 5\n");
 			if(p == 0.5)	
 			{
@@ -148,7 +148,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 				continue;
 			}
-			else if(z >= 0.5)
+			else if(d >= 0.5)
 			{
 				//printf("zone 5.1\n");
 				lam = 0.5*M_PI;
@@ -157,11 +157,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0 + 16.0*p/9.0/M_PI*(2.0*p*p - 1.0)*Ek -  \
 				 	 	(32.0*pow(p, 4.0) - 20.0*p*p + 3.0)/9.0/M_PI/p*Kk;
-				etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*z*z)*kap0 -  \
-				              	(1.0 + 5.0*p*p + z*z)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
+				etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
+				              	(1.0 + 5.0*p*p + d*d)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
 				continue;
 			}
-			else if(z<0.5)	
+			else if(d<0.5)	
 			{
 			//	printf("zone 5.2\n");
 				lam = 0.50*M_PI;
@@ -169,7 +169,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 				Kk = ellk(q);
 				Ek = ellec(q);
 				lambdad[i] = 1.0/3.0 + 2.0/9.0/M_PI*(4.0*(2.0*p*p - 1.0)*Ek + (1.0 - 4.0*p*p)*Kk);
-				etad[i] = p*p/2.0*(p*p + 2.0*z*z);
+				etad[i] = p*p/2.0*(p*p + 2.0*d*d);
 				f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 				continue;
 			}
@@ -177,27 +177,27 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			continue;
 		}
 		 //occulting star partly occults the source and crosses the limb:
-		if((z > 0.5 + fabs(p  - 0.5) && z < 1.0 + p) || (p > 0.5 && z > fabs(1.0 - p)*1.0001 \
-			&& z < p))
+		if((d > 0.5 + fabs(p  - 0.5) && d < 1.0 + p) || (p > 0.5 && d > fabs(1.0 - p)*1.0001 \
+			&& d < p))
 		{
 			//printf("zone 3.1\n");
 			lam = 0.50*M_PI;
-			q = sqrt((1.0 - pow((p - z), 2.0))/4.0/z/p);
+			q = sqrt((1.0 - pow((p - d), 2.0))/4.0/d/p);
 			Kk = ellk(q);
 			Ek = ellec(q);
 			n = 1.0/x1 - 1.0;
 			Pk = ellpic_bulirsch(n, q);
-			lambdad[i] = 1.0/9.0/M_PI/sqrt(p*z)*(((1.0 - x2)*(2.0*x2 +  \
-			        x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*z*(z*z +  \
+			lambdad[i] = 1.0/9.0/M_PI/sqrt(p*d)*(((1.0 - x2)*(2.0*x2 +  \
+			        x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*d*(d*d +  \
 			        7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
-			if(z < p) lambdad[i] += 2.0/3.0;
-			etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*z*z)*kap0 -  \
-				(1.0 + 5.0*p*p + z*z)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
+			if(d < p) lambdad[i] += 2.0/3.0;
+			etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
+				(1.0 + 5.0*p*p + d*d)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
 			f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 			continue;
 		}
 		//occulting star transits the source:
-		if(p <= 1.0  && z <= (1.0 - p)*1.0001)	
+		if(p <= 1.0  && d <= (1.0 - p)*1.0001)	
 		{
 			//printf("zone 4.1\n");
 			lam = 0.50*M_PI;
@@ -207,15 +207,15 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			n = x2/x1 - 1.0;
 			Pk = ellpic_bulirsch(n, q);
 			
-			lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*z*z + p*p +  \
-			         x3*x3)*Kk + (1.0 - x1)*(z*z + 7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
-			if(z < p) lambdad[i] += 2.0/3.0;
-			if(fabs(p + z - 1.0) <= 1.0e-4)
+			lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*d*d + p*p +  \
+			         x3*x3)*Kk + (1.0 - x1)*(d*d + 7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
+			if(d < p) lambdad[i] += 2.0/3.0;
+			if(fabs(p + d - 1.0) <= 1.0e-4)
 			{
 				lambdad[i] = 2.0/3.0/M_PI*acos(1.0 - 2.0*p) - 4.0/9.0/M_PI* \
 				            sqrt(p*(1.0 - p))*(3.0 + 2.0*p - 8.0*p*p);
 			}
-			etad[i] = p*p/2.0*(p*p + 2.0*z*z);
+			etad[i] = p*p/2.0*(p*p + 2.0*d*d);
 		}
 		f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
 	}

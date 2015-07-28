@@ -27,18 +27,18 @@
 static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 {
 	int nthreads;
-	double z, p, kap0, kap1;
+	double d, p, kap0, kap1;
 
-	PyArrayObject *zs, *flux;
+	PyArrayObject *ds, *flux;
 	npy_intp i, dims[1];
 	
-  	if(!PyArg_ParseTuple(args, "Odi", &zs, &p, &nthreads)) return NULL;		//parses function input
+  	if(!PyArg_ParseTuple(args, "Odi", &ds, &p, &nthreads)) return NULL;		//parses function input
 
-	dims[0] = PyArray_DIMS(zs)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(zs));	//creates numpy array to store return flux values
+	dims[0] = PyArray_DIMS(ds)[0]; 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
 	
 	double *f_array = PyArray_DATA(flux);
-	double *z_array = PyArray_DATA(zs);
+	double *d_array = PyArray_DATA(ds);
 
 	if(fabs(p - 0.5) < 1.e-3) p = 0.5;
 
@@ -47,20 +47,20 @@ static PyObject *_uniform_ld(PyObject *self, PyObject *args)
 	#endif
 
 	#if defined (_OPENMP)
-	#pragma omp parallel for private(z, kap1, kap0)
+	#pragma omp parallel for private(d, kap1, kap0)
 	#endif
 	for(i=0; i<dims[0]; i++)
 	{
-		z = z_array[i]; 				// separation of centers
+		d = d_array[i]; 				// separation of centers
 		
-		if(z >= 1. + p) f_array[i] = 1.;		//no overlap
-		if(p >= 1. && z <= p - 1.) f_array[i] = 0.;	//total eclipse of the star
-		else if(z <= 1. - p) f_array[i] = 1. - p*p;	//planet is fully in transit
+		if(d >= 1. + p) f_array[i] = 1.;		//no overlap
+		if(p >= 1. && d <= p - 1.) f_array[i] = 0.;	//total eclipse of the star
+		else if(d <= 1. - p) f_array[i] = 1. - p*p;	//planet is fully in transit
 		else						//planet is crossing the limb
 		{
-			kap1=acos(fmin((1. - p*p + z*z)/2./z, 1.));
-			kap0=acos(fmin((p*p + z*z - 1.)/2./p/z, 1.));
-			f_array[i] = 1. - (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*z*z - pow(1. + z*z - p*p, 2.), 0.)))/M_PI;
+			kap1=acos(fmin((1. - p*p + d*d)/2./d, 1.));
+			kap0=acos(fmin((p*p + d*d - 1.)/2./p/d, 1.));
+			f_array[i] = 1. - (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d - pow(1. + d*d - p*p, 2.), 0.)))/M_PI;
 		}
 	}
 
