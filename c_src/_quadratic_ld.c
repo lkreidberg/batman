@@ -48,7 +48,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	 Limb darkening has the form:
 	 I(r) = [1 - c1 * (1 - sqrt(1 - (r/rs)^2)) - c2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - c1/3 - c2/6)/pi
 */
-	int nz, nthreads;
+	int nd, nthreads;
 	double c1, c2, p, *mu,  *lambdad, *etad, \
 		*lambdae, lam, x1, x2, x3, d, omega, kap0 = 0.0, kap1 = 0.0, \
 		q, Kk, Ek, Pk, n;
@@ -59,7 +59,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 
 	dims[0] = PyArray_DIMS(ds)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
-	nz = (int)dims[0];
+	nd = (int)dims[0];
 
 	double *f_array = PyArray_DATA(flux);
 	double *d_array = PyArray_DATA(ds);
@@ -76,10 +76,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 	*/
 
 
-	lambdad = (double *)malloc(nz*sizeof(double));
-	lambdae = (double *)malloc(nz*sizeof(double));
-	etad = (double *)malloc(nz*sizeof(double));
-	mu = (double *)malloc(nz*sizeof(double));
+	lambdad = (double *)malloc(nd*sizeof(double));
+	lambdae = (double *)malloc(nd*sizeof(double));
+	etad = (double *)malloc(nd*sizeof(double));
+	mu = (double *)malloc(nd*sizeof(double));
 
 	if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
 
