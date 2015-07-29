@@ -10,9 +10,9 @@
 batman: |br| Bad-Ass Transit Model cAlculatioN
 =========================================
 
-The ``batman`` package for Python makes super fast calculation of transit light curves easy.  
+Welcome to the documentation for ``batman``, a Python package for fast calculation of exoplanet transit light curves.  The package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically. 
 
-The package supports quadratic and nonlinear limb-darkening, as well as custom user-specified profiles. The lion’s share of the computation is done with C extension modules, so it is very fast. ``batman`` is parallelized with OpenMP and compatible with Python 2-3.
+In typical use, ``batman`` can calculate a million model light curves in well under 10 minutes for any limb darkening profile.
 
 Contents:
 

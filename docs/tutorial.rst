@@ -23,7 +23,7 @@ Initializing the model
 	t = np.linspace(-0.025, 0.025, 1000)  #times at which to calculate light curve	
 	m = batman.TransitModel(params, t)    #initializes model
 
-The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "nonlinear" and "custom" limb darkening). 
+The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "square-root", "logarithmic", "exponential", "nonlinear", and "custom" limb darkening). 
 
 
 Calculating light curves
@@ -48,21 +48,24 @@ Now that the model has been set up, we can change the transit parameters and rec
 
 Limb darkening options
 ----------------------
-The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", and "nonlinear".  These options assume the following form for the stellar intensity profile:
+The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", "square-root", "logarithmic", "exponential", and "nonlinear".  These options assume the following form for the stellar intensity profile:
 
 .. math::
 
 	\begin{align}
 	  I(\mu) &= I_0                            						& &\text{(uniform)} 		\\
-	  I(\mu) &= I_0[1 - u_1(1-\mu)]								& &\text{(linear)}		\\
-	  I(\mu) &= I_0[1 - u_1(1 - \mu) - u_2(1-\mu)^2]	 				& &\text{(quadratic)}		\\
-	  I(\mu) &= I_0[1 - u_1(1-\mu^{1/2}) - u_2(1- \mu) - u_3(1-\mu^{3/2}) - u_4(1-\mu^2)]  	& &\text{(nonlinear)}				
+	  I(\mu) &= I_0[1 - c_1(1-\mu)]								& &\text{(linear)}		\\
+	  I(\mu) &= I_0[1 - c_1(1 - \mu) - c_2(1-\mu)^2]	 				& &\text{(quadratic)}		\\
+  	  I(\mu) &= I_0[1 - c_1(1 - \mu) - c_2(1-\sqrt{\mu})]                                   & &\text{(square-root)}         \\
+  	  I(\mu) &= I_0[1 - c_1(1 - \mu) - c_2\mu\ln{\mu}]                                      & &\text{(logarithmic)}         \\
+  	  I(\mu) &= I_0\left[1 - c_1(1 - \mu) - c_2/(1-\exp{\mu})\right]                  	& &\text{(exponential)}         \\
+	  I(\mu) &= I_0[1 - c_1(1-\mu^{1/2}) - c_2(1- \mu) - c_3(1-\mu^{3/2}) - c_4(1-\mu^2)]  	& &\text{(nonlinear)}				
 	\end{align}
 
-where :math:`\mu = \sqrt{1-r^2}, 0 \le r \le 1` is the normalized radial coordinate and :math:`I_0` is a normalization constant such that the integrated stellar intensity is unity.
+where :math:`\mu = \sqrt{1-x^2}, 0 \le x \le 1` is the normalized radial coordinate and :math:`I_0` is a normalization constant such that the integrated stellar intensity is unity.
 
 
-To illustrate the usage for these different options, here's a calculation of light curves for all four:
+To illustrate the usage for these different options, here's a calculation of light curves for the four most common profiles:
 
 ::
 
@@ -78,7 +81,7 @@ To illustrate the usage for these different options, here's a calculation of lig
 		flux = m.light_curve(params)		  #calculates light curve
 		plt.plot(t, flux, label = ld_options[i])
 
-The limb darkening coefficients are provided as a list of the form :math:`[u_1, ..., u_n]` where :math:`n` depends on the limb darkening model. 
+The limb darkening coefficients are provided as a list of the form :math:`[c_1, ..., c_n]` where :math:`n` depends on the limb darkening model. 
 
 .. image:: lightcurves.png
 
@@ -89,13 +92,13 @@ Custom limb darkening
 
 First, download the package from source at https://pypi.python.org/pypi/batman-package/.  Unpack the files and ``cd`` to the root directory.
 
-To define your stellar intensity profile, edit the ``intensity`` function in the file ``c_src/_custom_intensity.c``.  This function returns the intensity at a given radial value, :math:`I(r)`.  Its arguments are :math:`r` (the normalized radial coordinate; :math:`0\le r \le 1`) and six limb darkening coefficients, :math:`u_1, ..., u_6`. 
+To define your stellar intensity profile, edit the ``intensity`` function in the file ``c_src/_custom_intensity.c``.  This function returns the intensity at a given radial value, :math:`I(x)`.  Its arguments are :math:`x` (the normalized radial coordinate; :math:`0\le x \le 1`) and six limb darkening coefficients, :math:`c_1, ..., c_6`. 
 
 The code provides an example intensity profile to work from:
 
 .. math::
 
-	I(r)  = I_0\left[1 - u_1(1 - \sqrt{1-r^2}) - u_2\ln{\left(\frac{\sqrt{1-r^2}+u_3}{1 + u_3}\right)}\right]
+	I(x)  = I_0\left[1 - c_1(1 - \sqrt{1-x^2}) - c_2\ln{\left(\frac{\sqrt{1-x^2}+c_3}{1 + c_3}\right)}\right]
 
 (N.B.: This profile provides a better fit to stellar models than the quadratic law, but uses fewer coefficients than the nonlinear law. Thanks to Eric Agol for suggesting it!).
 
@@ -105,12 +108,12 @@ This function can be replaced with another of your choosing, so long as it satis
 
 .. math::
 
-	\int_0^{2\pi} \int_0^1 I(r)r dr d\theta = 1
+	\int_0^{2\pi} \int_0^1 I(x)x dx d\theta = 1
 
-- The intensity must also be defined on the interval :math:`0\le r \le 1`.  To avoid issues relating to numerical stability, I would recommend including::
+- The intensity must also be defined on the interval :math:`0\le x \le 1`.  To avoid issues relating to numerical stability, I would recommend including::
 
-	if(r < 0.00005) r = 0.00005;
-	if(r > 0.99995) r = 0.99995;
+	if(x < 0.00005) x = 0.00005;
+	if(x > 0.99995) x = 0.99995;
 
 
 To re-install ``batman`` with your custom limb darkening law, run the setup script:
@@ -124,7 +127,7 @@ You'll have to ``cd`` out of the source root directory to successfully import ``
 ::
 
 	params.limb_dark = "custom"
-	params.u = [u1, u2, u3, u4, u5, u6]
+	params.u = [c1, c2, c3, c4, c5, c6]
 
 with any unused limb darkening coefficients set equal to 0.
 
@@ -133,15 +136,15 @@ And that's it!
 
 Error tolerance
 ---------------
-For models calculated with brute force integration ("nonlinear" and "custom" profiles), we can specify the maximum allowed error in the light curve is with the ``max_err`` parameter:  
+For models calculated with numeric integration ("square-root", "logarithmic", "exponential", "nonlinear" and "custom" profiles), we can specify the maximum allowed truncation error with the ``max_err`` parameter:  
 
 ::
 
   m = batman.TransitModel(params, t, max_err = 0.5)
 
-This initializes a model with a maximum error of 0.5 ppm.  The default ``max_err`` is 1 ppm, but you may wish to adjust it depending on the combination of speed/accuracy you require.  Changing the value of ``max_err`` will not impact the output for the analytic models ("quadratic", "linear", and "uniform").
+This initializes a model with a step size tuned to yield a maximum truncation error of 0.5 ppm.  The default ``max_err`` is 1 ppm, but you may wish to adjust it depending on the combination of speed/accuracy you require.  Changing the value of ``max_err`` will not impact the output for the analytic models ("quadratic", "linear", and "uniform").
 
-To validate that the errors are indeed below the ``max_err`` threshold, we can use ``m.calc_err()``.  This function returns the maximum error (in ppm) over the full range of separation of centers :math:`z` (:math:`0 \lt z \lt 1`, in units of rs).  It also has the option to plot the error over this range:
+To validate that the errors are indeed below the ``max_err`` threshold, we can use ``m.calc_err()``.  This function returns the maximum error (in ppm) over the full range of separation of centers :math:`d` (:math:`0 \le d \le 1`, in units of rs).  It also has the option to plot the truncation error over this range:
 
 ::
 
@@ -149,8 +152,9 @@ To validate that the errors are indeed below the ``max_err`` threshold, we can u
 
 .. image:: residuals.png
 
-The errors are larger near the limb of the star (:math:`z = 1`) because the stellar intensity has a larger gradient near the limb.
+Truncation error is larger near :math:`d = 1` because the stellar intensity has a larger gradient near the limb.
 
+If you prefer not to calculate the step size automatically, it can be set explicitly with the ``fac`` parameter; this saves time during the model initialization step.
 
 Parallelization
 ---------------

@@ -24,3 +24,12 @@ Unpack the distribution with ``tar -xvf`` and navigate to the source root direct
 Note that you'll need to ``cd`` out of the source directory **before** you can import ``batman``.
 
 
+Tests
+-----
+To check whether the install is working, I recommend running a few basic tests with:
+
+::
+
+	$ python -c 'import batman; batman.test()'
+
+
