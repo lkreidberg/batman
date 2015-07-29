@@ -85,7 +85,7 @@ def test():
 		m = TransitModel(params, t, nthreads = 2)
 		wrapped = wrapper(m.light_curve, params)
 		t2 = timeit.timeit(wrapped,number=100)
-		if(t1 < 0.6*t2): print("\ttest passed")
+		if(t1 > 0.9*t2): print("\ttest passed")
 		else:
 			print("\ttest failed")
 			failures +=1
