@@ -9,6 +9,7 @@ build/*
 *.dvi
 *.bbl
 *.blg
+*.eps
 
 dist
 MANIFEST
