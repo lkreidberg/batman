@@ -37,21 +37,27 @@ class TransitModel:
 	"""
 	Class for generating model transit light curves.	
 
-	:param params:
-		A :attr:`TransitParams` object containing the physical parameters of the transit
+	:param params: A :attr:`TransitParams` object containing the physical parameters of the transit
+	:type params: a `TransitParams` instance
 
-	:param t:
-		Array of times at which to calculate the model.
+	:param t: Array of times at which to calculate the model.
+	:type t: ndarray 
 
-	:param max_err: (optional)
-		Error tolerance (in parts per million) for the model.
+	:param max_err: Error tolerance (in parts per million) for the model.
+	:type max_err: float, optional
 
-	:param nthreads: (optional)
-		Number of threads to use for parallelization. 
+	:param nthreads: Number of threads to use for parallelization. 
+	:type nthreads: int, optional
 
-	:param fac: (optional)
-		Scale factor for integration step size
+	:param fac: Scale factor for integration step size
+	:type fac: float, optional
+
+
+	:Example:
+	
+	>>> m = batman.TransitModel(params, max_err = 0.5, nthreads=4)
 	"""
+
 	def __init__(self, params, t, max_err=1.0, nthreads = 1, fac = None):
 		#checking for invalid input
 		if  (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
@@ -95,10 +101,13 @@ class TransitModel:
 	def calc_err(self, plot = False):
 		"""
 
-		Calculate maximum error (in parts per million) for transit light curve calculation.
+		Calculate maximum error for transit light curve calculation.
 			
-		:param plot: 
-			If set to ``True``, plots the error in the light curve model as a function of separation of centers.
+		:param plot: If ``True``, plots the error in the light curve model as a function of separation of centers.
+		:type plot: bool
+
+		:return: Truncation error (parts per million)
+		:rtype: float
 
 		"""
 		if self.limb_dark in ["logarithmic", "exponential", "nonlinear", "squareroot", "custom"]:
@@ -161,11 +170,17 @@ class TransitModel:
 	
 	def light_curve(self, params):
 		"""
-		Return a model light curve.
+		Calculate a model light curve.
 
-		:param params:
-			Transit parameter object.
+		:param params: Transit parameters
+		:type params: A `TransitParams` instance
 
+		:return: Relative flux 
+		:rtype: ndarray
+
+		:Example:
+
+		>>> flux = m.light_curve(params)
 		"""
 		#recalculates rsky and fac if necessary
 		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
@@ -198,34 +213,47 @@ class TransitParams(object):
 	"""
 	Object to store the physical parameters of the transit.
 
-	:param t0:
-		Time of periastron passage (for eccentric orbits) or time of central transit (for circular orbits).
+	:param t0: Time of periastron passage (for eccentric orbits) or time of central transit (for circular orbits).
+	:type t0: float
 
-	:param per:
-		Orbital period [in days].
+	:param per: Orbital period [in days].
+	:type per: float
 
-	:param rp:
-		Planet radius [in stellar radii].
+	:param rp: Planet radius [in stellar radii].
+	:type rp: float
 
-	:param a:
-		Semi-major axis [in stellar radii].
+	:param a: Semi-major axis [in stellar radii].
+	:type a: float
 
-	:param inc:
-		Orbital inclination [in degrees].
+	:param inc: Orbital inclination [in degrees].
+	:type inc: float
 
-	:param ecc:
-		Orbital eccentricity.
+	:param ecc: Orbital eccentricity.
+	:type ecc: float
 
-	:param w:
-	 	Argument of periapse [in degrees]
+	:param w: Argument of periapse [in degrees]
+	:type w: float
 
-	:param u:
-		List of limb darkening coefficients.
+	:param u: List of limb darkening coefficients.
+	:type u: array_like 
 
-	:param limb_dark:
-		Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom")
+	:param limb_dark: Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom")
+	:type limb_dark: str
 
-
+	:Example:
+	
+	>>> import batman
+	>>> params = batman.TransitParams()
+	>>> params.t0 = 0. 				#time of periastron passage (for eccentric orbits), OR
+	>>>						#mid-transit time (for circular orbits)
+	>>> params.per = 1.				#orbital period	
+	>>> params.rp = 0.1				#planet radius (in units of stellar radii)
+	>>> params.a = 15.				#semi-major axis (in units of stellar radii)
+	>>> params.inc = 87.				#orbital inclination (in degrees)	
+	>>> params.ecc = 0.				#eccentricity	
+	>>> params.w = 90.				#longitude of periastron (in degrees) 
+	>>> params.u = [0.1, 0.3] 	      	        #limb darkening coefficients
+	>>> params.limb_dark = "quadratic"          	#limb darkening model
 	"""
 	def __init__(self):
 		self.t0 = None
