@@ -59,7 +59,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 
 	dims[0] = PyArray_DIMS(ds)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
-	nz = (int)dims;
+	nz = (int)dims[0];
 
 	double *f_array = PyArray_DATA(flux);
 	double *d_array = PyArray_DATA(ds);
