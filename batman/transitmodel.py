@@ -67,6 +67,7 @@ class TransitModel:
 		if params.limb_dark not in ["uniform", "linear", "quadratic", "logarithmic", "exponential", "squareroot", "nonlinear", "custom"]: 
 			raise Exception("\""+params.limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
 				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, custom")
+		if max_err < 0.001: raise Exception("The lowest allowed value for max_err is 0.001. For more accurate calculation, set the integration step size explicitly with the fac parameter.")
 
 		#initializes model parameters
 		self.t = t
