@@ -20,7 +20,7 @@
 \altaffiltext{2}{National Science Foundation Graduate Research Fellow}
 
 \begin{abstract}
-I introduce \texttt{batman}, a Python package for modeling exoplanet transit light curves.  The \texttt{batman} package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically.  The code uses C extension modules to speed up model calculation and is parallelized with OpenMP.  For a typical light curve with 100 data points in transit, \texttt{batman} can calculate one million quadratic limb-darkened models in three minutes with a single 1.7 GHz Intel Core i5 processor.  The same calculation takes seven minutes using the four-parameter nonlinear limb darkening model (computed to 1 ppm accuracy).  Maximum truncation error for integrated models is an input parameter that can be set as low as 0.001 ppm, ensuring that the community is prepared for the precise transit light curves we anticipate measuring with upcoming facilities.  The \texttt{batman} package is open source and publicly available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}}.
+I introduce \texttt{batman}, a Python package for modeling exoplanet transit light curves.  The \texttt{batman} package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically.  The code uses C extension modules to speed up model calculation and is parallelized with OpenMP.  For a typical light curve with 100 data points in transit, \texttt{batman} can calculate one million quadratic limb-darkened models in 30 seconds with a single 1.7 GHz Intel Core i5 processor.  The same calculation takes seven minutes using the four-parameter nonlinear limb darkening model (computed to 1 ppm accuracy).  Maximum truncation error for integrated models is an input parameter that can be set as low as 0.001 ppm, ensuring that the community is prepared for the precise transit light curves we anticipate measuring with upcoming facilities.  The \texttt{batman} package is open source and publicly available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}}.
 \end{abstract}
 
 \keywords{methods: data analysis -- methods: numerical}
@@ -75,7 +75,7 @@ where $f$ is a constant scale factor. This prescription is fast to compute and w
 
 
 \begin{figure}
-\resizebox{\hsize}{!}{\includegraphics{f1.pdf}}
+\resizebox{\hsize}{!}{\includegraphics{f1.eps}}
 \caption{Schematic illustration of the integration scheme. The star (large black circle; partially visible) has a radius of 1 and is centered in the plane of the sky at ($x$, $y$) = (0, 0). The planet (smaller black circle) is separated from the center of the stellar disk by a distance $d$ (marked by the solid black line).  The star is partitioned into concentric circles (dotted lines) in order to calculate the integral over the planet disk.  A single integration element $\Delta A$ is shaded in orange. The integration step size illustrated here is larger than for a typical calculation for visual clarity.  Note that because the stellar intensity profile is radially symmetric, the coordinate system can be chosen such that the planet lies on the x-axis, as shown.}
 \label{fig:integration}
 \end{figure}
@@ -118,7 +118,7 @@ I tested the accuracy of the analytic model for quadratic limb darkening by comp
 I also tested the accuracy of the widely-used \cite{mandel02} code that uses Numerical Recipes functions to calculate elliptic integrals \citep{press92}.  The accuracy was better than 0.005 ppm for most input values; however, for the case $r_p - d < \epsilon$, the error in the light curve exceeded 2 ppm. By contrast, the \cite{bulirsch65} algorithm for elliptic integrals is well-behaved for this case and also faster.
 
 \begin{figure}
-\resizebox{\hsize}{!}{\includegraphics{f2.pdf}}
+\resizebox{\hsize}{!}{\includegraphics{f2.eps}}
 \caption{An example transit light curve for a nonlinear stellar intensity profile (top panel) and truncation error for the calculation (bottom panel).  The error tolerance parameter was set to 1.0 ppm.  The truncation error increases with distance from the center of the star up to around $\pm0.2$ hours from the time of mid-transit, because the stellar intensity gradient is larger at larger radii. The error decreases again during ingress and egress as the planet eclipses a smaller fraction of the stellar disk.}
 \label{fig:transit}
 \end{figure}
@@ -126,14 +126,14 @@ I also tested the accuracy of the widely-used \cite{mandel02} code that uses Num
 
 \subsection{Performance}
 \begin{figure}
-\resizebox{\hsize}{!}{\includegraphics{f3.pdf}}
+\resizebox{\hsize}{!}{\includegraphics{f3.eps}}
 \caption{Truncation error as a function of execution time for a light curve modeled with the nonlinear limb darkening law (black line). The execution time for a quadratic model (computed analytically to better than 0.05 ppm accuracy) is indicated by the arrow. Calculations were made with a 1.7 GHz Intel Core i5 processor.} 
 \label{fig:performance}
 \end{figure}
 
 Computationally intensive sections of code (including all of the transit model calculation) are written as C extension modules with the Python/C API, which improves the performance by roughly two orders of magnitude over a pure Python implementation.  \texttt{batman} also includes the option to parallelize at the C level with OpenMP, which further speeds up the calculation. The number of processors is specified by the user.  \texttt{batman} will raise an exception if the user attempts to parallelize a calculation on a system where OpenMP is not supported.
 
-I tested \texttt{batman}'s performance over a range of typical use cases with a 1.7 GHz Intel Core i5 processor.  In Figure\,\ref{fig:performance}, I show the truncation error versus execution time for a single transit light curve calculation using a nonlinear intensity profile, compared to the execution time for a quadratic model computed analytically.  The test case consists of 100 points evenly sampled in time during the planet's transit. I used physical parameters for the transiting planet GJ\,1214b \citep{kreidberg14a}. The stellar intensity profile is the same for the nonlinear and quadratic models: the nonlinear limb darkening coefficients are $(0.0, 0.7, 0.0, -0.3)$ and the quadratic coefficients are $(0.1, 0.3)$.  For this case, reaching a truncation error of 1.0 ppm via integration is just two times slower than the analytic calculation. Decreasing the truncation error by a factor of 10 increases the computation time by a factor of three.
+I tested \texttt{batman}'s performance over a range of typical use cases with a 1.7 GHz Intel Core i5 processor.  In Figure\,\ref{fig:performance}, I show the truncation error versus execution time for a single transit light curve calculation using a nonlinear intensity profile, compared to the execution time for a quadratic model computed analytically.  The test case consists of 100 points evenly sampled in time during the planet's transit. I used physical parameters for the transiting planet GJ\,1214b \citep{kreidberg14a}. The stellar intensity profile is the same for the nonlinear and quadratic models: the nonlinear limb darkening coefficients are $(0.0, 0.7, 0.0, -0.3)$ and the quadratic coefficients are $(0.1, 0.3)$.  Decreasing the truncation error by a factor of 10 increases the computation time by a factor of three.
 
 \subsection{Comparison with Analytic Models for Nonlinear Limb Darkening}
 I explored using an analytic model to calculate transit light curves for the four-parameter nonlinear limb darkening profile.  The analytic solution for nonlinear limb darkening was presented in \cite{mandel02}, but it is not used in any published software packages. The original code provided by \cite{mandel02} uses a numeric integration scheme that is 20 times slower than the algorithm presented in \S\,\ref{section:algorithm} (for an error tolerance of 1 ppm). 
@@ -147,6 +147,7 @@ I introduced a new algorithm for computing transit light curves for any radially
 \acknowledgments
 I thank Jacob Bean, Kevin Stevenson, Eric Agol, Ethan Kruse, Geert Jan Talens, Thomas Beatty, Brett Morris, and Karl Fogel for their support in developing \texttt{batman}. I also thank contributors to SciPy, Matplotlib, and the Python Programming Language for software and services.  Support for this work was provided by a grant from the National Science Foundation through a Graduate Research Fellowship to the author.  
 
+\input{ms.bbl}
 \bibliographystyle{apj}
 \bibliography{ms.bib}
 

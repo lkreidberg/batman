@@ -46,6 +46,7 @@ t = np.linspace(-0.013, 0.013, 100)  	#times at which to calculate light curve
 params.limb_dark = "quadratic"          #limb darkening model
 params.u = [0.1, 0.3]       	#limb darkening coefficients
 m = batman.TransitModel(params, t)      #initializes model
+f1 = m.light_curve(params)
 wrapped = wrapper(m.light_curve, params)
 time = timeit.timeit(wrapped,number=100)/100.
 #plt.axvline(time, color='0.5', linestyle='dashed')
@@ -87,7 +88,7 @@ plt.xscale('log')
 plt.xlabel("Execution time (s)")
 plt.ylabel("Truncation error (ppm)")
 plt.tight_layout()
-plt.savefig("f3.pdf", dpi=300)
+plt.savefig("f3.eps", dpi=300)
 plt.show()
 
 

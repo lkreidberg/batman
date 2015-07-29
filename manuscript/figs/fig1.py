@@ -103,5 +103,5 @@ plt.gca().text(0.3,0.04, "d", fontsize=16, weight='bold')
 plt.xlabel("x (stellar radii)")
 plt.ylabel("y (stellar radii)")
 
-plt.savefig("f1.pdf", dpi=300)
+plt.savefig("f1.eps", dpi=300)
 plt.show()

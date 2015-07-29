@@ -46,6 +46,6 @@ plt.ylabel("Error (ppm)")
 plt.xlim((-0.5, 0.5))
 plt.ylim((-1.1,0.1))
 
-plt.savefig("f2.pdf", dpi=300)
+plt.savefig("f2.eps", dpi=300)
 plt.show()
 
