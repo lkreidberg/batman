@@ -47,7 +47,6 @@ Voilà!  Here's a figure showing the light curves:
 ::
 
 	plt.plot(t, flux)
-	plt.plot(t, new_flux)
 	plt.xlabel("Time from central transit")
 	plt.ylabel("Relative flux")
 	plt.show()
