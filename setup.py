@@ -71,6 +71,7 @@ _logarithmic_ld   = Extension('batman._logarithmic_ld', ['c_src/_logarithmic_ld.
 _exponential_ld   = Extension('batman._exponential_ld', ['c_src/_exponential_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
+_eclipse = Extension('batman._eclipse', ['c_src/_eclipse.c'])
 
 setup(	name='batman-package', 
 	version="1.0.0", 
@@ -88,5 +89,5 @@ setup(	name='batman-package',
 		],
 	include_dirs = [np.get_include()],
 	install_requires = ['numpy'],
-	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _custom_ld, _rsky]
+	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _custom_ld, _rsky, _eclipse]
 )
