@@ -218,6 +218,26 @@ class TransitModel:
 			else: raise Exception("Invalid limb darkening option")
 		else: return _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
 
+	def get_t_periastron(self, params):
+		"""
+		Return the time of periastron passage.
+		"""
+		TA = pi/2. - params.w*pi/180.
+		E = 2.*np.arctan(np.sqrt((1. - params.ecc)/(1. + params.ecc))*np.tan(TA/2.))
+		M = E - params.ecc*np.sin(E)
+		t_periastron = params.t0 - params.per*M/2./pi
+		return t_periastron
+
+	def get_t_secondary(self, params):
+		"""
+		Return the time of secondary eclipse center.
+		"""
+		TA = 3.*pi/2. - params.w*pi/180.
+		E = 2.*np.arctan(np.sqrt((1. - params.ecc)/(1. + params.ecc))*np.tan(TA/2.))
+		M = E - params.ecc*np.sin(E)
+		t_secondary = self.get_t_periastron(params) + params.per*M/2./pi
+		return t_secondary
+
 
 class TransitParams(object):
 	"""
@@ -277,22 +297,3 @@ class TransitParams(object):
 		self.limb_dark = None
 		self.fp = None
 
-	def get_t_periastron(self):
-		"""
-		Return the time of periastron passage.
-		"""
-		TA = pi/2. - self.w*pi/180.
-		E = 2.*np.arctan(np.sqrt((1. - self.ecc)/(1. + self.ecc))*np.tan(TA/2.))
-		M = E - self.ecc*np.sin(E)
-		t_periastron = self.t0 - self.per*M/2./pi
-		return t_periastron
-
-	def get_t_secondary(self):
-		"""
-		Return the time of secondary eclipse center.
-		"""
-		TA = 3.*pi/2. - self.w*pi/180.
-		E = 2.*np.arctan(np.sqrt((1. - self.ecc)/(1. + self.ecc))*np.tan(TA/2.))
-		M = E - self.ecc*np.sin(E)
-		t_secondary = self.get_t_periastron() + self.per*M/2./pi
-		return t_secondary
