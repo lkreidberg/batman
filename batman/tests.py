@@ -93,8 +93,20 @@ def test():
 
 	if failures == 0: 
 		print("\nCongratulations! all tests passed")
-		print("  ____       ____\n  )   \     /   (\n   )_  \_V_/  _(\n     )__   __(\n        `-'")
-	else: print("Uh oh; tests finished with " + "{0}".format(failures) + " failures")
-
+		print("""
+  ____       ____
+  )   \     /   (
+   )_  \_V_/  _(
+     )__   __(
+        `-'""")
+	else: 
+		print("Uh oh; tests finished with " + "{0}".format(failures) + " failures")
 	
-
+		print("""
+         *
+    __  /|
+   /_ \/ |__
+  *" \.--._ \           
+     ( ^^ )\/
+      \__/ *""")
+	         
