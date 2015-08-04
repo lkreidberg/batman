@@ -39,11 +39,12 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol 
 		(2002) paper, this quantity is denoted d.
 	*/
-	double ecc, E, inc, a, d, f, omega, per, M, n, t0, eps, t, BIGD = 100.;
+	double ecc, E, inc, a, d, f, omega, per, M, n, tp, tc, eps, t, BIGD = 100.;
+	int transittype;
 	npy_intp i, dims[1];
 	PyArrayObject *ts, *ds;
 
-  	if(!PyArg_ParseTuple(args,"Odddddd", &ts, &t0, &per, &a, &inc, &ecc, &omega)) return NULL; 
+  	if(!PyArg_ParseTuple(args,"Oddddddi", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype)) return NULL; 
 
 	dims[0] = PyArray_DIMS(ts)[0]; 
 	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
@@ -57,18 +58,25 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	for(i = 0; i < dims[0]; i++)
 	{
 		t = t_array[i];
+		
+		//calculates time of periastron passage from time of inferior conjunction 
+		f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
+		E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
+		M = E - ecc*sin(E);						
+		tp = tc - per*M/2./M_PI;							//time of periastron 
 
 		if(ecc < 1.0e-5)
 		{
-			f = ((t - t0)/per - (int)((t - t0)/per))*2.*M_PI;			//calculates f for a circular orbit
+			f = ((t - tp)/per - (int)((t - tp)/per))*2.*M_PI;			//calculates f for a circular orbit
 		}
 		else
 		{
-			M = n*(t - t0);
+			M = n*(t - tp);
 			E = getE(M, ecc);
 			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
 		}
-		if ((omega+fabs(f)) >= M_PI && (omega+fabs(f)) <= 2.*M_PI) d = BIGD; 						// removes secondary transits
+		if (transittype == 1 && sin(f + omega)*sin(inc) <= 0.) d = BIGD;						//masks secondary
+		else if (transittype == 2 && sin(f + omega)*sin(inc) >= 0.) d = BIGD;						//masks primary
 		else d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers 
 		d_array[i] = d;
 	}
