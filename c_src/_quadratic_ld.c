@@ -177,7 +177,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 			continue;
 		}
 		 //occulting star partly occults the source and crosses the limb:
-		if((d > 0.5 + fabs(p  - 0.5) && d < 1.0 + p) || (p > 0.5 && d > fabs(1.0 - p)*1.0001 \
+		//if((d > 0.5 + fabs(p  - 0.5) && d < 1.0 + p) || (p > 0.5 && d > fabs(1.0 - p)*1.0001 \
+		//&& d < p))  //the factor of 1.0001 is from the Mandel/Agol Fortran routine, but gave bad output for d near fabs(1-p)
+		if((d > 0.5 + fabs(p  - 0.5) && d < 1.0 + p) || (p > 0.5 && d > fabs(1.0 - p) \
 			&& d < p))
 		{
 			//printf("zone 3.1\n");
@@ -226,7 +228,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 
 	return PyArray_Return((PyArrayObject *)flux);
 }
-
 	
 /*
 
