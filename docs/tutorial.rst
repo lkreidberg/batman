@@ -8,9 +8,12 @@ Initializing the model
 ----------------------
 ::
 
+	import batman
+	import numpy as np
+	import matplotlib as plt
+
 	params = batman.TransitParams()	      #object to store transit parameters
-	params.t0 = 0. 			      #time of periastron (for eccentric orbits), OR
-					      #mid-transit time (for circular orbits)
+	params.t0 = 0. 			      #time of inferior conjunction 
 	params.per = 1.			      #orbital period	
 	params.rp = 0.1			      #planet radius (in units of stellar radii)
 	params.a = 15.		              #semi-major axis (in units of stellar radii)
@@ -173,3 +176,31 @@ The parallelization is done at the C level with OpenMP.  If your default C compi
 
 
 
+Modeling eclipses
+-----------------
+``batman`` can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio with the parameter ``fp``:
+
+::
+	
+	params.fp = 0.001
+
+and initialize a model with the ``transittype`` parameter set to ``"secondary"``:
+
+::
+	
+	t = np.linspace(-0.52, -0.48, 1000)
+	m = batman.TransitModel(params, t, transittype="secondary")	       
+	flux = m.light_curve(params)
+	plt.plot(t, flux)
+
+.. image:: eclipse.png
+
+The eclipse light curve is normalized such that the summed flux from the planet and the star is unity.  The eclipse depth is :math:`f_p/(1+f_p)`. 
+
+The model is computed using the time of inferior conjunction (``params.t0``), but for a secondary eclipse we generally want to know the central eclipse time as well.  To calculate this value, use the ``get_t_secondary`` method:
+
+::
+
+	t_secondary = m.get_t_secondary(params)
+
+The returned secondary eclipse time corresponds to the time when the true anomaly equals :math:`3\pi/2 - \omega`. At the time of inferior conjunction, the true anomaly equals :math:`\pi/2 - \omega`. 

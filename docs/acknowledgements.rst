@@ -12,4 +12,5 @@ Many thanks to the following individuals for their support in the development of
 - Brett Morris
 - Eric Agol
 - Karl Fogel
+- Jason Eastman
 

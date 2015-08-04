@@ -24,8 +24,7 @@ rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
 matplotlib.rcParams.update({'font.size':14})
 
 params = batman.TransitParams()	        #object to store transit parameters
-params.t0 = 0. 				#time of periastron passage (for eccentric orbits), OR
-					#mid-transit time (for circular orbits)
+params.t0 = 0. 				#time of inferior conjunction 
 params.per = 1.				#orbital period	
 params.rp = 0.1				#planet radius (in units of stellar radii)
 params.a = 15.				#semi-major axis (in units of stellar radii)
@@ -35,7 +34,7 @@ params.w = 90.				#longitude of periastron (in degrees)
 params.limb_dark = "nonlinear"          #limb darkening model
 params.u = [0.5, 0.1, 0.1, -0.1]       	#limb darkening coefficients
    
-t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
+"""t = np.linspace(-0.025, 0.025, 1000)  	#times at which to calculate light curve	
 m = batman.TransitModel(params, t)      #initializes model
 
 flux = m.light_curve(params)		#calculates light curve
@@ -68,7 +67,7 @@ for i in range(4):
 plt.xlim((-0.025, 0.025))
 plt.ylim((0.987, 1.001))
 plt.legend()
-plt.xlabel("Time from central transit (days)")
+plt.xlabel("Time (days)")
 plt.ylabel("Relative flux")
 plt.savefig("lightcurves.png")
 #plt.show()
@@ -77,4 +76,21 @@ m = batman.TransitModel(params, t, max_err = 0.5)
 plt.clf()
 m.calc_err(plot = True) 
 
-m = batman.TransitModel(params, t, nthreads = 4)
+#m = batman.TransitModel(params, t, nthreads = 4)"""
+
+params.fp = 0.001
+t = np.linspace(-0.52, -0.48, 1000)
+m = batman.TransitModel(params, t, transittype="secondary")	       
+flux = m.light_curve(params)
+
+plt.plot(t, flux)
+plt.ylim((0.9989, 1.0001))
+plt.xlim((-0.52, -0.48))
+plt.xlabel("Time (days)") 
+plt.ylabel("Relative flux")
+plt.savefig("eclipse.png")
+#plt.show()
+
+t_secondary = m.get_t_secondary(params)
+print(t_secondary)
+

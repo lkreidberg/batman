@@ -25,8 +25,7 @@ rc('font',**{'family':'sans-serif','sans-serif':['Arial']})
 matplotlib.rcParams.update({'font.size':14})
 
 params = batman.TransitParams()
-params.t0 = 0. 				#time of periastron passage (for eccentric orbits), OR
-					#mid-transit time (for circular orbits)
+params.t0 = 0. 				#time of inferior conjunction 
 params.per = 1.				#orbital period	
 params.rp = 0.1				#planet radius (in units of stellar radii)
 params.a = 15.				#semi-major axis (in units of stellar radii)
