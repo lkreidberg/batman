@@ -65,8 +65,9 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 		{
 			kap1=acos(fmin((1. - p*p + d*d)/2./d, 1.));
 			kap0=acos(fmin((p*p + d*d - 1.)/2./p/d, 1.));
-			alpha_t = (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d - pow(1. + d*d - p*p, 2.), 0.)))/M_PI;
-			alpha_o = alpha_t/p/p;
+			alpha_t = (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d \
+				- pow(1. + d*d - p*p, 2.), 0.)))/M_PI;		//transit depth
+			alpha_o = alpha_t/p/p;				 	//fraction of planet disk that is eclipsed by the star
 			f_array[i] = 1. - alpha_o*fp/(1. + fp);
 			
 		}

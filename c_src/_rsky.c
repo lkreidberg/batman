@@ -75,8 +75,8 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 			E = getE(M, ecc);
 			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
 		}
-		if (transittype == 1 && sin(f + omega)*sin(inc) <= 0.) d = BIGD;						//masks secondary
-		else if (transittype == 2 && sin(f + omega)*sin(inc) >= 0.) d = BIGD;						//masks primary
+		if (transittype == 1 && sin(f + omega)*sin(inc) <= 0.) d = BIGD;						//z < 0, so d is set to large value in order to not model primary transit during secondary eclipse
+		else if (transittype == 2 && sin(f + omega)*sin(inc) >= 0.) d = BIGD;						//z > 0, so d is set to large value in order not to model secondary eclipse during primary transit
 		else d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers 
 		d_array[i] = d;
 	}
