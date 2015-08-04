@@ -5,6 +5,7 @@
 %\usepackage{hyperref}
 
 \newcommand*{\blue}{\textcolor{blue}}
+\sloppy
 
 \shortauthors{Kreidberg}
 
@@ -20,7 +21,7 @@
 \altaffiltext{2}{National Science Foundation Graduate Research Fellow}
 
 \begin{abstract}
-I introduce \texttt{batman}, a Python package for modeling exoplanet transit light curves.  The \texttt{batman} package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically.  The code uses C extension modules to speed up model calculation and is parallelized with OpenMP.  For a typical light curve with 100 data points in transit, \texttt{batman} can calculate one million quadratic limb-darkened models in 30 seconds with a single 1.7 GHz Intel Core i5 processor.  The same calculation takes seven minutes using the four-parameter nonlinear limb darkening model (computed to 1 ppm accuracy).  Maximum truncation error for integrated models is an input parameter that can be set as low as 0.001 ppm, ensuring that the community is prepared for the precise transit light curves we anticipate measuring with upcoming facilities.  The \texttt{batman} package is open source and publicly available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}}.
+I introduce \texttt{batman}, a Python package for modeling exoplanet transit \blue{and eclipse} light curves.  The \texttt{batman} package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically.  The code uses C extension modules to speed up model calculation and is parallelized with OpenMP.  For a typical light curve with 100 data points in transit, \texttt{batman} can calculate one million quadratic limb-darkened models in 30 seconds with a single 1.7 GHz Intel Core i5 processor.  The same calculation takes seven minutes using the four-parameter nonlinear limb darkening model (computed to 1 ppm accuracy).  Maximum truncation error for integrated models is an input parameter that can be set as low as 0.001 ppm, ensuring that the community is prepared for the precise transit light curves we anticipate measuring with upcoming facilities.  The \texttt{batman} package is open source and publicly available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}}.
 \end{abstract}
 
 \keywords{methods: data analysis -- methods: numerical}
@@ -32,7 +33,7 @@ Light curve models are a fundamental tool for transiting exoplanet science, but 
 
 A number of codes are available to calculate transit light curves. \cite{mandel02} provide Fortran and IDL routines to compute models for quadratic and nonlinear limb darkening laws. The software packages \texttt{TAP} \citep{gazak12} and \texttt{EXOFAST} \citep{eastman13} include IDL implementations of the \cite{mandel02} algorithm for quadratic limb darkening. \texttt{JKTEBOP} calculates models in Fortran for a broad range of limb darkening laws \citep{southworth04}. \cite{kjurkchieva13} introduce the pure Python code \texttt{TAC-maker}, which performs numeric integration for arbitrary limb darkening profiles. There are also routines available to model simultaneous transits by one or more bodies \citep{kipping11, pal12}.  Most recently, \cite{parvianinen15} released the Python package \texttt{PyTransit}, which implements analytic models from \cite{mandel02} and \cite{gimenez06}.  
 
-In this paper, I introduce the open source Python package \texttt{batman}.  This package is based on code that was used to model high-precision light curves obtained for atmosphere characterization \citep{kreidberg14b, kreidberg14a, kreidberg15, stevenson14c, stevenson14b, stevenson14a, stevenson14d}.  The \texttt{batman} package enables fast computation of transit light curves for any radially symmetric limb darkening law, and currently supports uniform, linear, quadratic, logarithmic, exponential, and nonlinear limb darkening. Light curves for the first three of these are calculated analytically based on the formalism from \cite{mandel02}.  Models for the remaining cases are computed with an efficient new integration scheme, described in \S\,\ref{section:algorithm}. I discuss \texttt{batman}'s features and performance in \S\,\ref{section:batman} and conclude in \S\,\ref{section:summary}.
+In this paper, I introduce the open source Python package \texttt{batman}.  This package is based on code that was used to model high-precision light curves obtained for atmosphere characterization \citep{kreidberg14b, kreidberg14a, kreidberg15, stevenson14c, stevenson14b, stevenson14a, stevenson14d}.  The \texttt{batman} package enables fast computation of transit light curves for any radially symmetric limb darkening law, and currently supports uniform, linear, quadratic, logarithmic, exponential, and nonlinear limb darkening. Light curves for the first three of these are calculated analytically based on the formalism from \cite{mandel02}.  Models for the remaining cases are computed with an efficient new integration scheme, described in \S\,\ref{section:algorithm}. \blue{The package also supports secondary eclipse modeling.} I discuss \texttt{batman}'s features and performance in \S\,\ref{section:batman} and conclude in \S\,\ref{section:summary}.
 
 
 \section{Algorithm}
@@ -99,14 +100,21 @@ where $\mu = \sqrt{1-x^2}$ and $c_1, ..., c_n$ are limb darkening coefficients. 
 
 The square-root, logarithmic, exponential, nonlinear, and custom models are computed with the numeric integration scheme from \S\,\ref{section:algorithm}.  The uniform, linear, and quadratic models are calculated analytically, with code based on the Fortran routines \texttt{occultquad.f} and \texttt{occultuniform.f} provided by \cite{mandel02}. For the analytic models, I follow \cite{eastman13} and use the algorithm from \cite{bulirsch65} to improve calculation speed and accuracy for elliptic integrals of the third kind.
 
+\subsection{Secondary Eclipse Model}
+\blue{\texttt{batman} can also model secondary eclipses. Eclipse light curves are generated with 
+$$
+f = 1 - \frac{\alpha f_p}{1 + f_p}
+$$
+where $f$ is normalized flux, $f_p$ is the planet-to-star flux ratio, and $\alpha$ is the fraction of the planet disk that is occulted by the star. The model is normalized such that the sum of the stellar flux and the planet flux is unity.  For a separation $d$, the occultation fraction $\alpha(d) = \alpha_t(d)/r_p^2$, where $1 - \alpha_t(d)$ is the transit light curve with uniform limb darkening. Note that this model assumes the planet flux is constant for all orbital phases.} 
+
 \subsection{Utilities}
-\texttt{batman} includes a utility function to calculate the separation of centers $d$ between the star and the planet based on orbital parameters of the system.  The input parameters are the planet semi-major axis $a$, inclination $i$, eccentricity $e$, longitude of periastron $\omega$, period $P$, and transit ephemeris $t_0$.  For eccentric orbits, the transit ephemeris is the time of periastron; for circular orbits, $t_0$ is the mid-transit time.  The separation of centers is given by:
+\texttt{batman} includes a utility function to calculate the separation of centers $d$ between the star and the planet based on orbital parameters of the system.  The input parameters are the planet semi-major axis $a$, inclination $i$, eccentricity $e$, longitude of periastron $\omega$, period $P$, and \blue{time of inferior conjunction $t_0$}.  The separation of centers is given by:
 $$
 d = \frac{a(1-e^2)}{1+e\cos{f}}\sqrt{1-\sin^2{(\omega+f)}\sin^2{i}}
 $$
-where $f$ is defined as the orbital phase (for circular orbits) or the true anomaly (for eccentric orbits).  The true anomaly is calculated with the algorithm provided by Murray \& Correia in Chapter 1 of \cite{seager10}.
+where $f$ is the true anomaly.  The true anomaly is calculated with the algorithm provided by Murray \& Correia in Chapter 1 of \cite{seager10}. \blue{For circular orbits, we adopt the convention $f = \pi/2$.} 
 
-For the case $\pi <= \omega + |f| <= 2\pi$, $d$ is set to a large value so that the code does not produce a transit model when the planet is being eclipsed by the star.  To model a secondary eclipse, use a uniform limb darkening profile and set $t_0$ equal to the mid-eclipse time.
+\blue{\texttt{batman} also provides utilities to calculate the time of periastron and the secondary eclipse time from the other transit parameters, using the method described in \S 3.1 of \cite{eastman13}.}
 
 \subsection{Accuracy}
 Recent transit observations have yielded signal-to-noise greater than 1000 per exposure \citep[e.g.][]{kreidberg14a, knutson14b}.  Accurate transit light curve calculation is essential for modeling such high precision measurements and will be increasingly important for data obtained with next-generation facilities.  \texttt{batman} therefore enables the user to specify the maximum allowable truncation error for numeric integration.  Figure\,\ref{fig:transit} shows an example transit light curve and its truncation error.
@@ -142,12 +150,12 @@ The analytic solution is challenging to compute because it uses the Appell F1 hy
 
 \section{Summary}
 \label{section:summary}
-I introduced a new algorithm for computing transit light curves for any radially symmetric stellar limb darkening law.  I also described the open-source Python package \texttt{batman}, a versatile code to generate model light curves. Uniform, linear, quadratic, logarithmic, exponential, and four-parameter nonlinear limb darkening laws are currently supported.  \texttt{batman} uses C extension modules to compute light curves and is parallelized with OpenMP to optimize performance.  Light curves can be calculated with accuracy better than 0.001 ppm, ensuring that the community is prepared to model the extraordinarily precise data we anticipate from upcoming facilities. \texttt{batman} is available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}} and is also hosted on the Python Package Index under the name \texttt{batman-package}.
+I introduced a new algorithm for computing transit light curves for any radially symmetric stellar limb darkening law.  I also described the open-source Python package \texttt{batman}, a versatile code to generate model \blue{transit and eclipse} light curves. Uniform, linear, quadratic, logarithmic, exponential, and four-parameter nonlinear limb darkening laws are currently supported.  \texttt{batman} uses C extension modules to compute light curves and is parallelized with OpenMP to optimize performance.  Light curves can be calculated with accuracy better than 0.001 ppm, ensuring that the community is prepared to model the extraordinarily precise data we anticipate from upcoming facilities. \texttt{batman} is available at \texttt{\blue{\url{https://github.com/lkreidberg/batman}}} and is also hosted on the Python Package Index under the name \texttt{batman-package}.
 
 \acknowledgments
-I thank Jacob Bean, Kevin Stevenson, Eric Agol, Ethan Kruse, Geert Jan Talens, Thomas Beatty, Brett Morris, and Karl Fogel for their support in developing \texttt{batman}. I also thank contributors to SciPy, Matplotlib, and the Python Programming Language for software and services.  Support for this work was provided by a grant from the National Science Foundation through a Graduate Research Fellowship to the author.  
+I thank Jacob Bean, Kevin Stevenson, Eric Agol, Ethan Kruse, Geert Jan Talens, Thomas Beatty, Brett Morris, and Karl Fogel for their support in developing \texttt{batman}. I also thank contributors to SciPy, Matplotlib, and the Python Programming Language for software and services.  I am grateful for helpful suggestions from the referee, Jason Eastman, that improved the code and the manuscript. Support for this work was provided by a grant from the National Science Foundation through a Graduate Research Fellowship to the author.  
 
-\input{ms.bbl}
+%\input{ms.bbl}
 \bibliographystyle{apj}
 \bibliography{ms.bib}
 
