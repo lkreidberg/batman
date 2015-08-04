@@ -23,6 +23,7 @@ from . import _logarithmic_ld
 from . import _exponential_ld
 from . import _custom_ld
 from . import _rsky
+from . import _eclipse
 #from . import _mandelagol_nonlinear_ld
 from math import pi
 import multiprocessing
@@ -52,13 +53,15 @@ class TransitModel:
 	:param fac: Scale factor for integration step size
 	:type fac: float, optional
 
+	:param transittype: Type of transit ("primary" or "secondary")
+	:type transittype: string, optional
 
 	:Example:
 	
 	>>> m = batman.TransitModel(params, max_err = 0.5, nthreads=4)
 	"""
 
-	def __init__(self, params, t, max_err=1.0, nthreads = 1, fac = None):
+	def __init__(self, params, t, max_err=1.0, nthreads = 1, fac = None, transittype = "primary"):
 		#checking for invalid input
 		if  (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
 		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "logarithmic" and len(params.u) != 2) or \
@@ -74,6 +77,7 @@ class TransitModel:
 			raise Exception("\""+params.limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
 				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, custom")
 		if max_err < 0.001: raise Exception("The lowest allowed value for max_err is 0.001. For more accurate calculation, set the integration step size explicitly with the fac parameter.")
+		if transittype not in ["primary", "secondary"]: raise Exception("Allowed transit types are \"primary\" and \"secondary\".")
 
 		#initializes model parameters
 		self.t = t
@@ -87,7 +91,10 @@ class TransitModel:
 		self.u = params.u
 		self.max_err = max_err
 		self.limb_dark = params.limb_dark
-		self.ds= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		self.fp = params.fp
+		if transittype == "primary": self.transittype = 1
+		else: self.transittype = 2
+		self.ds= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
 		if nthreads==None or nthreads == 1: self.nthreads=1
@@ -183,7 +190,7 @@ class TransitModel:
 		>>> flux = m.light_curve(params)
 		"""
 		#recalculates rsky and fac if necessary
-		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180.)
+		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 		#updates transit params
 		self.t0 = params.t0
@@ -195,26 +202,29 @@ class TransitModel:
 		self.w = params.w
 		self.u = params.u
 		self.limb_dark = params.limb_dark
+		self.fp = params.fp
 		
-		if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
-		if self.limb_dark == "quadratic": return (_quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], params.u[1], self.nthreads))
-		elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], 0., self.nthreads)
-		elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
-		elif self.limb_dark == "squareroot": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
-		elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.ds, params.rp, self.nthreads)
-		elif self.limb_dark == "logarithmic": return (_logarithmic_ld._logarithmic_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
-		elif self.limb_dark == "exponential": return (_exponential_ld._exponential_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
-		elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
-		#elif self.limb_dark == "mandelagol": return _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
-		else: raise Exception("Invalid limb darkening option")
-			
+		if self.transittype == 1:
+			if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
+			if self.limb_dark == "quadratic": return (_quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], params.u[1], self.nthreads))
+			elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], 0., self.nthreads)
+			elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+			elif self.limb_dark == "squareroot": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
+			elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.ds, params.rp, self.nthreads)
+			elif self.limb_dark == "logarithmic": return (_logarithmic_ld._logarithmic_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
+			elif self.limb_dark == "exponential": return (_exponential_ld._exponential_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
+			elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
+			#elif self.limb_dark == "mandelagol": return _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
+			else: raise Exception("Invalid limb darkening option")
+		else: return _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
+
 
 class TransitParams(object):
 	"""
 	Object to store the physical parameters of the transit.
 
-	:param t0: Time of periastron passage (for eccentric orbits) or time of central transit (for circular orbits).
-	:type t0: float
+	:param tc: Time of inferior conjunction [in days]. 
+	:type tc: float
 
 	:param per: Orbital period [in days].
 	:type per: float
@@ -265,3 +275,24 @@ class TransitParams(object):
 		self.w = None
 		self.u = None
 		self.limb_dark = None
+		self.fp = None
+
+	def get_t_periastron(self):
+		"""
+		Return the time of periastron passage.
+		"""
+		TA = pi/2. - self.w*pi/180.
+		E = 2.*np.arctan(np.sqrt((1. - self.ecc)/(1. + self.ecc))*np.tan(TA/2.))
+		M = E - self.ecc*np.sin(E)
+		t_periastron = self.t0 - self.per*M/2./pi
+		return t_periastron
+
+	def get_t_secondary(self):
+		"""
+		Return the time of secondary eclipse center.
+		"""
+		TA = 3.*pi/2. - self.w*pi/180.
+		E = 2.*np.arctan(np.sqrt((1. - self.ecc)/(1. + self.ecc))*np.tan(TA/2.))
+		M = E - self.ecc*np.sin(E)
+		t_secondary = self.get_t_periastron() + self.per*M/2./pi
+		return t_secondary
