@@ -1,5 +1,10 @@
 .. :changelog:
 
+2.1.0 (2015-08-06)
+~~~~~~~~~~~~~~~~~~
+- add get_t_conjunction() method 
+- change eclipse model normalization so that stellar flux is unity
+
 2.0.0 (2015-08-04)
 ~~~~~~~~~~~~~~~~~~
 - add secondary eclipse model
