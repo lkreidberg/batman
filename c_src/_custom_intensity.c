@@ -18,17 +18,17 @@
 #include <math.h>
 
 /*
-	- The intensity function returns the stellar intensity at a radius r; where 0 <= r <= 1
-	- The function arguments are the normalized radius (r), and limb darkening coefficients c1, ..., un
-	- see below for an example intensity profile for I(r) \propto 1 - c1*(1-sqrt(1-r^2)) - c2*ln((sqrt(1-r^2)+c)/(1+c))
+	- The intensity function returns the stellar intensity at a radius x; where 0 <= x <= 1
+	- The function arguments are the normalized radius (x), and limb darkening coefficients c1, ..., un
+	- see below for an example intensity profile for I(x) \propto 1 - c1*(1-sqrt(1-x^2)) - c2*ln((sqrt(1-x^2)+c)/(1+c))
 	- The normalization constant is calculated by constraining the integrated intensity to equal 1:
-		\int_r \int_theta {I(r)*r*dr*dtheta}/norm = 1
+		\int_x \int_theta {I(x)*x*dx*dtheta}/norm = 1
 */
 
-double intensity(double r, double c1, double c2, double c3, double c4, double c5, double c6) 
+double intensity(double x, double c1, double c2, double c3, double c4, double c5, double c6) 
 {
-	if(r > 0.99995) r = 0.99995;
-	double mu = sqrt(1. - r*r);
+	if(x > 0.99995) x = 0.99995;
+	double mu = sqrt(1. - x*x);
 	double norm = 2.*M_PI*(-c1/6. - c2*c3/2. + c2/4. + 0.5 + c2*c3*c3*log(1. + 1./c3)/2.); 
 	return (1. - c1*(1. - mu) - c2*log((mu + c3)/(1. + c3)))/norm;
 }
