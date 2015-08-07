@@ -178,29 +178,38 @@ The parallelization is done at the C level with OpenMP.  If your default C compi
 
 Modeling eclipses
 -----------------
-``batman`` can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio with the parameter ``fp``:
+``batman`` can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio and the central eclipse time:
 
 ::
 	
 	params.fp = 0.001
+	params.t_secondary = 0.5
+         
 
 and initialize a model with the ``transittype`` parameter set to ``"secondary"``:
 
 ::
 	
-	t = np.linspace(-0.52, -0.48, 1000)
+	t = np.linspace(0.48, 0.52, 1000)
 	m = batman.TransitModel(params, t, transittype="secondary")	       
 	flux = m.light_curve(params)
 	plt.plot(t, flux)
 
 .. image:: eclipse.png
 
-The eclipse light curve is normalized such that the summed flux from the planet and the star is unity.  The eclipse depth is :math:`f_p/(1+f_p)`. 
+The eclipse light curve is normalized such that the flux of the star is unity. The eclipse depth is :math:`f_p`. 
+The model assumes that the eclipse center occurs when the true anomaly equals :math:`3\pi/2 - \omega`. However, note that this calculation does NOT account for the light travel time in the system (which is of order minutes).
 
-The model is computed using the time of inferior conjunction (``params.t0``), but for a secondary eclipse we generally want to know the central eclipse time as well.  To calculate this value, use the ``get_t_secondary`` method:
+For convenience, `batman` includes utilities to calculate the time of secondary eclipse from the time of inferior conjunction, and vice versa. See the ``get_t_secondary`` and ``get_t_conjunction`` methods in the API.
+
+Supersampling
+~~~~~~~~~~
+For long exposure times, you may wish to calculate the average value of the light curve over the entire exposure.  To do this, initialize a model with the ``supersample_factor`` and ``exp_time`` parameters specified:
 
 ::
 
-	t_secondary = m.get_t_secondary(params)
+	m = batman.TransitModel(params, t, supersample_factor = 7, exp_time = 0.001)
 
-The returned secondary eclipse time corresponds to the time when the true anomaly equals :math:`3\pi/2 - \omega`. At the time of inferior conjunction, the true anomaly equals :math:`\pi/2 - \omega`. 
+This example will return the average value of the light curve calculated from 7 evenly spaced samples over the duration of each 0.001 day exposure.  The ``exp_time`` parameter must have the same units as the array of observation times ``t``.
+
+

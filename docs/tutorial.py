@@ -79,18 +79,19 @@ m.calc_err(plot = True)
 #m = batman.TransitModel(params, t, nthreads = 4)"""
 
 params.fp = 0.001
-t = np.linspace(-0.52, -0.48, 1000)
+params.t_secondary = 0.5
+t = np.linspace(0.48, 0.52, 1000)
 m = batman.TransitModel(params, t, transittype="secondary")	       
 flux = m.light_curve(params)
 
 plt.plot(t, flux)
-plt.ylim((0.9989, 1.0001))
-plt.xlim((-0.52, -0.48))
+plt.ylim((0.9995, 1.0015))
+plt.xlim((0.48, 0.52))
+plt.gca().set_yticklabels([0.9995, 1.000, 1.0005, 1.001, 1.0015])
 plt.xlabel("Time (days)") 
 plt.ylabel("Relative flux")
 plt.savefig("eclipse.png")
-#plt.show()
+plt.show()
 
-t_secondary = m.get_t_secondary(params)
-print(t_secondary)
 
+m = batman.TransitModel(params, t, supersample_factor = 7, exp_time = 0.001)
