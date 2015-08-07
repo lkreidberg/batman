@@ -55,11 +55,11 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 		
 		if(d >= 1. + p) 
 		{
-			f_array[i] = 1.;					//no overlap
+			f_array[i] = 1. + fp;					//planet fully visible
 		}
 		else if(d < 1. - p)
 		{
-			f_array[i] = 1./(1.+fp);
+			f_array[i] = 1.;					//planet fully occulted
 		}
 		else								//planet is crossing the limb
 		{
@@ -68,11 +68,9 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 			alpha_t = (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d \
 				- pow(1. + d*d - p*p, 2.), 0.)))/M_PI;		//transit depth
 			alpha_o = alpha_t/p/p;				 	//fraction of planet disk that is eclipsed by the star
-			f_array[i] = 1. - alpha_o*fp/(1. + fp);
-			
+			f_array[i] = 1. + fp*(1. - alpha_o);			//planet partially occulted
 		}
 	}
-
 	return PyArray_Return((PyArrayObject *)flux);
 }
 
