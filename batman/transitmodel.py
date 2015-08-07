@@ -231,14 +231,14 @@ class TransitModel:
 	
 	def get_t_periastron(self, params):
 		"""
-		Return the time of periastron passage (calculated based on the time of inferior conjunction, params.t0).
+		Return the time of periastron passage (calculated using `params.t0`).
 		"""
 		phase = self._get_phase(params, "primary")
 		return params.t0 - params.per*phase
 
 	def get_t_secondary(self, params):
 		"""
-		Return the time of secondary eclipse center (calculated based on the time of inferior conjunction, params.t0).
+		Return the time of secondary eclipse center (calculated using `params.t0`).
 		"""
 		phase = self._get_phase(params, "primary")
 		phase2 = self._get_phase(params, "secondary")
@@ -246,7 +246,7 @@ class TransitModel:
 
 	def get_t_conjunction(self, params):
 		"""
-		Return the time of primary transit center (calculated based on the time of secondary eclipse, params.t_secondary).
+		Return the time of primary transit center (calculated using `params.t_secondary`).
 		"""
 		phase = self._get_phase(params, "primary")
 		phase2 = self._get_phase(params, "secondary")
