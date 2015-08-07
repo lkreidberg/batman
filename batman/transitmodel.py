@@ -93,7 +93,9 @@ class TransitModel:
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
 		if transittype == "primary": self.transittype = 1
-		else: self.transittype = 2
+		else: 
+			self.transittype = 2
+			params.t0 = self.get_t_conjunction(params)
 		self.ds= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
@@ -218,35 +220,51 @@ class TransitModel:
 			else: raise Exception("Invalid limb darkening option")
 		else: return _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
 
-	def get_t_periastron(self, params):
-		"""
-		Return the time of periastron passage.
-		"""
-		TA = pi/2. - params.w*pi/180.
+	def _get_phase(self, params, position):
+		if position == "periastron": TA = 0.
+		elif position == "primary": TA = pi/2. - params.w*pi/180.
+		elif position == "secondary": TA = 3.*pi/2. - params.w*pi/180.
+		
 		E = 2.*np.arctan(np.sqrt((1. - params.ecc)/(1. + params.ecc))*np.tan(TA/2.))
 		M = E - params.ecc*np.sin(E)
-		t_periastron = params.t0 - params.per*M/2./pi
-		return t_periastron
+		return M/2./pi
+	
+	def get_t_periastron(self, params):
+		"""
+		Return the time of periastron passage (calculated based on the time of inferior conjunction, params.t0).
+		"""
+		phase = self._get_phase(params, "primary")
+		return params.t0 - params.per*phase
 
 	def get_t_secondary(self, params):
 		"""
-		Return the time of secondary eclipse center.
+		Return the time of secondary eclipse center (calculated based on the time of inferior conjunction, params.t0).
 		"""
-		TA = 3.*pi/2. - params.w*pi/180.
-		E = 2.*np.arctan(np.sqrt((1. - params.ecc)/(1. + params.ecc))*np.tan(TA/2.))
-		M = E - params.ecc*np.sin(E)
-		t_secondary = self.get_t_periastron(params) + params.per*M/2./pi
-		return t_secondary
+		phase = self._get_phase(params, "primary")
+		phase2 = self._get_phase(params, "secondary")
+		return params.t0 + params.per*(phase2-phase)
+
+	def get_t_conjunction(self, params):
+		"""
+		Return the time of primary transit center (calculated based on the time of secondary eclipse, params.t_secondary).
+		"""
+		phase = self._get_phase(params, "primary")
+		phase2 = self._get_phase(params, "secondary")
+		return params.t_secondary + params.per*(phase-phase2)
+			
 
 
 class TransitParams(object):
 	"""
 	Object to store the physical parameters of the transit.
 
-	:param tc: Time of inferior conjunction [in days]. 
-	:type tc: float
+	:param t0: Time of inferior conjunction. 
+	:type t0: float, optional 
 
-	:param per: Orbital period [in days].
+	:param t_secondary: Time of secondary eclipse center.
+	:type t_secondary: float, optional 
+
+	:param per: Orbital period.
 	:type per: float
 
 	:param rp: Planet radius [in stellar radii].
@@ -267,11 +285,12 @@ class TransitParams(object):
 	:param u: List of limb darkening coefficients.
 	:type u: array_like 
 
-	:param limb_dark: Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom")
+	:param limb_dark: Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom").
 	:type limb_dark: str
 
 	:param fp: Planet-to-star flux ratio (for secondary eclipse models).
 	:type fp: float, optional
+
 
 	:Example:
 	
@@ -286,6 +305,9 @@ class TransitParams(object):
 	>>> params.w = 90.				#longitude of periastron (in degrees) 
 	>>> params.u = [0.1, 0.3] 	      	        #limb darkening coefficients
 	>>> params.limb_dark = "quadratic"          	#limb darkening model
+
+	.. note::  Units for the orbital period and ephemeris can be anything as long as they are consistent (e.g. both in days). 
+
 	"""
 	def __init__(self):
 		self.t0 = None
@@ -298,4 +320,5 @@ class TransitParams(object):
 		self.u = None
 		self.limb_dark = None
 		self.fp = None
+		self.t_secondary = None
 
