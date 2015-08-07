@@ -56,12 +56,18 @@ class TransitModel:
 	:param transittype: Type of transit ("primary" or "secondary")
 	:type transittype: string, optional
 
+	:param supersample_factor:	Number of points subdividing exposure
+	:type supersample_factor: integer, optional
+
+	:param exp_time: Exposure time (in same units as `t`)
+	:type exp_time: double, optional
+
 	:Example:
 	
 	>>> m = batman.TransitModel(params, max_err = 0.5, nthreads=4)
 	"""
 
-	def __init__(self, params, t, max_err=1.0, nthreads = 1, fac = None, transittype = "primary"):
+	def __init__(self, params, t, max_err=1.0, nthreads = 1, fac = None, transittype = "primary", supersample_factor = 1, exp_time = 0.):
 		#checking for invalid input
 		if  (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
 		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "logarithmic" and len(params.u) != 2) or \
@@ -89,16 +95,27 @@ class TransitModel:
 		self.ecc = params.ecc
 		self.w = params.w
 		self.u = params.u
-		self.max_err = max_err
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
+		self.max_err = max_err
+		
+		self.supersample_factor = supersample_factor
+		self.exp_time = exp_time
+		if self.supersample_factor > 1: 
+			ts = []
+			for i in range(len(self.t)): ts.append(np.linspace(self.t[i] - self.exp_time/2., self.t[i] + self.exp_time/2., self.supersample_factor))
+			self.t_supersample = np.array(ts).flatten()
+		else: self.t_supersample = self.t
+		
 		if transittype == "primary": self.transittype = 1
 		else: 
 			self.transittype = 2
 			params.t0 = self.get_t_conjunction(params)
-		self.ds= _rsky._rsky(t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+		
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
+		
 		if nthreads==None or nthreads == 1: self.nthreads=1
 		else:
 			if nthreads <= multiprocessing.cpu_count()and nthreads >1 and openmp.detect(): self.nthreads = nthreads
@@ -192,7 +209,7 @@ class TransitModel:
 		>>> flux = m.light_curve(params)
 		"""
 		#recalculates rsky and fac if necessary
-		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 		#updates transit params
 		self.t0 = params.t0
@@ -208,17 +225,19 @@ class TransitModel:
 		
 		if self.transittype == 1:
 			if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
-			if self.limb_dark == "quadratic": return (_quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], params.u[1], self.nthreads))
-			elif self.limb_dark == "linear": return _quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], 0., self.nthreads)
-			elif self.limb_dark == "nonlinear": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
-			elif self.limb_dark == "squareroot": return _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
-			elif self.limb_dark == "uniform": return _uniform_ld._uniform_ld(self.ds, params.rp, self.nthreads)
-			elif self.limb_dark == "logarithmic": return (_logarithmic_ld._logarithmic_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
-			elif self.limb_dark == "exponential": return (_exponential_ld._exponential_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads))
-			elif self.limb_dark == "custom": return _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
-			#elif self.limb_dark == "mandelagol": return _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
+			if self.limb_dark == "quadratic": lc = _quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], params.u[1], self.nthreads)
+			elif self.limb_dark == "linear": lc = _quadratic_ld._quadratic_ld(self.ds, params.rp, params.u[0], 0., self.nthreads)
+			elif self.limb_dark == "nonlinear": lc = _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+			elif self.limb_dark == "squareroot": lc = _nonlinear_ld._nonlinear_ld(self.ds, params.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
+			elif self.limb_dark == "uniform": lc = _uniform_ld._uniform_ld(self.ds, params.rp, self.nthreads)
+			elif self.limb_dark == "logarithmic": lc = _logarithmic_ld._logarithmic_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "exponential": lc = _exponential_ld._exponential_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "custom": lc = _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
+			#elif self.limb_dark == "mandelagol": lc = _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
 			else: raise Exception("Invalid limb darkening option")
-		else: return _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
+		else: lc = _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
+		if self.supersample_factor == 1: return lc
+		else: return np.mean(lc.reshape(-1, self.supersample_factor), axis=1)
 
 	def _get_phase(self, params, position):
 		if position == "periastron": TA = 0.
@@ -252,7 +271,6 @@ class TransitModel:
 		phase2 = self._get_phase(params, "secondary")
 		return params.t_secondary + params.per*(phase-phase2)
 			
-
 
 class TransitParams(object):
 	"""
