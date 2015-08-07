@@ -309,6 +309,9 @@ class TransitParams(object):
 	:param fp: Planet-to-star flux ratio (for secondary eclipse models).
 	:type fp: float, optional
 
+	.. note::  
+		- Units for the orbital period and ephemeris can be anything as long as they are consistent (e.g. both in days). 
+		- The orbital path is calculated based on `t0` for primary transits and `t_secondary` for secondary eclipses.
 
 	:Example:
 	
@@ -323,9 +326,6 @@ class TransitParams(object):
 	>>> params.w = 90.				#longitude of periastron (in degrees) 
 	>>> params.u = [0.1, 0.3] 	      	        #limb darkening coefficients
 	>>> params.limb_dark = "quadratic"          	#limb darkening model
-
-	.. note::  Units for the orbital period and ephemeris can be anything as long as they are consistent (e.g. both in days). 
-
 	"""
 	def __init__(self):
 		self.t0 = None
