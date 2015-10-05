@@ -24,6 +24,7 @@ from . import _nonlinear_ld
 import timeit
 import batman
 
+__all__ = ['make_plots']
 
 def wrapper(func, *args, **kwargs):
     def wrapped():

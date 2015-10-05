@@ -20,7 +20,9 @@ import math
 import matplotlib.pyplot as plt
 import timeit
 from .transitmodel import *
-from .openmp import *
+from .openmp import detect
+
+__all__ = ['test']
 
 def wrapper(func, *args, **kwargs):
     def wrapped():
@@ -76,7 +78,7 @@ def test():
 			failures += 1
 
 	print("\nTesting multithreading...")
-	if openmp.detect():
+	if detect():
 		params.u = [0.1, 0.3]
 		params.limb_dark = "quadratic"
 		m = TransitModel(params, t, nthreads = 1)

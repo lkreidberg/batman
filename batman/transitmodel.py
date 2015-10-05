@@ -29,12 +29,14 @@ from math import pi
 import multiprocessing
 from . import openmp
 
+__all__ = ['TransitModel', 'TransitParams']
+
 def wrapper(func, *args, **kwargs):
     def wrapped():
         return func(*args, **kwargs)
     return wrapped
 
-class TransitModel:
+class TransitModel(object):
 	"""
 	Class for generating model transit light curves.	
 
