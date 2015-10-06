@@ -9,6 +9,9 @@ Check for OpenMP based on
 https://github.com/MDAnalysis/mdanalysis/tree/develop/package/setup.py
 retrieved 06/15/15
 """
+
+__all__ = ['detect']
+
 def detect():
 	"""Does this compiler support OpenMP parallelization?"""
 	compiler = new_compiler()
