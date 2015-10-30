@@ -103,10 +103,9 @@ class TransitModel(object):
 		
 		self.supersample_factor = supersample_factor
 		self.exp_time = exp_time
-		if self.supersample_factor > 1: 
-			ts = []
-			for i in range(len(self.t)): ts.append(np.linspace(self.t[i] - self.exp_time/2., self.t[i] + self.exp_time/2., self.supersample_factor))
-			self.t_supersample = np.array(ts).flatten()
+		if self.supersample_factor > 1:  % IJMC: now do it quicker, with no loops:
+                        t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
+			self.t_supersample = (t_offsets + self.t.reshape(self.t.size, 1)).flatten()
 		else: self.t_supersample = self.t
 		
 		if transittype == "primary": self.transittype = 1
