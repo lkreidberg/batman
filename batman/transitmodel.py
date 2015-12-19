@@ -24,7 +24,6 @@ from . import _exponential_ld
 from . import _custom_ld
 from . import _rsky
 from . import _eclipse
-#from . import _mandelagol_nonlinear_ld
 from math import pi
 import multiprocessing
 from . import openmp
@@ -213,6 +212,7 @@ class TransitModel(object):
 		#recalculates rsky and fac if necessary
 		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w: self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
+
 		#updates transit params
 		self.t0 = params.t0
 		self.per = params.per
@@ -224,6 +224,13 @@ class TransitModel(object):
 		self.u = params.u
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
+		self.inverse = False
+
+		#handles the case of inverse transits (rp < 0)
+		if self.rp < 0.: 
+			self.rp = -1.*self.rp
+			params.rp = -1.*params.rp
+			self.inverse = True
 		
 		if self.transittype == 1:
 			if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
@@ -237,6 +244,9 @@ class TransitModel(object):
 			elif self.limb_dark == "custom": lc = _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
 			#elif self.limb_dark == "mandelagol": lc = _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
 			else: raise Exception("Invalid limb darkening option")
+
+			if self.inverse == True: lc = 2. - lc
+
 		else: lc = _eclipse._eclipse(self.ds, params.rp, params.fp, self.nthreads)			
 		if self.supersample_factor == 1: return lc
 		else: return np.mean(lc.reshape(-1, self.supersample_factor), axis=1)
