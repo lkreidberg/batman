@@ -86,6 +86,7 @@ class TransitModel(object):
 				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, custom")
 		if max_err < 0.001: raise Exception("The lowest allowed value for max_err is 0.001. For more accurate calculation, set the integration step size explicitly with the fac parameter.")
 		if transittype not in ["primary", "secondary"]: raise Exception("Allowed transit types are \"primary\" and \"secondary\".")
+		if (supersample_factor > 1 and exp_time <= 0.): raise Exception("Please enter a valid exposure time (exp_time must be greater than 0 to calculate super-sampled light curves).")
 
 		#initializes model parameters
 		self.t = t
