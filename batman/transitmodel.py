@@ -114,7 +114,7 @@ class TransitModel(object):
 			self.transittype = 2
 			params.t0 = self.get_t_conjunction(params)
 		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
-		
+
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
 		
@@ -273,6 +273,16 @@ class TransitModel(object):
 		phase2 = self._get_phase(params, "secondary")
 		return params.t_secondary + params.per*(phase-phase2)
 			
+
+	def get_true_anomaly(self):
+		"""
+		Return the true anomaly at each time
+		"""
+		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
+							  self.inc*pi/180., self.ecc, self.w*pi/180.,
+							  self.transittype)
+		return self.f
+
 
 class TransitParams(object):
 	"""
