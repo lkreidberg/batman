@@ -22,6 +22,8 @@
 
 static PyObject *_rsky(PyObject *self, PyObject *args);
 
+static PyObject *_getf(PyObject *self, PyObject *args);
+
 double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
 	double E = M, eps = 1.0e-7;
@@ -83,6 +85,59 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	return PyArray_Return((PyArrayObject *)ds);
 } 
 
+
+
+static PyObject *_getf(PyObject *self, PyObject *args)
+{
+	/*
+		This module computes the distance between the centers of the
+		star and the planet in the plane of the sky.  This parameter is
+		denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book
+		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
+		(2002) paper, this quantity is denoted d.
+	*/
+	double ecc, E, inc, a, d, f, omega, per, M, n, tp, tc, eps, t, BIGD = 100.;
+	int transittype;
+	npy_intp i, dims[1];
+	PyArrayObject *ts, *fs;
+
+  	if(!PyArg_ParseTuple(args,"Oddddddi", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype)) return NULL;
+
+	dims[0] = PyArray_DIMS(ts)[0];
+	fs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
+
+	double *t_array = PyArray_DATA(ts);
+	double *f_array = PyArray_DATA(fs);
+
+	n = 2.*M_PI/per;	// mean motion
+	eps = 1.0e-7;
+
+	for(i = 0; i < dims[0]; i++)
+	{
+		t = t_array[i];
+
+		//calculates time of periastron passage from time of inferior conjunction
+		f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
+		E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
+		M = E - ecc*sin(E);
+		tp = tc - per*M/2./M_PI;							//time of periastron
+
+		if(ecc < 1.0e-5)
+		{
+			f = ((t - tp)/per - (int)((t - tp)/per))*2.*M_PI;			//calculates f for a circular orbit
+		}
+		else
+		{
+			M = n*(t - tp);
+			E = getE(M, ecc);
+			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
+		}
+		f_array[i] = f;
+	}
+	return PyArray_Return((PyArrayObject *)fs);
+}
+
+
 static char _rsky_doc[] = """ This module computes the distance between the centers of the \
 star and the planet in the plane of the sky.  This parameter is \
 denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book \
@@ -90,8 +145,15 @@ denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book \
 this quantity is denoted d.\
 LK 4/27/12 """;
 
+
+static char _getf_doc[] = """ This module computes the true anomaly. This parameter is \
+denoted f in the Seager Exoplanets book \
+(see the section by Murray, and Winn eq. 44).\
+BM 1/18/16 """;
+
+
 static PyMethodDef _rsky_methods[] = {
-  {"_rsky", _rsky,METH_VARARGS,_rsky_doc},{NULL}};
+  {"_rsky", _rsky,METH_VARARGS,_rsky_doc},{"_getf", _getf,METH_VARARGS,_getf_doc},{NULL}};
 
 
 #if PY_MAJOR_VERSION >= 3

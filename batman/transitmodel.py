@@ -105,7 +105,7 @@ class TransitModel(object):
 		self.supersample_factor = supersample_factor
 		self.exp_time = exp_time
 		if self.supersample_factor > 1:  # IJMC: now do it quicker, with no loops:
-                        t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
+			t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
 			self.t_supersample = (t_offsets + self.t.reshape(self.t.size, 1)).flatten()
 		else: self.t_supersample = self.t
 		
@@ -272,7 +272,15 @@ class TransitModel(object):
 		phase = self._get_phase(params, "primary")
 		phase2 = self._get_phase(params, "secondary")
 		return params.t_secondary + params.per*(phase-phase2)
-			
+
+	def get_true_anomaly(self):
+		"""
+		Return the true anomaly at each time
+		"""
+		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
+							  self.inc*pi/180., self.ecc, self.w*pi/180.,
+							  self.transittype)
+		return self.f
 
 class TransitParams(object):
 	"""
