@@ -96,7 +96,7 @@ static PyObject *_getf(PyObject *self, PyObject *args)
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
 		(2002) paper, this quantity is denoted d.
 	*/
-	double ecc, E, inc, a, d, f, omega, per, M, n, tp, tc, eps, t, BIGD = 100.;
+	double ecc, E, inc, a, f, omega, per, M, n, tp, tc, eps, t;
 	int transittype;
 	npy_intp i, dims[1];
 	PyArrayObject *ts, *fs;
