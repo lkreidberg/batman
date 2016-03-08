@@ -55,7 +55,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     PyArrayObject *ds, *flux;
     npy_intp i, dims[1];
 
-      if(!PyArg_ParseTuple(args,"Odddi", &ds, &p, &c1, &c2, &nthreads)) return NULL;
+    if(!PyArg_ParseTuple(args,"Odddi", &ds, &p, &c1, &c2, &nthreads)) return NULL;
 
     dims[0] = PyArray_DIMS(ds)[0];
     flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));    //creates numpy array to store return flux values
@@ -65,17 +65,18 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     double *d_array = PyArray_DATA(ds);
 
     /*
-        NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
-        Here we use a trick for faster access and more convenient access, where we set a pointer to the
-        beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
-        Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
-        If you run into trouble along these lines, I recommend changing the array access to something like:
-            d = PyFloat_AsDouble(PyArray_GETITEM(ds, PyArray_GetPtr(ds, &i)));
-        where ds is a numpy array object.
-        Laura Kreidberg 07/2015
+    NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
+    Here we use a trick for faster access and more convenient access, where we set a pointer to the
+    beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
+    Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
+    If you run into trouble along these lines, I recommend changing the array access to something like:
+        d = PyFloat_AsDouble(PyArray_GETITEM(ds, PyArray_GetPtr(ds, &i)));
+    where ds is a numpy array object.
+    Laura Kreidberg 07/2015
     */
 
     omega = 1.0 - c1/3.0 - c2/6.0;
+    // double precision equality tolerance for corner case issues
     double tol = 1.0e-14;
 
     #if defined (_OPENMP)
@@ -87,7 +88,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     #endif
     for(i = 0; i < dims[0]; i++)
     {
-        d = d_array[i];         // separation of centers
+        d = d_array[i];
 
         // allow for negative impact parameters
         d = fabs(d);
@@ -97,13 +98,13 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         {
             d = p;
         }
-        if(fabs(p-1.0-d) < tol)
+        if(fabs(p - 1.0 - d) < tol)
         {
-            d = p-1.0;
+            d = p - 1.0;
         }
-        if(fabs(1.0-p-d) < tol)
+        if(fabs(1.0 - p - d) < tol)
         {
-            d = 1.0-p;
+            d = 1.0 - p;
         }
         if(d < tol)
         {
@@ -145,7 +146,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         if(d == p)
         {
             //printf("zone 5\n");
-            if(d<0.5)
+            if(d < 0.5)
             {
                 //printf("zone 5.2\n");
                 q = 2.0*p;
