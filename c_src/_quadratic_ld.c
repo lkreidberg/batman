@@ -49,8 +49,8 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
      I(r) = [1 - c1 * (1 - sqrt(1 - (r/rs)^2)) - c2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - c1/3 - c2/6)/pi
 */
     int nd, nthreads;
-    double c1, c2, p, *lambdad, *etad, \
-        *lambdae, lam, x1, x2, x3, d, omega, kap0 = 0.0, kap1 = 0.0, \
+    double c1, c2, p, lambdad, etad, \
+        lambdae, lam, x1, x2, x3, d, omega, kap0 = 0.0, kap1 = 0.0, \
         q, Kk, Ek, Pk, n;
     PyArrayObject *ds, *flux;
     npy_intp i, dims[1];
@@ -75,11 +75,6 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         Laura Kreidberg 07/2015
     */
 
-
-    lambdad = (double *)malloc(nd*sizeof(double));
-    lambdae = (double *)malloc(nd*sizeof(double));
-    etad = (double *)malloc(nd*sizeof(double));
-
     if(fabs(p - 0.5) < 1.0e-3) p = 0.5;
 
     omega = 1.0 - c1/3.0 - c2/6.0;
@@ -102,10 +97,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         if(d >= 1.0 + p)
         {
             //printf("zone 1\n");
-            lambdad[i] = 0.0;
-            etad[i] = 0.0;
-            lambdae[i] = 0.0;
-            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+            lambdad = 0.0;
+            etad = 0.0;
+            lambdae = 0.0;
+            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
 
             continue;
         }
@@ -113,10 +108,10 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         if(p >= 1.0 && d <= p - 1.0)
         {
             //printf("zone 2\n");
-            lambdad[i] = 0.0;
-            etad[i] = 0.5;        //error in Fortran code corrected here, following Jason Eastman's python code
-            lambdae[i] = 1.0;
-            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*(lambdad[i] + 2.0/3.0) + c2*etad[i])/omega;
+            lambdad = 0.0;
+            etad = 0.5;        //error in Fortran code corrected here, following Jason Eastman's python code
+            lambdae = 1.0;
+            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*(lambdad + 2.0/3.0) + c2*etad)/omega;
             continue;
         }
         //source is partly occulted and occulting object crosses the limb:
@@ -125,14 +120,14 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             //printf("zone 3\n");
             kap1 = acos(MIN((1.0 - p*p + d*d)/2.0/d, 1.0));
             kap0 = acos(MIN((p*p + d*d - 1.0)/2.0/p/d, 1.0));
-            lambdae[i] = p*p*kap0 + kap1;
-            lambdae[i] = (lambdae[i] - 0.50*sqrt(MAX(4.0*d*d - pow((1.0 + d*d - p*p), 2.0), 0.0)))/M_PI;
+            lambdae = p*p*kap0 + kap1;
+            lambdae = (lambdae - 0.50*sqrt(MAX(4.0*d*d - pow((1.0 + d*d - p*p), 2.0), 0.0)))/M_PI;
         }
         //occulting object transits the source but doesn't completely cover it:
         if(d <= 1.0 - p)
         {
             //printf("zone 4\n");
-            lambdae[i] = p*p;
+            lambdae = p*p;
         }
         //edge of the occulting star lies at the origin
         if(fabs(d - p) < 1.0e-4*(d + p))
@@ -142,9 +137,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             if(p == 0.5)
             {
                 //printf("zone 6\n");
-                lambdad[i] = 1.0/3.0 - 4.0/M_PI/9.0;
-                etad[i] = 3.0/32.0;
-                f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+                lambdad = 1.0/3.0 - 4.0/M_PI/9.0;
+                etad = 3.0/32.0;
+                f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
                 continue;
             }
             else if(d >= 0.5)
@@ -154,9 +149,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
                 q = 0.5/p;
                 Kk = ellk(q);
                 Ek = ellec(q);
-                lambdad[i] = 1.0/3.0 + 16.0*p/9.0/M_PI*(2.0*p*p - 1.0)*Ek -  \
+                lambdad = 1.0/3.0 + 16.0*p/9.0/M_PI*(2.0*p*p - 1.0)*Ek -  \
                           (32.0*pow(p, 4.0) - 20.0*p*p + 3.0)/9.0/M_PI/p*Kk;
-                etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
+                etad = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
                                   (1.0 + 5.0*p*p + d*d)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
             //    continue;
             }
@@ -167,12 +162,12 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
                 q = 2.0*p;
                 Kk = ellk(q);
                 Ek = ellec(q);
-                lambdad[i] = 1.0/3.0 + 2.0/9.0/M_PI*(4.0*(2.0*p*p - 1.0)*Ek + (1.0 - 4.0*p*p)*Kk);
-                etad[i] = p*p/2.0*(p*p + 2.0*d*d);
-                f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+                lambdad = 1.0/3.0 + 2.0/9.0/M_PI*(4.0*(2.0*p*p - 1.0)*Ek + (1.0 - 4.0*p*p)*Kk);
+                etad = p*p/2.0*(p*p + 2.0*d*d);
+                f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
                 continue;
             }
-            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
             continue;
         }
          //occulting star partly occults the source and crosses the limb:
@@ -188,13 +183,13 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             Ek = ellec(q);
             n = 1.0/x1 - 1.0;
             Pk = ellpic_bulirsch(n, q);
-            lambdad[i] = 1.0/9.0/M_PI/sqrt(p*d)*(((1.0 - x2)*(2.0*x2 +  \
+            lambdad = 1.0/9.0/M_PI/sqrt(p*d)*(((1.0 - x2)*(2.0*x2 +  \
                     x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*d*(d*d +  \
                     7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
-            if(d < p) lambdad[i] += 2.0/3.0;
-            etad[i] = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
+            if(d < p) lambdad += 2.0/3.0;
+            etad = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
                 (1.0 + 5.0*p*p + d*d)/4.0*sqrt((1.0 - x1)*(x2 - 1.0)));
-            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+            f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
             continue;
         }
         //occulting star transits the source:
@@ -208,21 +203,18 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             n = x2/x1 - 1.0;
             Pk = ellpic_bulirsch(n, q);
 
-            lambdad[i] = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*d*d + p*p +  \
+            lambdad = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*d*d + p*p +  \
                      x3*x3)*Kk + (1.0 - x1)*(d*d + 7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
-            if(d < p) lambdad[i] += 2.0/3.0;
+            if(d < p) lambdad += 2.0/3.0;
             if(fabs(p + d - 1.0) <= 1.0e-4)
             {
-                lambdad[i] = 2.0/3.0/M_PI*acos(1.0 - 2.0*p) - 4.0/9.0/M_PI* \
+                lambdad = 2.0/3.0/M_PI*acos(1.0 - 2.0*p) - 4.0/9.0/M_PI* \
                             sqrt(p*(1.0 - p))*(3.0 + 2.0*p - 8.0*p*p);
             }
-            etad[i] = p*p/2.0*(p*p + 2.0*d*d);
+            etad = p*p/2.0*(p*p + 2.0*d*d);
         }
-        f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae[i] + (c1 + 2.0*c2)*lambdad[i] + c2*etad[i])/omega;
+        f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
     }
-    free(lambdae);
-    free(lambdad);
-    free(etad);
 
     return PyArray_Return((PyArrayObject *)flux);
 }
