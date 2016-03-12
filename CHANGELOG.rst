@@ -1,4 +1,10 @@
 .. :changelog:
+2.3.0 (2015-03-11)
+~~~~~~~~~~~~~~~~~~
+- add get_true_anomaly() method
+- remove redundant arrays
+- improve accuracy for special cases (e.g. rp near 0.5)
+
 2.2.0 (2015-12-19)
 ~~~~~~~~~~~~~~~~~~
 - add inverse transit capability (can now handle negative rp)
