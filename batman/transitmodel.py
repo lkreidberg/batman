@@ -111,7 +111,7 @@ class TransitModel(object):
 			self.inverse = True
 
 		if self.supersample_factor > 1:  # IJMC: now do it quicker, with no loops:
-                        t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
+			t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
 			self.t_supersample = (t_offsets + self.t.reshape(self.t.size, 1)).flatten()
 		else: self.t_supersample = self.t
 		
