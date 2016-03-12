@@ -292,7 +292,15 @@ class TransitModel(object):
 		phase = self._get_phase(params, "primary")
 		phase2 = self._get_phase(params, "secondary")
 		return params.t_secondary + params.per*(phase-phase2)
-			
+
+	def get_true_anomaly(self):
+		"""
+		Return the true anomaly at each time
+		"""
+		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
+							  self.inc*pi/180., self.ecc, self.w*pi/180.,
+							  self.transittype)
+		return self.f
 
 class TransitParams(object):
 	"""
