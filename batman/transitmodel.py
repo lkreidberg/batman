@@ -100,9 +100,16 @@ class TransitModel(object):
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
 		self.max_err = max_err
-		
 		self.supersample_factor = supersample_factor
 		self.exp_time = exp_time
+		self.inverse = False
+
+		#handles the case of inverse transits (rp < 0)
+		if self.rp < 0.: 
+			self.rp = -1.*self.rp
+			params.rp = -1.*params.rp
+			self.inverse = True
+
 		if self.supersample_factor > 1:  # IJMC: now do it quicker, with no loops:
                         t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
 			self.t_supersample = (t_offsets + self.t.reshape(self.t.size, 1)).flatten()
@@ -188,7 +195,10 @@ class TransitModel(object):
 				else: f = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
 
 				err = np.max(np.abs(f-f0))*1.0e6
-				if err> self.max_err: fac_hi = fac	
+
+				print(self.rp, err, fac)		
+
+				if err > self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
 				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for integration step size")
