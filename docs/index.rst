@@ -25,6 +25,7 @@ Contents:
    quickstart
    tutorial
    api
+   trouble 
    acknowledgements
 
 Release Notes
