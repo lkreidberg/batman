@@ -1,4 +1,9 @@
 .. :changelog:
+2.2.0 (2015-12-19)
+~~~~~~~~~~~~~~~~~~
+- add inverse transit capability (can now handle negative rp)
+- speed up super-sampling
+
 
 2.1.0 (2015-08-06)
 ~~~~~~~~~~~~~~~~~~
