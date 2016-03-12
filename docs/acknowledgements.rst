@@ -13,4 +13,4 @@ Many thanks to the following individuals for their support in the development of
 - Eric Agol
 - Karl Fogel
 - Jason Eastman
-
+- Ian Crossfield
