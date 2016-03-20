@@ -17,6 +17,10 @@
 
 #include <math.h>
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
 /*
 	- The intensity function returns the stellar intensity at a radius x; where 0 <= x <= 1
 	- The function arguments are the normalized radius (x), and limb darkening coefficients c1, ..., un
