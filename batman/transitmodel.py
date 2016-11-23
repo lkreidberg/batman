@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import matplotlib.pyplot as plt
 from . import _nonlinear_ld
 from . import _quadratic_ld
 from . import _uniform_ld
@@ -165,6 +164,7 @@ class TransitModel(object):
 	
 			err = np.max(np.abs(f-f0))*1.0e6
 			if plot == True:
+				import matplotlib.pyplot as plt
 				plt.plot(ds, 1.0e6*(f-f0), color='k')
 				plt.xlabel("d (separation of centers)")
 				plt.ylabel("Error (ppm)") 

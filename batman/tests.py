@@ -17,7 +17,6 @@
 from __future__ import print_function
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 import timeit
 from .transitmodel import *
 from .openmp import detect
