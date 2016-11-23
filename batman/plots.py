@@ -17,7 +17,6 @@
 from __future__ import print_function
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 from .transitmodel import *
 from . import _quadratic_ld
 from . import _nonlinear_ld
@@ -33,6 +32,7 @@ def wrapper(func, *args, **kwargs):
 
 
 def make_plots():
+	import matplotlib.pyplot as plt
 	"""zs = np.linspace(0., 1., 1000)
 	rp = 0.1
 	wrapped = wrapper(_quadratic_ld._quadratic_ld, zs, rp, 0.1, 0.3, 1)
