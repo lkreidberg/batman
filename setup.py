@@ -89,5 +89,8 @@ setup(	name='batman-package',
 		],
 	include_dirs = [np.get_include()],
 	install_requires = ['numpy'],
+	extras_requires= {
+	    'matplotlib': ['matplotlib'],
+	},
 	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _custom_ld, _rsky, _eclipse]
 )
