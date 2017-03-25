@@ -109,9 +109,9 @@ class TransitModel(object):
 			params.rp = -1.*params.rp
 			self.inverse = True
 
-		if self.supersample_factor > 1:  # IJMC: now do it quicker, with no loops:
-			t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
-			self.t_supersample = (t_offsets + self.t.reshape(self.t.size, 1)).flatten()
+		if self.supersample_factor > 1:
+                        t_offsets = self.exp_time * ((np.arange(1, self.supersample_factor+1, dtype='d') - 0.5)/self.supersample_factor - 0.5)
+                        self.t_supersample = (self.t[:, np.newaxis] + t_offsets).ravel()                    
 		else: self.t_supersample = self.t
 		
 		if transittype == "primary": self.transittype = 1
