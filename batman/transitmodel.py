@@ -98,7 +98,7 @@ class TransitModel(object):
 		self.u = params.u
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
-                self.t_secondary = params.t_secondary
+		self.t_secondary = params.t_secondary
 		self.max_err = max_err
 		self.supersample_factor = supersample_factor
 		self.exp_time = exp_time
@@ -222,9 +222,9 @@ class TransitModel(object):
 		"""
 		#recalculates rsky and fac if necessary
 		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w or params.t_secondary != self.t_secondary:
-                    if self.transittype == 2 and params.t_secondary != self.t_secondary:
-                        params.t0 = self.get_t_conjunction(params)
-                    self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+			if self.transittype == 2 and params.t_secondary != self.t_secondary:
+				params.t0 = self.get_t_conjunction(params)
+			self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 
 		#updates transit params
@@ -238,6 +238,7 @@ class TransitModel(object):
 		self.u = params.u
 		self.limb_dark = params.limb_dark
 		self.fp = params.fp
+		self.t_secondary = params.t_secondary
 		self.inverse = False
 
 		#handles the case of inverse transits (rp < 0)
