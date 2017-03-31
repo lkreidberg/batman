@@ -18,7 +18,12 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include <math.h>
+
+#if defined (_OPENACC) && defined(__PGI)
+#  include <accelmath.h>
+#else
+#  include <math.h>
+#endif
 
 #if defined (_OPENMP)
 #  include <omp.h>
@@ -33,14 +38,14 @@
 
 static PyObject *_nonlinear_ld(PyObject *self, PyObject *args);
 
-double intensity(double x, double c1, double c2, double c3, double c4, double norm)
+inline double intensity(double x, double c1, double c2, double c3, double c4, double norm)
 {
 	if(x > 0.99995) x = 0.99995;
 	double sqrtmu = pow(1. - x*x,0.25);
 	return (1. - c1*(1. - sqrtmu) - c2*(1. - pow(sqrtmu,2.)) - c3*(1. - pow(sqrtmu, 3.)) - c4*(1. - pow(sqrtmu,4.)))/norm; 	
 }
 
-double area(double d, double x, double R)
+inline double area(double d, double x, double R)
 {
 	/*
 	Returns area of overlapping circles with radii r and R; separated by a distance d
@@ -56,10 +61,10 @@ double area(double d, double x, double R)
 
 static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, x, I; 
+	double rprs, fac;
 	int nthreads;
-	npy_intp i, dims[1];
-	double dx, A_f, x_in, x_out, delta, c1, c2, c3, c4;
+	npy_intp dims[1];
+	double c1, c2, c3, c4;
 	
 	PyArrayObject *ds, *flux;
   	if(!PyArg_ParseTuple(args,"Oddddddi", &ds, &rprs, &c1, &c2, &c3, &c4, &fac, &nthreads)) return NULL;
@@ -83,36 +88,38 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 		Laura Kreidberg 07/2015
 	*/
 	
-	#if defined (_OPENMP)
+	#if defined (_OPENMP) && !defined(_OPENACC)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
 	#endif
 
 	double norm = (-c1/10. - c2/6. - 3.*c3/14. - c4/4. + 0.5)*2.*M_PI; 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
 
-	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, x_in, x_out, delta, x, dx, A_i, A_f, I)
+	#if defined (_OPENACC)
+	#pragma acc parallel loop copyout(f_array[:dims[0]])
+	#elif defined (_OPENMP)
+	#pragma omp parallel for
 	#endif
-	for(i = 0; i < dims[0]; i++)
+	for(int i = 0; i < dims[0]; i++)
 	{
-		d = d_array[i];
-		x_in = MAX(d - rprs, 0.);					//lower bound for integration
-		x_out = MIN(d + rprs, 1.0);					//upper bound for integration
+		double d = d_array[i];
+		double x_in = MAX(d - rprs, 0.);					//lower bound for integration
+		double x_out = MIN(d + rprs, 1.0);					//upper bound for integration
 
 		if(x_in >= 1.) f_array[i] = 1.0;				//flux = 1. if the planet is not transiting
 		else
 		{
-			delta = 0.;						//variable to store the integrated intensity, \int I dA
-			x = x_in;						//starting radius for integration
-			dx = fac*acos(x); 					//initial step size 
+			double delta = 0.;						//variable to store the integrated intensity, \int I dA
+			double x = x_in;						//starting radius for integration
+			double dx = fac*acos(x); 					//initial step size
 
 			x += dx;						//first step
 
-			A_i = 0.;						//initial area
+			double A_i = 0.;						//initial area
 	
 			while(x < x_out)
 			{
-				A_f = area(d, x, rprs);				//calculates area of overlapping circles
-				I = intensity(x - dx/2.,c1,c2, c3, c4, norm); 	//intensity at the midpoint
+				double A_f = area(d, x, rprs);				//calculates area of overlapping circles
+				double I = intensity(x - dx/2.,c1,c2, c3, c4, norm); 	//intensity at the midpoint
 				delta += (A_f - A_i)*I;				//increase in transit depth for this integration step
 				dx = fac*acos(x);  				//updating step size
 				x = x + dx;					//stepping to next element
@@ -120,8 +127,8 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 			}
 			dx = x_out - x + dx;  					//calculating change in radius for last step  FIXME
 			x = x_out;						//final radius for integration
-			A_f = area(d, x, rprs);					//area for last integration step
-			I = intensity(x - dx/2.,c1,c2, c3, c4, norm); 		//intensity at the midpoint 
+			double A_f = area(d, x, rprs);					//area for last integration step
+			double I = intensity(x - dx/2.,c1,c2, c3, c4, norm); 		//intensity at the midpoint
 			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 
 			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
