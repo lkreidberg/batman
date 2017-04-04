@@ -197,8 +197,6 @@ class TransitModel(object):
 
 				err = np.max(np.abs(f-f0))*1.0e6
 
-				print(self.rp, err, fac)		
-
 				if err > self.max_err: fac_hi = fac	
 				else: fac_lo = fac
 				n += 1
