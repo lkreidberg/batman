@@ -28,7 +28,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args);
 
 static PyObject *_getf(PyObject *self, PyObject *args);
 
-double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
+inline double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
 	double E = M, eps = 1.0e-7;
 
@@ -45,9 +45,9 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol 
 		(2002) paper, this quantity is denoted d.
 	*/
-	double ecc, E, inc, a, d, f, omega, per, M, n, tp, tc, eps, t, BIGD = 100.;
+	double ecc, inc, a, omega, per, tc, BIGD = 100.;
 	int transittype;
-	npy_intp i, dims[1];
+	npy_intp dims[1];
 	PyArrayObject *ts, *ds;
 
   	if(!PyArg_ParseTuple(args,"Oddddddi", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype)) return NULL; 
@@ -58,18 +58,20 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	double *t_array = PyArray_DATA(ts);
 	double *d_array = PyArray_DATA(ds);
 
-	n = 2.*M_PI/per;	// mean motion
-	eps = 1.0e-7;
-	
-	for(i = 0; i < dims[0]; i++)
+	const double n = 2.*M_PI/per;	// mean motion
+	const double eps = 1.0e-7;
+
+	#pragma acc parallel loop
+	for(int i = 0; i < dims[0]; i++)
 	{
-		t = t_array[i];
+		double d;
+		double t = t_array[i];
 		
 		//calculates time of periastron passage from time of inferior conjunction 
-		f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
-		E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
-		M = E - ecc*sin(E);						
-		tp = tc - per*M/2./M_PI;							//time of periastron 
+		double f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
+		double E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
+		double M = E - ecc*sin(E);
+		double tp = tc - per*M/2./M_PI;							//time of periastron
 
 		if(ecc < 1.0e-5)
 		{
