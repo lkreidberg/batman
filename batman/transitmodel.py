@@ -119,7 +119,7 @@ class TransitModel(object):
 		else: 
 			self.transittype = 2
 			params.t0 = self.get_t_conjunction(params)
-		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 		
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
@@ -222,7 +222,7 @@ class TransitModel(object):
 		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w or params.t_secondary != self.t_secondary:
 			if self.transittype == 2 and params.t_secondary != self.t_secondary:
 				params.t0 = self.get_t_conjunction(params)
-			self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+			self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 
 		#updates transit params
@@ -302,7 +302,7 @@ class TransitModel(object):
 		"""
 		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
 							  self.inc*pi/180., self.ecc, self.w*pi/180.,
-							  self.transittype)
+							  self.transittype, self.nthreads)
 		return self.f
 
 class TransitParams(object):

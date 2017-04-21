@@ -22,11 +22,11 @@
 
 static PyObject *_logarithmic_ld(PyObject *self, PyObject *args);
 
-double intensity(double x, double c1, double c2, double norm)
+inline double intensity(double x, double* args)
 {
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	return (1. - c1*(1.-mu) - c2*mu*log(mu))/norm; 
+	return (1. - args[0]*(1.-mu) - args[1]*mu*log(mu))/args[2];
 }
 
 
@@ -61,7 +61,8 @@ static PyObject *_logarithmic_ld(PyObject *self, PyObject *args)
 	
 	double norm = (-3.*c1 + 2.*c2 + 9.)*M_PI/9.0; 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
 	double intensity_args[] = {c1, c2, norm};
-	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity, intensity_args);
+	#pragma acc data copyin(intensity_args)
+	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity_args);
 
 	return PyArray_Return((PyArrayObject *)flux);
 

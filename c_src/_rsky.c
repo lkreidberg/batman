@@ -18,11 +18,23 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include<math.h>
+
+#if defined (_OPENACC) && defined(__PGI)
+#  include <accelmath.h>
+#else
+#  include <math.h>
+#endif
+
+#if defined (_OPENMP) && !defined(_OPENACC)
+#  include <omp.h>
+#endif
 
 #ifndef M_PI
     #define M_PI 3.14159265358979323846
 #endif
+
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 static PyObject *_rsky(PyObject *self, PyObject *args);
 
@@ -46,11 +58,11 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 		(2002) paper, this quantity is denoted d.
 	*/
 	double ecc, inc, a, omega, per, tc, BIGD = 100.;
-	int transittype;
+	int transittype, nthreads;;
 	npy_intp dims[1];
 	PyArrayObject *ts, *ds;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddi", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype)) return NULL; 
+  	if(!PyArg_ParseTuple(args,"Oddddddii", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype, &nthreads)) return NULL;
 
 	dims[0] = PyArray_DIMS(ts)[0]; 
 	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
@@ -61,7 +73,15 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	const double n = 2.*M_PI/per;	// mean motion
 	const double eps = 1.0e-7;
 
-	#pragma acc parallel loop
+	#if defined (_OPENMP) && !defined(_OPENACC)
+	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
+	#endif
+
+	#if defined (_OPENACC)
+	#pragma acc parallel loop copyin(t_array[:dims[0]]) copyout(d_array[:dims[0]])
+	#elif defined (_OPENMP)
+	#pragma omp parallel for
+	#endif
 	for(int i = 0; i < dims[0]; i++)
 	{
 		double d;
@@ -102,12 +122,12 @@ static PyObject *_getf(PyObject *self, PyObject *args)
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
 		(2002) paper, this quantity is denoted d.
 	*/
-	double ecc, E, inc, a, f, omega, per, M, n, tp, tc, eps, t;
-	int transittype;
+	double ecc, inc, a, omega, per, n, tc, eps;
+	int transittype, nthreads;
 	npy_intp i, dims[1];
 	PyArrayObject *ts, *fs;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddi", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Oddddddii", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype, &nthreads)) return NULL;
 
 	dims[0] = PyArray_DIMS(ts)[0];
 	fs = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
@@ -118,15 +138,24 @@ static PyObject *_getf(PyObject *self, PyObject *args)
 	n = 2.*M_PI/per;	// mean motion
 	eps = 1.0e-7;
 
+	#if defined (_OPENMP) && !defined(_OPENACC)
+	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
+	#endif
+
+	#if defined (_OPENACC)
+	#pragma acc parallel loop copyin(t_array[:dims[0]]) copyout(f_array[:dims[0]])
+	#elif defined (_OPENMP)
+	#pragma omp parallel for
+	#endif
 	for(i = 0; i < dims[0]; i++)
 	{
-		t = t_array[i];
+		double t = t_array[i];
 
 		//calculates time of periastron passage from time of inferior conjunction
-		f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
-		E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
-		M = E - ecc*sin(E);
-		tp = tc - per*M/2./M_PI;							//time of periastron
+		double f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
+		double E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
+		double M = E - ecc*sin(E);
+		double tp = tc - per*M/2./M_PI;							//time of periastron
 
 		if(ecc < 1.0e-5)
 		{

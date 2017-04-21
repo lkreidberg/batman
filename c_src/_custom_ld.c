@@ -18,18 +18,7 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include<math.h>
-
-#if defined (_OPENMP)
-#  include <omp.h>
-#endif
-
-#ifndef M_PI
-    #define M_PI 3.14159265358979323846
-#endif
-
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#include "common.h"
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
@@ -40,12 +29,12 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args);
 	- The normalization constant is calculated by constraining the integrated intensity to equal 1:
 		\int_x \int_theta {I(x)*x*dx*dtheta}/norm = 1
 */
-double intensity(double x, double c1, double c2, double c3, double c4, double c5, double c6)
+inline double intensity(double x, double* args)
 {
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	double norm = 2.*M_PI*(-c1/6. - c2*c3/2. + c2/4. + 0.5 + c2*c3*c3*log(1. + 1./c3)/2.);
-	return (1. - c1*(1. - mu) - c2*log((mu + c3)/(1. + c3)))/norm;
+	double norm = 2.*M_PI*(-args[0]/6. - args[1]*args[2]/2. + args[3]/4. + 0.5 + args[1]*args[2]*args[2]*log(1. + 1./args[2])/2.);
+	return (1. - args[0]*(1. - mu) - args[1]*log((mu + args[2])/(1. + args[2])))/norm;
 }
 
 
@@ -78,7 +67,8 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 	*/
 
 	double intensity_args[] = {c1, c2, c3, c4, c5, c6};
-	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity, intensity_args);
+	#pragma acc data copyin(intensity_args)
+	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity_args);
 	return PyArray_Return((PyArrayObject *)flux);
 } 
 

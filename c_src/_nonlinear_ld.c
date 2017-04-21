@@ -16,17 +16,15 @@
  */
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include <Python.h>
 #include "numpy/arrayobject.h"
 #include "common.h"
 
 
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-
 static PyObject *_nonlinear_ld(PyObject *self, PyObject *args);
 
-double intensity(double x, double* args)
+inline double intensity(double x, double* args)
 {
 	//args should contain c1, c2, c3, c4, norm, in that order
 	if(x > 0.99995) x = 0.99995;
@@ -65,9 +63,10 @@ static PyObject *_nonlinear_ld(PyObject *self, PyObject *args)
 		Laura Kreidberg 07/2015
 	*/
 	double intensity_args[] = {c1, c2, c3, c4, norm};
-	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity, intensity_args);
-	return PyArray_Return((PyArrayObject *)flux);
 
+	#pragma acc data copyin(intensity_args)
+	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity_args);
+	return PyArray_Return((PyArrayObject *)flux);
 } 
 
 static char _nonlinear_ld_doc[] = "This extension module returns a limb darkened light curve for a nonlinear stellar intensity profile.";

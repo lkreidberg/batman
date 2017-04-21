@@ -20,14 +20,15 @@
 #include "numpy/arrayobject.h"
 #include "common.h"
 
+
 static PyObject *_exponential_ld(PyObject *self, PyObject *args);
 
-double intensity(double x, double c1, double c2, double norm)
+inline double intensity(double x, double* args)
 {
 	if(x > 0.99995) x = 0.99995;
 	if(x < 0.00005) x = 0.00005;
 	double mu = sqrt(1. - x*x);
-	return (1. - c1*(1. - mu) - c2/(1. - exp(mu)))/norm; 
+	return (1. - args[0]*(1. - mu) - args[1]/(1. - exp(mu)))/args[2];
 }
 
 
@@ -62,7 +63,8 @@ static PyObject *_exponential_ld(PyObject *self, PyObject *args)
 	
 	double norm = 2.*M_PI*(0.5 - 0.1666666667*c1 + 0.77750463*c2); 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
 	double intensity_args[] = {c1, c2, norm};
-	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity, intensity_args);
+	#pragma acc data copyin(intensity_args)
+	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity_args);
 	
 	return PyArray_Return((PyArrayObject *)flux);
 

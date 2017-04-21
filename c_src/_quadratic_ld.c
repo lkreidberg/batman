@@ -18,9 +18,14 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include <math.h>
 
-#if defined (_OPENMP)
+#if defined (_OPENACC) && defined(__PGI)
+#  include <accelmath.h>
+#else
+#  include <math.h>
+#endif
+
+#if defined (_OPENMP) && !defined(_OPENACC)
 #  include <omp.h>
 #endif
 
@@ -31,9 +36,9 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-double ellpic_bulirsch(double n, double k);
-double ellec(double k);
-double ellk(double k);
+inline double ellpic_bulirsch(double n, double k);
+inline double ellec(double k);
+inline double ellk(double k);
 static PyObject *_quadratic_ld(PyObject *self, PyObject *args);
 
 static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
@@ -52,18 +57,15 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
      Limb darkening has the form:
      I(r) = [1 - c1 * (1 - sqrt(1 - (r/rs)^2)) - c2*(1 - sqrt(1 - (r/rs)^2))^2]/(1 - c1/3 - c2/6)/pi
 */
-    int nd, nthreads;
-    double c1, c2, p, lambdad, etad, \
-        lambdae, x1, x2, x3, d, omega, kap0 = 0.0, kap1 = 0.0, \
-        q, Kk, Ek, Pk, n;
+    const int nthreads;
+    const double c1, c2, p;
     PyArrayObject *ds, *flux;
-    npy_intp i, dims[1];
+    npy_intp dims[1];
 
     if(!PyArg_ParseTuple(args,"Odddi", &ds, &p, &c1, &c2, &nthreads)) return NULL;
 
     dims[0] = PyArray_DIMS(ds)[0];
     flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));    //creates numpy array to store return flux values
-    nd = (int)dims[0];
 
     double *f_array = PyArray_DATA(flux);
     double *d_array = PyArray_DATA(ds);
@@ -79,20 +81,24 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     Laura Kreidberg 07/2015
     */
 
-    omega = 1.0 - c1/3.0 - c2/6.0;
+    const double omega = 1.0 - c1/3.0 - c2/6.0;
     // double precision equality tolerance for corner case issues
-    double tol = 1.0e-14;
+    const double tol = 1.0e-14;
 
-    #if defined (_OPENMP)
-    omp_set_num_threads(nthreads);
-    #endif
+	#if defined (_OPENMP) && !defined(_OPENACC)
+	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
+	#endif
 
-    #if defined (_OPENMP)
-    #pragma omp parallel for private(d, x1, x2, x3, n, q, Kk, Ek, Pk, kap0, kap1, lambdad, lambdae, etad)
-    #endif
-    for(i = 0; i < dims[0]; i++)
+	#if defined (_OPENACC)
+	#pragma acc parallel loop copyin(d_array[:dims[0]]) copyout(f_array[:dims[0]])
+	#elif defined (_OPENMP)
+	#pragma omp parallel for
+	#endif
+    for (int i = 0; i < dims[0]; i++)
     {
-        d = d_array[i];
+    	double kap0 = 0.0, kap1 = 0.0;
+    	double lambdad, lambdae, etad;
+        double d = d_array[i];
 
         // allow for negative impact parameters
         d = fabs(d);
@@ -115,9 +121,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             d = 0.0;
         }
 
-        x1 = pow((p - d), 2.0);
-        x2 = pow((p + d), 2.0);
-        x3 = p*p - d*d;
+        double x1 = pow((p - d), 2.0);
+        double x2 = pow((p + d), 2.0);
+        double x3 = p*p - d*d;
 
         //source is unocculted:
         if(d >= 1.0 + p)
@@ -153,9 +159,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             if(d < 0.5)
             {
                 //printf("zone 5.2\n");
-                q = 2.0*p;
-                Kk = ellk(q);
-                Ek = ellec(q);
+                double q = 2.0*p;
+                double Kk = ellk(q);
+                double Ek = ellec(q);
                 lambdad = 1.0/3.0 + 2.0/9.0/M_PI*(4.0*(2.0*p*p - 1.0)*Ek + (1.0 - 4.0*p*p)*Kk);
                 etad = p*p/2.0*(p*p + 2.0*d*d);
                 f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
@@ -164,9 +170,9 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             else if(d > 0.5)
             {
                 //printf("zone 5.1\n");
-                q = 0.5/p;
-                Kk = ellk(q);
-                Ek = ellec(q);
+                double q = 0.5/p;
+                double Kk = ellk(q);
+                double Ek = ellec(q);
                 lambdad = 1.0/3.0 + 16.0*p/9.0/M_PI*(2.0*p*p - 1.0)*Ek -  \
                           (32.0*pow(p, 4.0) - 20.0*p*p + 3.0)/9.0/M_PI/p*Kk;
                 etad = 1.0/2.0/M_PI*(kap1 + p*p*(p*p + 2.0*d*d)*kap0 -  \
@@ -192,11 +198,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             && d < p))
         {
             //printf("zone 3.1\n");
-            q = sqrt((1.0 - x1)/4.0/d/p);
-            Kk = ellk(q);
-            Ek = ellec(q);
-            n = 1.0/x1 - 1.0;
-            Pk = ellpic_bulirsch(n, q);
+            double q = sqrt((1.0 - x1)/4.0/d/p);
+            double Kk = ellk(q);
+            double Ek = ellec(q);
+            double n = 1.0/x1 - 1.0;
+            double Pk = ellpic_bulirsch(n, q);
             lambdad = 1.0/9.0/M_PI/sqrt(p*d)*(((1.0 - x2)*(2.0*x2 +  \
                     x1 - 3.0) - 3.0*x3*(x2 - 2.0))*Kk + 4.0*p*d*(d*d +  \
                     7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
@@ -213,11 +219,11 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
             lambdae = p*p;
 
             //printf("zone 4.1\n");
-            q = sqrt((x2 - x1)/(1.0 - x1));
-            Kk = ellk(q);
-            Ek = ellec(q);
-            n = x2/x1 - 1.0;
-            Pk = ellpic_bulirsch(n, q);
+            double q = sqrt((x2 - x1)/(1.0 - x1));
+            double Kk = ellk(q);
+            double Ek = ellec(q);
+            double n = x2/x1 - 1.0;
+            double Pk = ellpic_bulirsch(n, q);
 
             lambdad = 2.0/9.0/M_PI/sqrt(1.0 - x1)*((1.0 - 5.0*d*d + p*p +  \
                      x3*x3)*Kk + (1.0 - x1)*(d*d + 7.0*p*p - 4.0)*Ek - 3.0*x3/x1*Pk);
@@ -256,7 +262,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     (Eastman et al. 2013, PASP 125, 83) by Laura Kreidberg (7/22/15)
 */
 
-double ellpic_bulirsch(double n, double k)
+inline double ellpic_bulirsch(double n, double k)
 {
     double kc = sqrt(1.-k*k);
     double p = sqrt(n + 1.);
@@ -292,7 +298,7 @@ double ellpic_bulirsch(double n, double k)
     return 0;
 }
 
-double ellec(double k)
+inline double ellec(double k)
 {
     double m1, a1, a2, a3, a4, b1, b2, b3, b4, ee1, ee2, ellec;
     // Computes polynomial approximation for the complete elliptic
@@ -312,7 +318,7 @@ double ellec(double k)
     return ellec;
 }
 
-double ellk(double k)
+inline double ellk(double k)
 {
     double a0, a1, a2, a3, a4, b0, b1, b2, b3, b4, ellk,  ek1, ek2, m1;
     // Computes polynomial approximation for the complete elliptic
