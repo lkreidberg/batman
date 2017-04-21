@@ -33,27 +33,27 @@
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args);
 
-double intensity(double x, double c1, double c2, double c3, double c4, double c5, double c6);
-
-double area(double d, double x, double R)
+/*
+	- The intensity function returns the stellar intensity at a radius x; where 0 <= x <= 1
+	- The function arguments are the normalized radius (x), and limb darkening coefficients c1, ..., un
+	- see below for an example intensity profile for I(x) \propto 1 - c1*(1-sqrt(1-x^2)) - c2*ln((sqrt(1-x^2)+c)/(1+c))
+	- The normalization constant is calculated by constraining the integrated intensity to equal 1:
+		\int_x \int_theta {I(x)*x*dx*dtheta}/norm = 1
+*/
+double intensity(double x, double c1, double c2, double c3, double c4, double c5, double c6)
 {
-	/*
-	Returns area of overlapping circles with radii x and R; separated by a distance d
-	*/
-	double arg1 = (d*d + x*x - R*R)/(2.*d*x);
-	double arg2 = (d*d + R*R - x*x)/(2.*d*R); 
-	double arg3 = MAX((-d + x + R)*(d + x - R)*(d - x + R)*(d + x + R), 0.);
-
-	if(x <= R - d) return M_PI*x*x;							//planet completely overlaps stellar circle
-	else if(x >= R + d) return M_PI*R*R;						//stellar circle completely overlaps planet
-	else return x*x*acos(arg1) + R*R*acos(arg2) - 0.5*sqrt(arg3);			//partial overlap
+	if(x > 0.99995) x = 0.99995;
+	double mu = sqrt(1. - x*x);
+	double norm = 2.*M_PI*(-c1/6. - c2*c3/2. + c2/4. + 0.5 + c2*c3*c3*log(1. + 1./c3)/2.);
+	return (1. - c1*(1. - mu) - c2*log((mu + c3)/(1. + c3)))/norm;
 }
+
 
 static PyObject *_custom_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, x, I, dx, A_f, x_in, x_out, delta, c1, c2, c3, c4, c5, c6;
+	double rprs, fac, c1, c2, c3, c4, c5, c6;
 	int nthreads;
-	npy_intp i, dims[1];
+	npy_intp dims[1];
 	PyArrayObject *ds, *flux;
 
   	if(!PyArg_ParseTuple(args,"Oddddddddi", &ds, &rprs, &c1, &c2, &c3, &c4, &c5, &c6, &fac, &nthreads)) return NULL; //parses input arguments
@@ -77,46 +77,8 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args)
 		Laura Kreidberg 07/2015
 	*/
 
-	#if defined (_OPENMP)
-	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
-	#endif
-
-	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, x_in, x_out, delta, x, dx, A_i, A_f, I)
-	#endif
-	for(i = 0; i < dims[0]; i++)
-	{
-		d = d_array[i];
-		x_in = MAX(d - rprs, 0.);						//lower bound for integration
-		x_out = MIN(d + rprs, 1.0);						//upper bound for integration
-
-		if(x_in >= 1.) f_array[i] = 1.0;					//flux = 1. if the planet is not transiting
-		else
-		{
-			delta = 0.;							//variable to store the integrated intensity, \int I dA
-
-			x = x_in;							//starting radius for integration
-			dx = fac*acos(x); 						//initial step size 
-			x += dx;							//first step
-			A_i = 0.;							//initial area
-	
-			while(x < x_out)
-			{
-				A_f = area(d, x, rprs);					//calculates area of overlapping circles
-				I = intensity(x - dx/2.,c1,c2, c3, c4, c5, c6); 	//intensity at the midpoint
-				delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
-				dx = fac*acos(x);  					//updating step size
-				x = x + dx;						//stepping to next element
-				A_i = A_f;						//storing area
-			}
-			dx = x_out - x + dx;  						//calculating change in radius for last step
-			x = x_out;							//final radius for integration
-			A_f = area(d, x, rprs);						//area for last integration step
-			I = intensity(x - dx/2., c1, c2, c3, c4, c5, c6); 		//intensity at the midpoint 
-			delta += (A_f - A_i)*I;						//increase in transit depth for this integration step
-			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
-		}
-	}
+	double intensity_args[] = {c1, c2, c3, c4, c5, c6};
+	calc_limb_darkening(f_array, d_array, dims[0], rprs, fac, nthreads, intensity, intensity_args);
 	return PyArray_Return((PyArrayObject *)flux);
 } 
 
