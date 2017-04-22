@@ -294,7 +294,10 @@ inline double ellpic_bulirsch(double n, double k)
         }
         nit++;
     }
+
+	#ifndef _OPENACC
     printf("Convergence failure in ellpic_bulirsch\n");
+	#endif
     return 0;
 }
 
