@@ -118,8 +118,7 @@ class TransitModel(object):
 		if transittype == "primary": self.transittype = 1
 		else: 
 			self.transittype = 2
-			params.t0 = self.get_t_conjunction(params)
-		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
+			params.t0 = self.get_t_conjunction(params)		
 		
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
@@ -131,6 +130,7 @@ class TransitModel(object):
 				if nthreads > multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
 				elif nthreads <= 1: raise Exception("Number of threads must be between 2 and {0:d}".format(multiprocessing.cpu_count()))
 				else: raise Exception("OpenMP not enabled: do not set the nthreads parameter")
+                self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 
 	def calc_err(self, plot = False):
 		"""
