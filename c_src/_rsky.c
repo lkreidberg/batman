@@ -56,6 +56,8 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 		denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book
 		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
 		(2002) paper, this quantity is denoted d.
+
+		If f_only is 1, this function returns the true anomaly instead of the distance.
 	*/
 	double ecc, inc, a, omega, per, tc, BIGD = 100.;
 	int transittype, nthreads;;

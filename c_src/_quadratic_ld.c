@@ -85,19 +85,19 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
     // double precision equality tolerance for corner case issues
     const double tol = 1.0e-14;
 
-	#if defined (_OPENMP) && !defined(_OPENACC)
-	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
-	#endif
+    #if defined (_OPENMP) && !defined(_OPENACC)
+    omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
+    #endif
 
-	#if defined (_OPENACC)
-	#pragma acc parallel loop copyin(d_array[:dims[0]]) copyout(f_array[:dims[0]])
-	#elif defined (_OPENMP)
-	#pragma omp parallel for
-	#endif
+    #if defined (_OPENACC)
+    #pragma acc parallel loop copyin(d_array[:dims[0]]) copyout(f_array[:dims[0]])
+    #elif defined (_OPENMP)
+    #pragma omp parallel for
+    #endif
     for (int i = 0; i < dims[0]; i++)
     {
-    	double kap0 = 0.0, kap1 = 0.0;
-    	double lambdad, lambdae, etad;
+        double kap0 = 0.0, kap1 = 0.0;
+        double lambdad, lambdae, etad;
         double d = d_array[i];
 
         // allow for negative impact parameters
@@ -295,9 +295,9 @@ inline double ellpic_bulirsch(double n, double k)
         nit++;
     }
 
-	#ifndef _OPENACC
+    #ifndef _OPENACC
     printf("Convergence failure in ellpic_bulirsch\n");
-	#endif
+    #endif
     return 0;
 }
 

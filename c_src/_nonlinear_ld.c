@@ -29,7 +29,7 @@ inline double intensity(double x, double* args)
 	double c1=args[0], c2=args[1], c3=args[2], c4=args[3], norm=args[4];
 	if(x > 0.99995) x = 0.99995;
 	double sqrtmu = pow(1. - x*x,0.25);
-	return (1. - c1*(1. - sqrtmu) - c2*(1. - pow(sqrtmu,2.)) - c3*(1. - pow(sqrtmu, 3.)) - c4*(1. - pow(sqrtmu,4.)))/norm;
+	return (1. - c1*(1. - sqrtmu) - c2*(1. - pow(sqrtmu,2.)) - c3*(1. - pow(sqrtmu, 3.)) - c4*(1. - pow(sqrtmu,4.)))/norm; 
 }
 
 

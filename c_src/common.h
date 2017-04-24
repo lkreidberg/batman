@@ -1,3 +1,21 @@
+/* The batman package: fast computation of exoplanet transit light curves
+ * Copyright (C) 2015 Laura Kreidberg
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 #if defined (_OPENACC) && defined(__PGI)
 #  include <accelmath.h>
 #else
@@ -15,7 +33,8 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-inline double intensity(double x, double* args); //must be defined in the C file including this header
+/* Must be defined in the C file that includes this header. */
+inline double intensity(double x, double* args);
 
 inline double area(double d, double x, double R)
 {
@@ -34,16 +53,12 @@ inline double area(double d, double x, double R)
 void calc_limb_darkening(double* f_array, double* d_array, int N, double rprs, double fac, int nthreads, double* intensity_args)
 {
 	/*
-		NOTE:  the safest way to access numpy arrays is to use the PyArray_GETITEM and PyArray_SETITEM functions.
-		Here we use a trick for faster access and more convenient access, where we set a pointer to the
-		beginning of the array with the PyArray_DATA (e.g., f_array) and access elements with e.g., f_array[i].
-		Success of this operation depends on the numpy array storing data in blocks equal in size to a C double.
-		If you run into trouble along these lines, I recommend changing the array access to something like:
-			d = PyFloat_AsDouble(PyArray_GETITEM(ds, PyArray_GetPtr(ds, &i)));
-		where ds is a numpy array object.
+		This function takes an array of sky distances (d_array) of length N, computes stellar intensity by calling intensity with
+		intensity_args, and puts the results in f_array.  To use this function, include this file in a .c file and implement
+		the intensity function within that .c file.
 
-
-		Laura Kreidberg 07/2015
+		The proper way of implementing this function is to accept a pointer to the intensity function.  Unfortunately, few
+		compilers that implement OpenACC support function pointers, so this approach is not yet possible.
 	*/
 
 	#if defined (_OPENMP) && !defined(_OPENACC)

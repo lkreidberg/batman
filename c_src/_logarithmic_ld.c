@@ -27,7 +27,7 @@ inline double intensity(double x, double* args)
 	double c1=args[0], c2=args[1], norm=args[2];
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	return (1. - c1*(1.-mu) - c2*mu*log(mu))/norm;
+	return (1. - c1*(1.-mu) - c2*mu*log(mu))/norm; 
 }
 
 
