@@ -31,10 +31,11 @@ static PyObject *_custom_ld(PyObject *self, PyObject *args);
 */
 inline double intensity(double x, double* args)
 {
+	double c1=args[0], c2=args[1], c3=args[2];
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	double norm = 2.*M_PI*(-args[0]/6. - args[1]*args[2]/2. + args[3]/4. + 0.5 + args[1]*args[2]*args[2]*log(1. + 1./args[2])/2.);
-	return (1. - args[0]*(1. - mu) - args[1]*log((mu + args[2])/(1. + args[2])))/norm;
+	double norm = 2.*M_PI*(-c1/6. - c2*c3/2. + c2/4. + 0.5 + c2*c3*c3*log(1. + 1./c3)/2.);
+	return (1. - c1*(1. - mu) - c2*log((mu + c3)/(1. + c3)))/norm;
 }
 
 

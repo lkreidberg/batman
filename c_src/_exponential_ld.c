@@ -25,10 +25,11 @@ static PyObject *_exponential_ld(PyObject *self, PyObject *args);
 
 inline double intensity(double x, double* args)
 {
+	double c1=args[0], c2=args[1], norm=args[2];
 	if(x > 0.99995) x = 0.99995;
 	if(x < 0.00005) x = 0.00005;
 	double mu = sqrt(1. - x*x);
-	return (1. - args[0]*(1. - mu) - args[1]/(1. - exp(mu)))/args[2];
+	return (1. - c1*(1. - mu) - c2/(1. - exp(mu)))/norm;
 }
 
 

@@ -24,9 +24,10 @@ static PyObject *_logarithmic_ld(PyObject *self, PyObject *args);
 
 inline double intensity(double x, double* args)
 {
+	double c1=args[0], c2=args[1], norm=args[2];
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	return (1. - args[0]*(1.-mu) - args[1]*mu*log(mu))/args[2];
+	return (1. - c1*(1.-mu) - c2*mu*log(mu))/norm;
 }
 
 
