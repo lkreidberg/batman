@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 
+
 """
 Check for OpenMP based on
 https://github.com/MDAnalysis/mdanalysis/tree/develop/package/setup.py
@@ -69,6 +70,7 @@ _quadratic_ld = Extension('batman._quadratic_ld', ['c_src/_quadratic_ld.c'], ext
 _uniform_ld   = Extension('batman._uniform_ld', ['c_src/_uniform_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _logarithmic_ld   = Extension('batman._logarithmic_ld', ['c_src/_logarithmic_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _exponential_ld   = Extension('batman._exponential_ld', ['c_src/_exponential_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
+_power2_ld   = Extension('batman._power2_ld', ['c_src/_power2_ld.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _custom_ld   = Extension('batman._custom_ld', ['c_src/_custom_ld.c', 'c_src/_custom_intensity.c'], extra_compile_args = parallel_args, libraries = parallel_libraries) 
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
 _eclipse = Extension('batman._eclipse', ['c_src/_eclipse.c'])
@@ -92,5 +94,5 @@ setup(	name='batman-package',
 	extras_requires= {
 	    'matplotlib': ['matplotlib'],
 	},
-	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _custom_ld, _rsky, _eclipse]
+	ext_modules=[_nonlinear_ld, _quadratic_ld, _uniform_ld, _logarithmic_ld, _exponential_ld, _power2_ld, _custom_ld, _rsky, _eclipse]
 )

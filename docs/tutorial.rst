@@ -26,7 +26,7 @@ Initializing the model
 	t = np.linspace(-0.025, 0.025, 1000)  #times at which to calculate light curve	
 	m = batman.TransitModel(params, t)    #initializes model
 
-The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "square-root", "logarithmic", "exponential", "nonlinear", and "custom" limb darkening). 
+The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for "square-root", "logarithmic", "exponential", "nonlinear", "power2", and "custom" limb darkening). 
 
 
 Calculating light curves
@@ -51,7 +51,7 @@ Now that the model has been set up, we can change the transit parameters and rec
 
 Limb darkening options
 ----------------------
-The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", "square-root", "logarithmic", "exponential", and "nonlinear".  These options assume the following form for the stellar intensity profile:
+The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", "square-root", "logarithmic", "exponential", "power2", and "nonlinear".  These options assume the following form for the stellar intensity profile:
 
 .. math::
 
@@ -62,6 +62,7 @@ The ``batman`` package currently supports the following pre-defined limb darkeni
   	  I(\mu) &= I_0[1 - c_1(1 - \mu) - c_2(1-\sqrt{\mu})]                                   & &\text{(square-root)}         \\
   	  I(\mu) &= I_0[1 - c_1(1 - \mu) - c_2\mu\ln{\mu}]                                      & &\text{(logarithmic)}         \\
   	  I(\mu) &= I_0\left[1 - c_1(1 - \mu) - c_2/(1-\exp{\mu})\right]                  	& &\text{(exponential)}         \\
+  	  I(\mu) &= I_0\left[1 - c_1(1 - \mu^c_2)\right]                  	& &\text{(power2)}         \\
 	  I(\mu) &= I_0[1 - c_1(1-\mu^{1/2}) - c_2(1- \mu) - c_3(1-\mu^{3/2}) - c_4(1-\mu^2)]  	& &\text{(nonlinear)}				
 	\end{align}
 

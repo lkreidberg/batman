@@ -14,3 +14,4 @@ Many thanks to the following individuals for their support in the development of
 - Karl Fogel
 - Jason Eastman
 - Ian Crossfield
+- Michael Zhang

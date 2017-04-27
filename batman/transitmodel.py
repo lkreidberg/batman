@@ -20,6 +20,7 @@ from . import _quadratic_ld
 from . import _uniform_ld
 from . import _logarithmic_ld
 from . import _exponential_ld
+from . import _power2_ld
 from . import _custom_ld
 from . import _rsky
 from . import _eclipse
@@ -72,16 +73,17 @@ class TransitModel(object):
 		if  (params.limb_dark == "uniform" and len(params.u) != 0) or (params.limb_dark == "linear" and len(params.u) != 1) or \
 		    (params.limb_dark == "quadratic" and len(params.u) != 2) or (params.limb_dark == "logarithmic" and len(params.u) != 2) or \
 		    (params.limb_dark == "exponential" and len(params.u) != 2) or (params.limb_dark == "squareroot" and len(params.u) != 2) or \
+		    (params.limb_dark == "power2" and len(params.u) != 2) or \
 		    (params.limb_dark == "nonlinear" and len(params.u) != 4):
 			raise Exception("Incorrect number of coefficients for " +params.limb_dark + " limb darkening; u should have the form:\n \
 			 u = [] for uniform LD\n \
 			 u = [u1] for linear LD\n \
-  			 u = [u1, u2] for quadratic, logarithmic, exponential, and squareroot LD\n \
+  			 u = [u1, u2] for quadratic, logarithmic, exponential, squareroot, and power2 LD\n \
 			 u = [u1, u2, u3, u4] for nonlinear LD, or\n \
 		         u = [u1, ..., un] for custom LD") 
-		if params.limb_dark not in ["uniform", "linear", "quadratic", "logarithmic", "exponential", "squareroot", "nonlinear", "custom"]: 
+		if params.limb_dark not in ["uniform", "linear", "quadratic", "logarithmic", "exponential", "squareroot", "nonlinear", "power2", "custom"]: 
 			raise Exception("\""+params.limb_dark+"\""+" limb darkening not supported; allowed options are:\n \
-				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, custom")
+				uniform, linear, quadratic, logarithmic, exponential, squareroot, nonlinear, power2, custom")
 		if max_err < 0.001: raise Exception("The lowest allowed value for max_err is 0.001. For more accurate calculation, set the integration step size explicitly with the fac parameter.")
 		if transittype not in ["primary", "secondary"]: raise Exception("Allowed transit types are \"primary\" and \"secondary\".")
 		if (supersample_factor > 1 and exp_time <= 0.): raise Exception("Please enter a valid exposure time (exp_time must be greater than 0 to calculate super-sampled light curves).")
@@ -144,7 +146,7 @@ class TransitModel(object):
 		:rtype: float
 
 		"""
-		if self.limb_dark in ["logarithmic", "exponential", "nonlinear", "squareroot", "custom"]:
+		if self.limb_dark in ["logarithmic", "exponential", "nonlinear", "squareroot", "power2", "custom"]:
 			ds = np.linspace(0., 1.1, 500)
 			fac_lo = 5.0e-4
 			if self.limb_dark == "nonlinear":
@@ -159,6 +161,9 @@ class TransitModel(object):
 			elif self.limb_dark == "logarithmic":
 				f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
 				f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "power2":
+				f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+				f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
 			else:
 				f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
 				f =  _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
@@ -175,7 +180,7 @@ class TransitModel(object):
 		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 
 	def _get_fac(self):
-		if self.limb_dark in ["logarithmic", "exponential", "squareroot", "nonlinear", "custom"]:
+		if self.limb_dark in ["logarithmic", "exponential", "squareroot", "nonlinear", "power2", "custom"]:
 			nthreads = 1
 			fac_lo, fac_hi = 5.0e-4, 1.
 			ds = np.linspace(0., 1.+self.rp, 1000)
@@ -183,6 +188,7 @@ class TransitModel(object):
 			elif self.limb_dark == "squareroot": f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, nthreads)
 			elif self.limb_dark == "exponential": f0 = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
 			elif self.limb_dark == "logarithmic": f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
+			elif self.limb_dark == "power2": f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
 			else: f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
 
 			n = 0
@@ -193,6 +199,7 @@ class TransitModel(object):
 				elif self.limb_dark == "squareroot": f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac, nthreads)
 				elif self.limb_dark == "exponential": f = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
 				elif self.limb_dark == "logarithmic": f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
+				elif self.limb_dark == "power2": f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
 				else: f = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
 
 				err = np.max(np.abs(f-f0))*1.0e6
@@ -254,8 +261,8 @@ class TransitModel(object):
 			elif self.limb_dark == "uniform": lc = _uniform_ld._uniform_ld(self.ds, params.rp, self.nthreads)
 			elif self.limb_dark == "logarithmic": lc = _logarithmic_ld._logarithmic_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads)
 			elif self.limb_dark == "exponential": lc = _exponential_ld._exponential_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "power2": lc = _power2_ld._power2_ld(self.ds, params.rp, params.u[0], params.u[1], self.fac, self.nthreads)
 			elif self.limb_dark == "custom": lc = _custom_ld._custom_ld(self.ds, params.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
-			#elif self.limb_dark == "mandelagol": lc = _mandelagol_nonlinear_ld._mandelagol_nonlinear_ld(self.ds, params.u[0], params.u[1], params.u[2], params.u[3], params.rp, len(self.ds))
 			else: raise Exception("Invalid limb darkening option")
 
 			if self.inverse == True: lc = 2. - lc
@@ -336,7 +343,7 @@ class TransitParams(object):
 	:param u: List of limb darkening coefficients.
 	:type u: array_like 
 
-	:param limb_dark: Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", or "custom").
+	:param limb_dark: Limb darkening model (choice of "nonlinear", "quadratic", "exponential", "logarithmic", "squareroot", "linear", "uniform", "power2", or "custom").
 	:type limb_dark: str
 
 	:param fp: Planet-to-star flux ratio (for secondary eclipse models).

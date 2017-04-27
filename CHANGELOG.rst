@@ -1,4 +1,8 @@
 .. :changelog:
+2.4.0 (2017-04-27)
+~~~~~~~~~~~~~~~~~~
+- add power2 limb darkening model from Morello et al. 2017
+
 2.3.0 (2015-03-11)
 ~~~~~~~~~~~~~~~~~~
 - add get_true_anomaly() method
