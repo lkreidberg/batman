@@ -34,9 +34,11 @@
 static PyObject *_power2_ld(PyObject *self, PyObject *args);
 
 double intensity(double x, double c1, double c2, double norm)
+{
 	if(x > 0.99995) x = 0.99995;
 	double mu = sqrt(1. - x*x);
-	return (1. - c1*(1.-mu**c2))/norm; 
+	return (1. - c1*(1.-pow(mu,c2)))/norm; 
+}
 
 double area(double d, double x, double R)
 {
@@ -59,7 +61,7 @@ static PyObject *_power2_ld(PyObject *self, PyObject *args)
 	npy_intp i, dims[1];
 	PyArrayObject *ds, *flux;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddddi", &ds, &rprs, &c1, &c2, &fac, &nthreads)) return NULL; //parses input arguments
+  	if(!PyArg_ParseTuple(args,"Oddddi", &ds, &rprs, &c1, &c2, &fac, &nthreads)) return NULL; //parses input arguments
 	
 	dims[0] = PyArray_DIMS(ds)[0]; 
 	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
@@ -84,6 +86,9 @@ static PyObject *_power2_ld(PyObject *self, PyObject *args)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
 	#endif
 
+	//double norm = (-3.*c1 + 2.*c2 + 9.)*M_PI/9.0; 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
+	double norm = 2.*M_PI*(0.5 - c1/2. + c1/(2.+c2)); 	//normalization for intensity profile (faster to calculate it once, rather than every time intensity is called)		
+
 	#if defined (_OPENMP)
 	#pragma omp parallel for private(d, x_in, x_out, delta, x, dx, A_i, A_f, I)
 	#endif
@@ -106,7 +111,7 @@ static PyObject *_power2_ld(PyObject *self, PyObject *args)
 			while(x < x_out)
 			{
 				A_f = area(d, x, rprs);					//calculates area of overlapping circles
-				I = intensity(x - dx/2.,c1,c2); 			//intensity at the midpoint
+				I = intensity(x - dx/2., c1, c2, norm); 		//intensity at the midpoint
 				delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
 				dx = fac*acos(x);  					//updating step size
 				x = x + dx;						//stepping to next element
@@ -115,7 +120,7 @@ static PyObject *_power2_ld(PyObject *self, PyObject *args)
 			dx = x_out - x + dx;  						//calculating change in radius for last step
 			x = x_out;							//final radius for integration
 			A_f = area(d, x, rprs);						//area for last integration step
-			I = intensity(x - dx/2., c1, c2); 				//intensity at the midpoint 
+			I = intensity(x - dx/2., c1, c2, norm); 			//intensity at the midpoint 
 			delta += (A_f - A_i)*I;						//increase in transit depth for this integration step
 			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA 
 		}
