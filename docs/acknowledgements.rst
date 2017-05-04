@@ -14,6 +14,7 @@ Many thanks to the following individuals for their support in the development of
 - Karl Fogel
 - Jason Eastman
 - Ian Crossfield
+- Mark Omohundro
 - Michael Hippke
 - Hannu Parviainen
 - Michael Zhang
