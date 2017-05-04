@@ -14,7 +14,7 @@ Welcome to the documentation for ``batman``, a Python package for fast calculati
 
 In typical use, ``batman`` can calculate a million model light curves in well under 10 minutes for any limb darkening profile.
 
-A `paper <http://arxiv.org/abs/1507.08285>`_ describing ``batman`` is up on arXiv; please cite it if you make use of the package!
+Please cite the `paper <http://adsabs.harvard.edu/abs/2015PASP..127.1161K>`_ if you make use of ``batman`` in your work!
 
 Contents:
 
