@@ -21,7 +21,7 @@ Initializing the model
 	params.ecc = 0.			      #eccentricity	
 	params.w = 90.			      #longitude of periastron (in degrees) 
 	params.limb_dark = "nonlinear"        #limb darkening model
-   	params.u = [0.5, 0.1, 0.1, -0.1]      #limb darkening coefficients
+   	params.u = [0.5, 0.1, 0.1, -0.1]      #limb darkening coefficients [u1, u2, u3, u4]
 	   
 	t = np.linspace(-0.025, 0.025, 1000)  #times at which to calculate light curve	
 	m = batman.TransitModel(params, t)    #initializes model
