@@ -51,7 +51,7 @@ Now that the model has been set up, we can change the transit parameters and rec
 
 Limb darkening options
 ----------------------
-The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", "square-root", "logarithmic", "exponential", "power2", and "nonlinear".  These options assume the following form for the stellar intensity profile:
+The ``batman`` package currently supports the following pre-defined limb darkening options: "uniform", "linear", "quadratic", "square-root", "logarithmic", "exponential", "power2" (from Morello et al. 2017), and "nonlinear".  These options assume the following form for the stellar intensity profile:
 
 .. math::
 
