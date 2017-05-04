@@ -51,7 +51,7 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 	#endif
 
 	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, kap1, kap0)
+	#pragma omp parallel for private(d, kap1, kap0, alpha_t, alpha_o)
 	#endif
 	for(i=0; i<dims[0]; i++)
 	{
