@@ -76,9 +76,9 @@ _rsky = Extension('batman._rsky', ['c_src/_rsky.c'])
 _eclipse = Extension('batman._eclipse', ['c_src/_eclipse.c'])
 
 setup(	name='batman-package', 
-	version="2.3.0",
+	version="2.4.0",
 	author='Laura Kreidberg',
-	author_email = 'laura.kreidberg@uchicago.edu',
+	author_email = 'laura.kreidberg@gmail.com',
 	url = 'https://github.com/lkreidberg/batman',
 	packages =['batman'],
 	license = ['GNU GPLv3'],

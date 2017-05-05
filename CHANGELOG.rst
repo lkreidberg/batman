@@ -1,7 +1,10 @@
 .. :changelog:
-2.4.0 (2017-04-27)
+
+2.4.0 (2017-05-03)
 ~~~~~~~~~~~~~~~~~~
 - add power2 limb darkening model from Morello et al. 2017
+- bug fix for secondary eclipse calculation (make variables private to avoid race condition)
+- OpenACC to take advantage of GPU acceleration (thanks to Michael Zhang)
 
 2.3.0 (2015-03-11)
 ~~~~~~~~~~~~~~~~~~

@@ -24,7 +24,7 @@ Next we create a ``TransitParams`` object to store the physical parameters descr
 	params.inc = 87.		     #orbital inclination (in degrees)	
 	params.ecc = 0.			     #eccentricity	
 	params.w = 90.		   	     #longitude of periastron (in degrees)
-	params.u = [0.1, 0.3]  	             #limb darkening coefficients
+	params.u = [0.1, 0.3]  	             #limb darkening coefficients [u1, u2]
 	params.limb_dark = "quadratic"       #limb darkening model
 
 Note that for circular orbits, ``batman`` uses the convention ``params.w = 90``.  The units for ``params.t0`` and ``params.per`` can be anything as long as they are consistent.
