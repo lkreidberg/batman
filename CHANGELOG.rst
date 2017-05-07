@@ -1,4 +1,7 @@
 .. :changelog:
+2.4.1 (2017-05-07)
+~~~~~~~~~~~~~~~~~~
+- fix calculation of eccentric anomaly to handle diabolical inputs (following Eastmane et al. 2013)
 
 2.4.0 (2017-05-03)
 ~~~~~~~~~~~~~~~~~~

@@ -31,8 +31,16 @@ static PyObject *_getf(PyObject *self, PyObject *args);
 inline double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
 	double E = M, eps = 1.0e-7;
+	double fe, fs;
 
-	while(fabs(E - e*sin(E) - M) > eps) E = E - (E - e*sin(E) - M)/(1.0 - e*cos(E));
+	// modification from LK 05/07/2017:
+	// add fmod to ensure convergence for diabolical inputs (following Eastman et al. 2013; Section 3.1)
+	while(fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps)
+	{
+		fe = fmod(E - e*sin(E) - M, 2.*M_PI);
+		fs = fmod(1 - e*cos(E), 2.*M_PI);
+		E = E - fe/fs;
+	}
 	return E;
 }
 
@@ -59,7 +67,7 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
 	double *d_array = PyArray_DATA(ds);
 
 	const double n = 2.*M_PI/per;	// mean motion
-	const double eps = 1.0e-7;
+	//const double eps = 1.0e-7;
 
 	#pragma acc parallel loop
 	for(int i = 0; i < dims[0]; i++)
