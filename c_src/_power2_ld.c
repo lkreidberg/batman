@@ -33,9 +33,9 @@ inline double intensity(double x, double* args)
 
 static PyObject *_power2_ld(PyObject *self, PyObject *args)
 {
-	double rprs, d, fac, A_i, x, I, dx, A_f, x_in, x_out, delta, c1, c2;
+	double rprs, fac, c1, c2;
 	int nthreads;
-	npy_intp i, dims[1];
+	npy_intp dims[1];
 	PyArrayObject *ds, *flux;
 
   	if(!PyArg_ParseTuple(args,"Oddddi", &ds, &rprs, &c1, &c2, &fac, &nthreads)) return NULL; //parses input arguments
