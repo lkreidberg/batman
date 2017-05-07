@@ -18,9 +18,14 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include <math.h>
 
-#if defined (_OPENMP)
+#if defined (_OPENACC) && defined(__PGI)
+#  include <accelmath.h>
+#else
+#  include <math.h>
+#endif
+
+#if defined (_OPENMP) && !defined(_OPENACC)
 #  include <omp.h>
 #endif
 
@@ -31,10 +36,10 @@
 static PyObject *_eclipse(PyObject *self, PyObject *args)
 {
 	int nthreads;
-	double d, p, kap0, kap1, fp, alpha_t, alpha_o;
+	double p, fp;
 
 	PyArrayObject *ds, *flux;
-	npy_intp i, dims[1];
+	npy_intp dims[1];
 	
   	if(!PyArg_ParseTuple(args, "Oddi", &ds, &p, &fp, &nthreads)) return NULL;		//parses function input
 
@@ -46,16 +51,18 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 
 	if(fabs(p - 0.5) < 1.e-3) p = 0.5;
 
-	#if defined (_OPENMP)
-	omp_set_num_threads(nthreads);
+	#if defined (_OPENMP) && !defined(_OPENACC)
+	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
 	#endif
 
-	#if defined (_OPENMP)
-	#pragma omp parallel for private(d, kap1, kap0, alpha_t, alpha_o)
+	#if defined (_OPENACC)
+	#pragma acc parallel loop copyout(f_array[:dims[0]])
+	#elif defined (_OPENMP)
+	#pragma omp parallel for
 	#endif
-	for(i=0; i<dims[0]; i++)
+	for(int i=0; i<dims[0]; i++)
 	{
-		d = d_array[i]; 						// separation of centers
+		double d = d_array[i]; 						// separation of centers
 		
 		if(d >= 1. + p) 
 		{
@@ -67,11 +74,11 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 		}
 		else								//planet is crossing the limb
 		{
-			kap1=acos(fmin((1. - p*p + d*d)/2./d, 1.));
-			kap0=acos(fmin((p*p + d*d - 1.)/2./p/d, 1.));
-			alpha_t = (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d \
+			double kap1=acos(fmin((1. - p*p + d*d)/2./d, 1.));
+			double kap0=acos(fmin((p*p + d*d - 1.)/2./p/d, 1.));
+			double alpha_t = (p*p*kap0 + kap1 - 0.5*sqrt(fmax(4.*d*d \
 				- pow(1. + d*d - p*p, 2.), 0.)))/M_PI;		//transit depth
-			alpha_o = alpha_t/p/p;				 	//fraction of planet disk that is eclipsed by the star
+			double alpha_o = alpha_t/p/p;				 	//fraction of planet disk that is eclipsed by the star
 			f_array[i] = 1. + fp*(1. - alpha_o);			//planet partially occulted
 		}
 	}

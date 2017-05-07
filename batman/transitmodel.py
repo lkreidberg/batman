@@ -121,8 +121,7 @@ class TransitModel(object):
 		if transittype == "primary": self.transittype = 1
 		else: 
 			self.transittype = 2
-			params.t0 = self.get_t_conjunction(params)
-		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+			params.t0 = self.get_t_conjunction(params)		
 		
 		if fac != None: self.fac = fac
 		else: self.fac = self._get_fac()
@@ -134,6 +133,7 @@ class TransitModel(object):
 				if nthreads > multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
 				elif nthreads <= 1: raise Exception("Number of threads must be between 2 and {0:d}".format(multiprocessing.cpu_count()))
 				else: raise Exception("OpenMP not enabled: do not set the nthreads parameter")
+                self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 
 	def calc_err(self, plot = False):
 		"""
@@ -230,7 +230,7 @@ class TransitModel(object):
 		if params.t0 != self.t0 or params.per != self.per or params.a != self.a or params.inc != self.inc or params.ecc != self.ecc or params.w != self.w or params.t_secondary != self.t_secondary:
 			if self.transittype == 2 and params.t_secondary != self.t_secondary:
 				params.t0 = self.get_t_conjunction(params)
-			self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype)
+			self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 		if params.limb_dark != self.limb_dark: self.fac = self._get_fac()
 
 		#updates transit params
@@ -310,7 +310,7 @@ class TransitModel(object):
 		"""
 		self.f = _rsky._getf(self.t_supersample, self.t0, self.per, self.a,
 							  self.inc*pi/180., self.ecc, self.w*pi/180.,
-							  self.transittype)
+							  self.transittype, self.nthreads)
 		return self.f
 
 class TransitParams(object):
