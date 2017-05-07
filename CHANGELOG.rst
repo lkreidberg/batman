@@ -2,6 +2,9 @@
 2.4.1 (2017-05-07)
 ~~~~~~~~~~~~~~~~~~
 - fix calculation of eccentric anomaly to handle diabolical inputs (following Eastmane et al. 2013)
+- Optimized all files for GPU
+- Restructured code so that _power2, _exponential, _logarithmic, _nonlinear, and _custom_ld all use a common code path
+- Fixed bug where openmp.py duplicated a file handle without closing, causing operating system to run out of file handles after repeated re-runs
 
 2.4.0 (2017-05-03)
 ~~~~~~~~~~~~~~~~~~
