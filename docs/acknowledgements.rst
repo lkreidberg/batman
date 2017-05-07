@@ -18,3 +18,4 @@ Many thanks to the following individuals for their support in the development of
 - Michael Hippke
 - Hannu Parviainen
 - Michael Zhang
+- Andrew Mayo
