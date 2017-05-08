@@ -1,4 +1,8 @@
 .. :changelog:
+2.4.4 (2017-05-08)
+~~~~~~~~~~~~~~~~~~
+- ok now actually added .h files to MANIFEST.in :)
+
 2.4.3 (2017-05-08)
 ~~~~~~~~~~~~~~~~~~
 - added .h files to MANIFEST.in 

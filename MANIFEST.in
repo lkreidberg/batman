@@ -1,1 +1,1 @@
-include README.rst CHANGELOG.rst LICENSE.txt *.h
+include README.rst CHANGELOG.rst LICENSE.txt c_src/*.h
