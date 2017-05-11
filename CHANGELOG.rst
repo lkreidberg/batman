@@ -1,4 +1,8 @@
 .. :changelog:
+2.4.5 (2017-05-11)
+~~~~~~~~~~~~~~~~~~
+- correct tab spacing inconsistency
+
 2.4.4 (2017-05-08)
 ~~~~~~~~~~~~~~~~~~
 - ok now actually added .h files to MANIFEST.in :)
