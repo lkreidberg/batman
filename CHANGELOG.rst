@@ -1,4 +1,8 @@
 .. :changelog:
+2.4.6 (2017-11-25)
+~~~~~~~~~~~~~~~~~~
+- ensure numerical stability for pathological transit depth case
+
 2.4.5 (2017-05-11)
 ~~~~~~~~~~~~~~~~~~
 - correct tab spacing inconsistency

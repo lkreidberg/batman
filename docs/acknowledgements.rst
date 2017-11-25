@@ -19,3 +19,4 @@ Many thanks to the following individuals for their support in the development of
 - Hannu Parviainen
 - Michael Zhang
 - Andrew Mayo
+- Heather Cegla
