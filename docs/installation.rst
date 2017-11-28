@@ -25,7 +25,7 @@ Note that you'll need to ``cd`` out of the source directory **before** you can i
 
 On Windows
 ----------
-Some intrepid users have braved the path of installing batman on Windows. Their advice is available on the `issue tracker <://github.com/lkreidberg/batman/issues/26>`_.
+Some intrepid users have braved the path of installing batman on Windows. Their advice is available on the `issue tracker <https://github.com/lkreidberg/batman/issues/26>`_.
 
 Tests
 -----
