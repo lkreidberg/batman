@@ -89,6 +89,10 @@ class TransitModel(object):
 		if (supersample_factor > 1 and exp_time <= 0.): raise Exception("Please enter a valid exposure time (exp_time must be greater than 0 to calculate super-sampled light curves).")
 		if (not isinstance(t, np.ndarray)): raise Exception("Times t must be a numpy array (not a list).")
 
+		#ensure times are contiguous
+		if not t.flags['C_CONTIGUOUS']:
+			t = np.ascontiguousarray(t)
+			
 		#initializes model parameters
 		self.t = t
 		self.t0 = params.t0
