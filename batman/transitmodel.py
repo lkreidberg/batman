@@ -151,71 +151,73 @@ class TransitModel(object):
 		:rtype: float
 
 		"""
-		if self.limb_dark in ["logarithmic", "exponential", "nonlinear", "squareroot", "power2", "custom"]:
-			ds = np.linspace(0., 1.1, 500)
-			fac_lo = 5.0e-4
-			if self.limb_dark == "nonlinear":
-				f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
-				f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
-			elif self.limb_dark == "squareroot":
-				f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, self.nthreads)
-				f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., self.fac, self.nthreads)
-			elif self.limb_dark == "exponential":
-				f0 = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
-				f = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
-			elif self.limb_dark == "logarithmic":
-				f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
-				f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
-			elif self.limb_dark == "power2":
-				f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
-				f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
-			else:
-				f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
-				f =  _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
-	
-			err = np.max(np.abs(f-f0))*1.0e6
-			if plot == True:
-				import matplotlib.pyplot as plt
-				plt.plot(ds, 1.0e6*(f-f0), color='k')
-				plt.xlabel("d (separation of centers)")
-				plt.ylabel("Error (ppm)") 
-				plt.show()
+		if self.limb_dark not in ["logarithmic", "exponential", "nonlinear", "squareroot", "power2", "custom"]:
+			raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
 
-			return err
-		else: raise Exception("Function calc_err not valid for " + self.limb_dark + " limb darkening")
+		ds = np.linspace(0., 1.1, 500)
+		fac_lo = 5.0e-4
+		if self.limb_dark == "nonlinear":
+			f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, self.nthreads)
+			f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.fac, self.nthreads)
+		elif self.limb_dark == "squareroot":
+			f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, self.nthreads)
+			f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., self.fac, self.nthreads)
+		elif self.limb_dark == "exponential":
+			f0 = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+			f = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
+		elif self.limb_dark == "logarithmic":
+			f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+			f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
+		elif self.limb_dark == "power2":
+			f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, self.nthreads)
+			f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], self.fac, self.nthreads)
+		else:
+			f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, self.nthreads)
+			f =	 _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], self.fac, self.nthreads)
+
+		err = np.max(np.abs(f-f0))*1.0e6
+		if plot == True:
+			import matplotlib.pyplot as plt
+			plt.plot(ds, 1.0e6*(f-f0), color='k')
+			plt.xlabel("d (separation of centers)")
+			plt.ylabel("Error (ppm)")
+			plt.show()
+
+		return err
 
 	def _get_fac(self):
-		if self.limb_dark in ["logarithmic", "exponential", "squareroot", "nonlinear", "power2", "custom"]:
-			nthreads = 1
-			fac_lo, fac_hi = 5.0e-4, 1.
-			ds = np.linspace(0., 1.+self.rp, 1000)
-			if self.limb_dark == "nonlinear": f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
-			elif self.limb_dark == "squareroot": f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, nthreads)
-			elif self.limb_dark == "exponential": f0 = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
-			elif self.limb_dark == "logarithmic": f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
-			elif self.limb_dark == "power2": f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
-			else: f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
+		if self.limb_dark not in ["logarithmic", "exponential", "squareroot", "nonlinear", "power2", "custom"]:
+			return None
 
-			n = 0
-			err = 0.
-			while(err > self.max_err or err < 0.99*self.max_err):
-				fac = (fac_lo + fac_hi)/2.
-				if self.limb_dark == "nonlinear": f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
-				elif self.limb_dark == "squareroot": f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac, nthreads)
-				elif self.limb_dark == "exponential": f = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
-				elif self.limb_dark == "logarithmic": f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
-				elif self.limb_dark == "power2": f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
-				else: f = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
+		nthreads = 1
+		fac_lo, fac_hi = 5.0e-4, 1.
+		ds = np.linspace(0., 1.+self.rp, 1000)
+		if self.limb_dark == "nonlinear": f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac_lo, nthreads)
+		elif self.limb_dark == "squareroot": f0 = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac_lo, nthreads)
+		elif self.limb_dark == "exponential": f0 = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
+		elif self.limb_dark == "logarithmic": f0 = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
+		elif self.limb_dark == "power2": f0 = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac_lo, nthreads)
+		else: f0 = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac_lo, nthreads)
 
-				err = np.max(np.abs(f-f0))*1.0e6
+		n = 0
+		err = 0.
+		while(err > self.max_err or err < 0.99*self.max_err):
+			fac = (fac_lo + fac_hi)/2.
+			if self.limb_dark == "nonlinear": f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], fac, nthreads)
+			elif self.limb_dark == "squareroot": f = _nonlinear_ld._nonlinear_ld(ds, self.rp, self.u[1], self.u[0], 0., 0., fac, nthreads)
+			elif self.limb_dark == "exponential": f = _exponential_ld._exponential_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
+			elif self.limb_dark == "logarithmic": f = _logarithmic_ld._logarithmic_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
+			elif self.limb_dark == "power2": f = _power2_ld._power2_ld(ds, self.rp, self.u[0], self.u[1], fac, nthreads)
+			else: f = _custom_ld._custom_ld(ds, self.rp, self.u[0], self.u[1], self.u[2], self.u[3], self.u[4], self.u[5], fac, nthreads)
 
-				if err > self.max_err: fac_hi = fac	
-				else: fac_lo = fac
-				n += 1
-				if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for integration step size")
-			return fac
-		else: return None
-	
+			err = np.max(np.abs(f-f0))*1.0e6
+
+			if err > self.max_err: fac_hi = fac
+			else: fac_lo = fac
+			n += 1
+			if n > 1e3: raise Exception("Convergence failure in calculation of scale factor for integration step size")
+		return fac
+
 	def light_curve(self, params):
 		"""
 		Calculate a model light curve.
