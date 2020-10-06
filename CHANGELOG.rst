@@ -1,4 +1,8 @@
 .. :changelog:
+2.4.7 (2020-10-06)
+~~~~~~~~~~~~~~~~~~
+- specify numpy as a build dependency, ensure times are contiguous, remove extraneous calculations for zero eccentricity orbits
+
 2.4.6 (2017-11-25)
 ~~~~~~~~~~~~~~~~~~
 - ensure numerical stability for pathological transit depth case

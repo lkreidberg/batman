@@ -20,3 +20,6 @@ Many thanks to the following individuals for their support in the development of
 - Michael Zhang
 - Andrew Mayo
 - Heather Cegla
+- Patricio Cubillos
+- Sebastian Zieba
+- Dan Hey
