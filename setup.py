@@ -1,4 +1,5 @@
 from __future__ import print_function
+import setuptools
 from distutils.core import setup
 from distutils.extension import Extension
 import numpy as np
@@ -91,6 +92,7 @@ setup(	name='batman-package',
 		],
 	include_dirs = [np.get_include()],
 	install_requires = ['numpy'],
+        setup_requires = ['wheel'],
 	extras_requires= {
 	    'matplotlib': ['matplotlib'],
 	},
