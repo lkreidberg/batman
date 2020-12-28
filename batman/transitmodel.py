@@ -89,6 +89,10 @@ class TransitModel(object):
 		if (supersample_factor > 1 and exp_time <= 0.): raise Exception("Please enter a valid exposure time (exp_time must be greater than 0 to calculate super-sampled light curves).")
 		if (not isinstance(t, np.ndarray)): raise Exception("Times t must be a numpy array (not a list).")
 
+		#ensure times are contiguous
+		if not t.flags['C_CONTIGUOUS']:
+			t = np.ascontiguousarray(t)
+			
 		#initializes model parameters
 		self.t = t
 		self.t0 = params.t0
@@ -133,7 +137,7 @@ class TransitModel(object):
 				if nthreads > multiprocessing.cpu_count(): raise Exception("Maximum number of threads is "+'{0:d}'.format(multiprocessing.cpu_count()))
 				elif nthreads <= 1: raise Exception("Number of threads must be between 2 and {0:d}".format(multiprocessing.cpu_count()))
 				else: raise Exception("OpenMP not enabled: do not set the nthreads parameter")
-                self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
+		self.ds = _rsky._rsky(self.t_supersample, params.t0, params.per, params.a, params.inc*pi/180., params.ecc, params.w*pi/180., self.transittype, self.nthreads)
 
 	def calc_err(self, plot = False):
 		"""

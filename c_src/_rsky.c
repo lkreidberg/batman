@@ -98,9 +98,23 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 		double t = t_array[i];
 
 		//calculates time of periastron passage from time of inferior conjunction
-		double f = M_PI/2. - omega;								//true anomaly corresponding to time of primary transit center
-		double E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
-		double M = E - ecc*sin(E);
+		double f = M_PI/2. - omega;							//true anomaly corresponding to time of primary transit center
+		double E;
+		double M;
+
+        // The true (f), eccentric (E) and mean (M) anomaly are all equal for a circular orbit 
+        // Follows from general formulas (see also: https://luger.dev/starry/v0.3.0/tutorials/basics3.html)
+		if(ecc < 1.0e-5)
+		{
+			E = f;				
+			M = f;
+		}
+		else
+		{        
+			E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
+			M = E - ecc*sin(E);
+		}
+
 		double tp = tc - per*M/2./M_PI;							//time of periastron
 
 		if(ecc < 1.0e-5)
