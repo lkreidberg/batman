@@ -76,7 +76,7 @@ _power2_ld   = Extension('batman._power2_ld', ['c_src/_power2_ld.c'], extra_comp
 _rsky = Extension('batman._rsky', ['c_src/_rsky.c'], extra_compile_args = parallel_args, libraries = parallel_libraries)
 _eclipse = Extension('batman._eclipse', ['c_src/_eclipse.c'], extra_compile_args = parallel_args, libraries = parallel_libraries)
 
-setup(	name='batman-package', 
+setup(name='batman-package', 
 	version="2.4.9",
 	author='Laura Kreidberg',
 	author_email = 'laura.kreidberg@gmail.com',
