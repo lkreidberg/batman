@@ -1,16 +1,16 @@
 /* The batman package: fast computation of exoplanet transit light curves
- * Copyright (C) 2015 Laura Kreidberg	 
- * 
+ * Copyright (C) 2015 Laura Kreidberg
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -44,15 +44,23 @@ inline double getE(double M, double e)	//calculates the eccentric anomaly (see S
 {
 	double E = M, eps = 1.0e-7;
 	double fe, fs;
+  int ii, maxiter = 1000;
 
 	// modification from LK 05/07/2017:
 	// add fmod to ensure convergence for diabolical inputs (following Eastman et al. 2013; Section 3.1)
-	while(fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps)
+  ii = 0;
+	while ((fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps) & (ii < maxiter))
 	{
 		fe = fmod(E - e*sin(E) - M, 2.*M_PI);
 		fs = fmod(1 - e*cos(E), 2.*M_PI);
 		E = E - fe/fs;
+    ii++;
 	}
+  if (ii >= maxiter)
+  {
+    PyErr_SetString(PyExc_RuntimeError, "Eccentric anomaly computation reached the maximum number of interations");
+    return E;
+  }
 	return E;
 }
 
@@ -102,15 +110,15 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 		double E;
 		double M;
 
-        // The true (f), eccentric (E) and mean (M) anomaly are all equal for a circular orbit 
+        // The true (f), eccentric (E) and mean (M) anomaly are all equal for a circular orbit
         // Follows from general formulas (see also: https://luger.dev/starry/v0.3.0/tutorials/basics3.html)
 		if(ecc < 1.0e-5)
 		{
-			E = f;				
+			E = f;
 			M = f;
 		}
 		else
-		{        
+		{
 			E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
 			M = E - ecc*sin(E);
 		}
@@ -145,7 +153,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 static PyObject *_rsky(PyObject *self, PyObject *args)
 {
 	return _rsky_or_f(self, args, 0);
-} 
+}
 
 
 
@@ -178,7 +186,7 @@ static PyMethodDef _rsky_methods[] = {
 		PyModuleDef_HEAD_INIT,
 		"_rsky",
 		_rsky_doc,
-		-1, 
+		-1,
 		_rsky_methods
 	};
 
@@ -190,7 +198,7 @@ static PyMethodDef _rsky_methods[] = {
 		{
 			return NULL;
 		}
-		import_array(); 
+		import_array();
 		return module;
 	}
 #else
@@ -200,4 +208,3 @@ static PyMethodDef _rsky_methods[] = {
 	  import_array();
 	}
 #endif
-
