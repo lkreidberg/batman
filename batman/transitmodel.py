@@ -97,6 +97,7 @@ class TransitModel(object):
 		self.t = t
 		self.t0 = params.t0
 		self.per = params.per
+		self.rp = np.abs(params.rp)
 		self.a = params.a
 		self.inc = params.inc
 		self.ecc = params.ecc
@@ -111,12 +112,8 @@ class TransitModel(object):
 
 		#handles the case of inverse transits (rp < 0)
 		self.inverse = False
-		if params.rp < 0.:
-			self.rp = -1.*np.copy(params.rp)
-			print(params.rp, "setting inverse transit to True")
-			print("Using rp", self.rp)
+		if params.rp < 0.: 
 			self.inverse = True
-		else: self.rp = np.copy(params.rp)
 
 		if self.supersample_factor > 1:  # IJMC: now do it quicker, with no loops:
 			t_offsets = np.linspace(-self.exp_time/2., self.exp_time/2., self.supersample_factor)
@@ -241,6 +238,7 @@ class TransitModel(object):
 		#updates transit params
 		self.t0 = params.t0
 		self.per = params.per
+		self.rp = np.abs(params.rp)
 		self.a = params.a
 		self.inc = params.inc
 		self.ecc = params.ecc
@@ -252,29 +250,25 @@ class TransitModel(object):
 
 		#handles the case of inverse transits (rp < 0)
 		self.inverse = False
-		if params.rp < 0.:
-			self.rp = -1.*np.copy(params.rp)
-			print(params.rp, "setting inverse transit to True")
-			print("Using rp", self.rp)
+		if params.rp < 0.: 
 			self.inverse = True
-		else: self.rp = np.copy(params.rp)
 		
 		if self.transittype == 1:
 			if params.limb_dark != self.limb_dark: raise Exception("Need to reinitialize model in order to change limb darkening option")
-			if self.limb_dark == "quadratic": lc = _quadratic_ld._quadratic_ld(self.ds, self.rp, params.u[0], params.u[1], self.nthreads)
-			elif self.limb_dark == "linear": lc = _quadratic_ld._quadratic_ld(self.ds, self.rp, params.u[0], 0., self.nthreads)
-			elif self.limb_dark == "nonlinear": lc = _nonlinear_ld._nonlinear_ld(self.ds, self.rp, params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
-			elif self.limb_dark == "squareroot": lc = _nonlinear_ld._nonlinear_ld(self.ds, self.rp, params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
-			elif self.limb_dark == "uniform": lc = _uniform_ld._uniform_ld(self.ds, self.rp, self.nthreads)
-			elif self.limb_dark == "logarithmic": lc = _logarithmic_ld._logarithmic_ld(self.ds, self.rp, params.u[0], params.u[1], self.fac, self.nthreads)
-			elif self.limb_dark == "exponential": lc = _exponential_ld._exponential_ld(self.ds, self.rp, params.u[0], params.u[1], self.fac, self.nthreads)
-			elif self.limb_dark == "power2": lc = _power2_ld._power2_ld(self.ds, self.rp, params.u[0], params.u[1], self.fac, self.nthreads)
-			elif self.limb_dark == "custom": lc = _custom_ld._custom_ld(self.ds, self.rp, params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
+			if self.limb_dark == "quadratic": lc = _quadratic_ld._quadratic_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], self.nthreads)
+			elif self.limb_dark == "linear": lc = _quadratic_ld._quadratic_ld(self.ds, np.abs(params.rp), params.u[0], 0., self.nthreads)
+			elif self.limb_dark == "nonlinear": lc = _nonlinear_ld._nonlinear_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], params.u[2], params.u[3], self.fac, self.nthreads)
+			elif self.limb_dark == "squareroot": lc = _nonlinear_ld._nonlinear_ld(self.ds, np.abs(params.rp), params.u[1], params.u[0], 0., 0., self.fac, self.nthreads)
+			elif self.limb_dark == "uniform": lc = _uniform_ld._uniform_ld(self.ds, np.abs(params.rp), self.nthreads)
+			elif self.limb_dark == "logarithmic": lc = _logarithmic_ld._logarithmic_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "exponential": lc = _exponential_ld._exponential_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "power2": lc = _power2_ld._power2_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], self.fac, self.nthreads)
+			elif self.limb_dark == "custom": lc = _custom_ld._custom_ld(self.ds, np.abs(params.rp), params.u[0], params.u[1], params.u[2], params.u[3], params.u[4], params.u[5], self.fac, self.nthreads)
 			else: raise Exception("Invalid limb darkening option")
 
 			if self.inverse == True: lc = 2. - lc
 
-		else: lc = _eclipse._eclipse(self.ds, self.rp, params.fp, self.nthreads)			
+		else: lc = _eclipse._eclipse(self.ds, np.abs(params.rp), params.fp, self.nthreads)			
 		if self.supersample_factor == 1: return lc
 		else: return np.mean(lc.reshape(-1, self.supersample_factor), axis=1)
 
