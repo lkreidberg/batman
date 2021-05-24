@@ -82,7 +82,7 @@ setup(name='batman-package',
 	author_email = 'laura.kreidberg@gmail.com',
 	url = 'https://github.com/lkreidberg/batman',
 	packages =['batman'],
-	license = ['GNU GPLv3'],
+	license = 'GNU GPLv3',
 	description ='Fast transit light curve modeling',
 	classifiers = [
 		'Development Status :: 5 - Production/Stable',
