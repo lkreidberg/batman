@@ -77,7 +77,7 @@ _rsky = Extension('batman._rsky', ['c_src/_rsky.c'], extra_compile_args = parall
 _eclipse = Extension('batman._eclipse', ['c_src/_eclipse.c'], extra_compile_args = parallel_args, libraries = parallel_libraries)
 
 setup(	name='batman-package', 
-	version="2.4.7",
+	version="2.4.9",
 	author='Laura Kreidberg',
 	author_email = 'laura.kreidberg@gmail.com',
 	url = 'https://github.com/lkreidberg/batman',

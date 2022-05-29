@@ -1,4 +1,13 @@
 .. :changelog:
+
+2.4.9 (2022-29-05)
+~~~~~~~~~~~~~~~~~~
+- require oldest-supported-numpy in pyproject.toml
+
+2.4.8 (2021-24-05)
+~~~~~~~~~~~~~~~~~~
+- fix bug in setup.py for python 3.8 install, add support for inverse transits
+
 2.4.7 (2020-10-06)
 ~~~~~~~~~~~~~~~~~~
 - specify numpy as a build dependency, ensure times are contiguous, remove extraneous calculations for zero eccentricity orbits
