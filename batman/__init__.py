@@ -1,7 +1,7 @@
 __all__ = ['transitmodel', 'tests', 'plots']
 
 
-__version__ = "2.4.7"
+__version__ = "2.4.8"
 
 from .transitmodel import *
 from .tests import *
