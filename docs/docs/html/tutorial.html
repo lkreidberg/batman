@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Tutorial &#8212; batman 2.4.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="tutorial">
+<span id="id1"></span><h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial, we’ll go through <code class="docutils literal notranslate"><span class="pre">batman</span></code>’s functionality in more detail than in the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.  First let’s initialize a model with nonlinear limb darkening:</p>
+<section id="initializing-the-model">
+<h2>Initializing the model<a class="headerlink" href="#initializing-the-model" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">batman</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitParams</span><span class="p">()</span>       <span class="c1">#object to store transit parameters</span>
+<span class="n">params</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="mf">0.</span>                        <span class="c1">#time of inferior conjunction</span>
+<span class="n">params</span><span class="o">.</span><span class="n">per</span> <span class="o">=</span> <span class="mf">1.</span>                       <span class="c1">#orbital period</span>
+<span class="n">params</span><span class="o">.</span><span class="n">rp</span> <span class="o">=</span> <span class="mf">0.1</span>                       <span class="c1">#planet radius (in units of stellar radii)</span>
+<span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">15.</span>                        <span class="c1">#semi-major axis (in units of stellar radii)</span>
+<span class="n">params</span><span class="o">.</span><span class="n">inc</span> <span class="o">=</span> <span class="mf">87.</span>                      <span class="c1">#orbital inclination (in degrees)</span>
+<span class="n">params</span><span class="o">.</span><span class="n">ecc</span> <span class="o">=</span> <span class="mf">0.</span>                       <span class="c1">#eccentricity</span>
+<span class="n">params</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mf">90.</span>                        <span class="c1">#longitude of periastron (in degrees)</span>
+<span class="n">params</span><span class="o">.</span><span class="n">limb_dark</span> <span class="o">=</span> <span class="s2">&quot;nonlinear&quot;</span>        <span class="c1">#limb darkening model</span>
+<span class="n">params</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">]</span>      <span class="c1">#limb darkening coefficients [u1, u2, u3, u4]</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>  <span class="c1">#times at which to calculate light curve</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>    <span class="c1">#initializes model</span>
+</pre></div>
+</div>
+<p>The initialization step calculates the separation of centers between the star and the planet, as well as the integration step size (for “square-root”, “logarithmic”, “exponential”, “nonlinear”, “power2”, and “custom” limb darkening).</p>
+</section>
+<section id="calculating-light-curves">
+<h2>Calculating light curves<a class="headerlink" href="#calculating-light-curves" title="Permalink to this headline">¶</a></h2>
+<p>To make a model light curve, we use the <code class="docutils literal notranslate"><span class="pre">light_curve</span></code> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">flux</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">light_curve</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>                    <span class="c1">#calculates light curve</span>
+</pre></div>
+</div>
+<p>Now that the model has been set up, we can change the transit parameters and recalculate the light curve <strong>without</strong> reinitializing the model.  For example, we can make light curves for a range of planet radii like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.09</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">radii</span><span class="p">:</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">rp</span> <span class="o">=</span> <span class="n">r</span>                           <span class="c1">#updates planet radius</span>
+        <span class="n">new_flux</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">light_curve</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>        <span class="c1">#recalculates light curve</span>
+</pre></div>
+</div>
+<img alt="_images/change_rp.png" src="_images/change_rp.png" />
+</section>
+<section id="limb-darkening-options">
+<h2>Limb darkening options<a class="headerlink" href="#limb-darkening-options" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">batman</span></code> package currently supports the following pre-defined limb darkening options: “uniform”, “linear”, “quadratic”, “square-root”, “logarithmic”, “exponential”, “power2” (from Morello et al. 2017), and “nonlinear”.  These options assume the following form for the stellar intensity profile:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+  I(\mu) &amp;= I_0                                                                         &amp; &amp;\text{(uniform)}             \\
+  I(\mu) &amp;= I_0[1 - c_1(1-\mu)]                                                         &amp; &amp;\text{(linear)}              \\
+  I(\mu) &amp;= I_0[1 - c_1(1 - \mu) - c_2(1-\mu)^2]                                        &amp; &amp;\text{(quadratic)}           \\
+  I(\mu) &amp;= I_0[1 - c_1(1 - \mu) - c_2(1-\sqrt{\mu})]                                   &amp; &amp;\text{(square-root)}         \\
+  I(\mu) &amp;= I_0[1 - c_1(1 - \mu) - c_2\mu\ln{\mu}]                                      &amp; &amp;\text{(logarithmic)}         \\
+  I(\mu) &amp;= I_0\left[1 - c_1(1 - \mu) - c_2/(1-\exp{\mu})\right]                        &amp; &amp;\text{(exponential)}         \\
+  I(\mu) &amp;= I_0\left[1 - c_1(1 - \mu^c_2)\right]                        &amp; &amp;\text{(power2)}         \\
+  I(\mu) &amp;= I_0[1 - c_1(1-\mu^{1/2}) - c_2(1- \mu) - c_3(1-\mu^{3/2}) - c_4(1-\mu^2)]   &amp; &amp;\text{(nonlinear)}
+\end{align}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mu = \sqrt{1-x^2}, 0 \le x \le 1\)</span> is the normalized radial coordinate and <span class="math notranslate nohighlight">\(I_0\)</span> is a normalization constant such that the integrated stellar intensity is unity.</p>
+<p>To illustrate the usage for these different options, here’s a calculation of light curves for the four most common profiles:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ld_options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="s2">&quot;quadratic&quot;</span><span class="p">,</span> <span class="s2">&quot;nonlinear&quot;</span><span class="p">]</span>
+<span class="n">ld_coefficients</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">]]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">limb_dark</span> <span class="o">=</span> <span class="n">ld_options</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>          <span class="c1">#specifies the LD profile</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="n">ld_coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>             <span class="c1">#updates LD coefficients</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>        <span class="c1">#initializes the model</span>
+        <span class="n">flux</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">light_curve</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>              <span class="c1">#calculates light curve</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">flux</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">ld_options</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The limb darkening coefficients are provided as a list of the form <span class="math notranslate nohighlight">\([c_1, ..., c_n]\)</span> where <span class="math notranslate nohighlight">\(n\)</span> depends on the limb darkening model.</p>
+<img alt="_images/lightcurves.png" src="_images/lightcurves.png" />
+</section>
+<section id="custom-limb-darkening">
+<h2>Custom limb darkening<a class="headerlink" href="#custom-limb-darkening" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">batman</span></code> also supports the definition of custom limb darkening.  To create a custom limb darkening law, you’ll have to write a very wee bit of C code and perform a new installation of <code class="docutils literal notranslate"><span class="pre">batman</span></code>.</p>
+<p>First, download the package from source at <a class="reference external" href="https://pypi.python.org/pypi/batman-package/">https://pypi.python.org/pypi/batman-package/</a>.  Unpack the files and <code class="docutils literal notranslate"><span class="pre">cd</span></code> to the root directory.</p>
+<p>To define your stellar intensity profile, edit the <code class="docutils literal notranslate"><span class="pre">intensity</span></code> function in the file <code class="docutils literal notranslate"><span class="pre">c_src/_custom_intensity.c</span></code>.  This function returns the intensity at a given radial value, <span class="math notranslate nohighlight">\(I(x)\)</span>.  Its arguments are <span class="math notranslate nohighlight">\(x\)</span> (the normalized radial coordinate; <span class="math notranslate nohighlight">\(0\le x \le 1\)</span>) and six limb darkening coefficients, <span class="math notranslate nohighlight">\(c_1, ..., c_6\)</span>.</p>
+<p>The code provides an example intensity profile to work from:</p>
+<div class="math notranslate nohighlight">
+\[I(x)  = I_0\left[1 - c_1(1 - \sqrt{1-x^2}) - c_2\ln{\left(\frac{\sqrt{1-x^2}+c_3}{1 + c_3}\right)}\right]\]</div>
+<p>(N.B.: This profile provides a better fit to stellar models than the quadratic law, but uses fewer coefficients than the nonlinear law. Thanks to Eric Agol for suggesting it!).</p>
+<p>This function can be replaced with another of your choosing, so long as it satistifies the following conditions:</p>
+<ul class="simple">
+<li><p>The integrated intensity over the stellar disk must be unity:</p></li>
+</ul>
+<div class="math notranslate nohighlight">
+\[\int_0^{2\pi} \int_0^1 I(x)x dx d\theta = 1\]</div>
+<ul>
+<li><p>The intensity must also be defined on the interval <span class="math notranslate nohighlight">\(0\le x \le 1\)</span>.  To avoid issues relating to numerical stability, I would recommend including:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.00005</span><span class="p">)</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.00005</span><span class="p">;</span>
+<span class="k">if</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mf">0.99995</span><span class="p">)</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">0.99995</span><span class="p">;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>To re-install <code class="docutils literal notranslate"><span class="pre">batman</span></code> with your custom limb darkening law, run the setup script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ sudo python setup.py install
+</pre></div>
+</div>
+<p>You’ll have to <code class="docutils literal notranslate"><span class="pre">cd</span></code> out of the source root directory to successfully import <code class="docutils literal notranslate"><span class="pre">batman</span></code>.  Now, to calculate a model light curve with your custom limb darkening profile, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">limb_dark</span> <span class="o">=</span> <span class="s2">&quot;custom&quot;</span>
+<span class="n">params</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="p">[</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">c3</span><span class="p">,</span> <span class="n">c4</span><span class="p">,</span> <span class="n">c5</span><span class="p">,</span> <span class="n">c6</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>with any unused limb darkening coefficients set equal to 0.</p>
+<p>And that’s it!</p>
+</section>
+<section id="error-tolerance">
+<h2>Error tolerance<a class="headerlink" href="#error-tolerance" title="Permalink to this headline">¶</a></h2>
+<p>For models calculated with numeric integration (“square-root”, “logarithmic”, “exponential”, “nonlinear” and “custom” profiles), we can specify the maximum allowed truncation error with the <code class="docutils literal notranslate"><span class="pre">max_err</span></code> parameter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">max_err</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This initializes a model with a step size tuned to yield a maximum truncation error of 0.5 ppm.  The default <code class="docutils literal notranslate"><span class="pre">max_err</span></code> is 1 ppm, but you may wish to adjust it depending on the combination of speed/accuracy you require.  Changing the value of <code class="docutils literal notranslate"><span class="pre">max_err</span></code> will not impact the output for the analytic models (“quadratic”, “linear”, and “uniform”).</p>
+<p>To validate that the errors are indeed below the <code class="docutils literal notranslate"><span class="pre">max_err</span></code> threshold, we can use <code class="docutils literal notranslate"><span class="pre">m.calc_err()</span></code>.  This function returns the maximum error (in ppm) over the full range of separation of centers <span class="math notranslate nohighlight">\(d\)</span> (<span class="math notranslate nohighlight">\(0 \le d \le 1\)</span>, in units of rs).  It also has the option to plot the truncation error over this range:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">err</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">calc_err</span><span class="p">(</span><span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="_images/residuals.png" src="_images/residuals.png" />
+<p>Truncation error is larger near <span class="math notranslate nohighlight">\(d = 1\)</span> because the stellar intensity has a larger gradient near the limb.</p>
+<p>If you prefer not to calculate the step size automatically, it can be set explicitly with the <code class="docutils literal notranslate"><span class="pre">fac</span></code> parameter; this saves time during the model initialization step.</p>
+</section>
+<section id="parallelization">
+<h2>Parallelization<a class="headerlink" href="#parallelization" title="Permalink to this headline">¶</a></h2>
+<p>The default behavior for <code class="docutils literal notranslate"><span class="pre">batman</span></code> is no parallelization.  If you want to speed up the calculation, you can parallelize it by setting the
+<code class="docutils literal notranslate"><span class="pre">nthreads</span></code> parameter.  For example, to use 4 processors you would initialize a model with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">nthreads</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The parallelization is done at the C level with OpenMP.  If your default C compiler does not support OpenMP, <code class="docutils literal notranslate"><span class="pre">batman</span></code> will raise an exception if you specify <code class="docutils literal notranslate"><span class="pre">nthreads</span></code>&gt;1.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Mac users: the C default compiler (clang) does not currently (06/2015) support OpenMP. To use a different compiler, perform a fresh install with the “CC” and “CXX” environment variables set inside “setup.py” with os.environ.</p>
+</div>
+</section>
+<section id="modeling-eclipses">
+<h2>Modeling eclipses<a class="headerlink" href="#modeling-eclipses" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">batman</span></code> can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio and the central eclipse time:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">fp</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">params</span><span class="o">.</span><span class="n">t_secondary</span> <span class="o">=</span> <span class="mf">0.5</span>
+</pre></div>
+</div>
+<p>and initialize a model with the <code class="docutils literal notranslate"><span class="pre">transittype</span></code> parameter set to <code class="docutils literal notranslate"><span class="pre">&quot;secondary&quot;</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.48</span><span class="p">,</span> <span class="mf">0.52</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">transittype</span><span class="o">=</span><span class="s2">&quot;secondary&quot;</span><span class="p">)</span>
+<span class="n">flux</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">light_curve</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">flux</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="_images/eclipse.png" src="_images/eclipse.png" />
+<p>The eclipse light curve is normalized such that the flux of the star is unity. The eclipse depth is <span class="math notranslate nohighlight">\(f_p\)</span>.
+The model assumes that the eclipse center occurs when the true anomaly equals <span class="math notranslate nohighlight">\(3\pi/2 - \omega\)</span>.</p>
+<p>For convenience, <cite>batman</cite> includes utilities to calculate the time of secondary eclipse from the time of inferior conjunction, and vice versa. See the <code class="docutils literal notranslate"><span class="pre">get_t_secondary</span></code> and <code class="docutils literal notranslate"><span class="pre">get_t_conjunction</span></code> methods in the API.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Note that the secondary eclipse calculation does NOT account for the light travel time in the system (which is of order minutes). Future versions of <code class="docutils literal notranslate"><span class="pre">batman</span></code> may include this feature, but for now you’re on your own!</p>
+</div>
+</section>
+<section id="supersampling">
+<h2>Supersampling<a class="headerlink" href="#supersampling" title="Permalink to this headline">¶</a></h2>
+<p>For long exposure times, you may wish to calculate the average value of the light curve over the entire exposure.  To do this, initialize a model with the <code class="docutils literal notranslate"><span class="pre">supersample_factor</span></code> and <code class="docutils literal notranslate"><span class="pre">exp_time</span></code> parameters specified:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">supersample_factor</span> <span class="o">=</span> <span class="mi">7</span><span class="p">,</span> <span class="n">exp_time</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This example will return the average value of the light curve calculated from 7 evenly spaced samples over the duration of each 0.001-day exposure.  The <code class="docutils literal notranslate"><span class="pre">exp_time</span></code> parameter must have the same units as the array of observation times <code class="docutils literal notranslate"><span class="pre">t</span></code>.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/batlogo.jpg" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html">batman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initializing-the-model">Initializing the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calculating-light-curves">Calculating light curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#limb-darkening-options">Limb darkening options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-limb-darkening">Custom limb darkening</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#error-tolerance">Error tolerance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parallelization">Parallelization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modeling-eclipses">Modeling eclipses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supersampling">Supersampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trouble.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="quickstart.html" title="previous chapter">Quickstart</a></li>
+      <li>Next: <a href="api.html" title="next chapter">API</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Laura Kreidberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/tutorial.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

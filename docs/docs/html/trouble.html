@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Troubleshooting &#8212; batman 2.4.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Acknowledgements" href="acknowledgements.html" />
+    <link rel="prev" title="API" href="api.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="troubleshooting">
+<span id="trouble"></span><h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h1>
+<section id="help-batman-is-running-really-slowly-why-is-this">
+<h2>Help! <code class="docutils literal notranslate"><span class="pre">batman</span></code> is running really slowly - why is this?<a class="headerlink" href="#help-batman-is-running-really-slowly-why-is-this" title="Permalink to this headline">¶</a></h2>
+<p>My first guess is that you’re reinitializing the model many times. This is by far the slowest component of <code class="docutils literal notranslate"><span class="pre">batman</span></code>, because it calculates the optimal step size for the integration starting from a very small value. To speed this up, you can manually set the scale factor for the step size. First check what the optimal step size factor is after you initalize a model with realistic transit parameters:</p>
+<dl>
+<dt>::</dt><dd><p>m = batman.TransitModel(params, t)</p>
+<p>fac = m.fac
+print(“stepsize:”, fac)</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stepsize</span><span class="p">:</span> <span class="mf">0.023</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Then, you can use set this step size as the default, like so:</p>
+<dl class="simple">
+<dt>::</dt><dd><p>m = batman.TransitModel(params, t, fac = fac)</p>
+</dd>
+</dl>
+<p>This will save A LOT of time! The optimal step size will vary slightly depending on the limb darkening and the planet radius, so I would recommend choosing a conservative value for the error tolerance to account for this.</p>
+</section>
+<section id="my-light-curve-has-nans-in-it">
+<h2>My light curve has nans in it!<a class="headerlink" href="#my-light-curve-has-nans-in-it" title="Permalink to this headline">¶</a></h2>
+<p>Check and see if your transit parameters are physically realistic. In particular, confirm that the planet’s orbit does not pass through the star. (You think this would never happen to you, but don’t be too sure! I’ve been asked about it more than once.)</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/batlogo.jpg" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html">batman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#help-batman-is-running-really-slowly-why-is-this">Help! <code class="docutils literal notranslate"><span class="pre">batman</span></code> is running really slowly - why is this?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#my-light-curve-has-nans-in-it">My light curve has nans in it!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="api.html" title="previous chapter">API</a></li>
+      <li>Next: <a href="acknowledgements.html" title="next chapter">Acknowledgements</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Laura Kreidberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/trouble.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

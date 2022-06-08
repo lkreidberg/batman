@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>batman: Bad-Ass Transit Model cAlculatioN &#8212; batman 2.4.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="batman-br-bad-ass-transit-model-calculation">
+<h1>batman: <br /> Bad-Ass Transit Model cAlculatioN<a class="headerlink" href="#batman-br-bad-ass-transit-model-calculation" title="Permalink to this headline">¶</a></h1>
+<p>Welcome to the documentation for <code class="docutils literal notranslate"><span class="pre">batman</span></code>, a Python package for fast calculation of exoplanet transit light curves.  The package supports calculation of light curves for any radially symmetric stellar limb darkening law, using a new integration algorithm for models that cannot be quickly calculated analytically.</p>
+<p>In typical use, <code class="docutils literal notranslate"><span class="pre">batman</span></code> can calculate a million model light curves in well under 10 minutes for any limb darkening profile.</p>
+<p>Please cite the <a class="reference external" href="http://adsabs.harvard.edu/abs/2015PASP..127.1161K">paper</a> if you make use of <code class="docutils literal notranslate"><span class="pre">batman</span></code> in your work!</p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#pip">pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-source">From source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#on-windows">On Windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#initializing-the-model">Initializing the model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#calculating-light-curves">Calculating light curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#limb-darkening-options">Limb darkening options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#custom-limb-darkening">Custom limb darkening</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#error-tolerance">Error tolerance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#parallelization">Parallelization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#modeling-eclipses">Modeling eclipses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#supersampling">Supersampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trouble.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trouble.html#help-batman-is-running-really-slowly-why-is-this">Help! <code class="docutils literal notranslate"><span class="pre">batman</span></code> is running really slowly - why is this?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trouble.html#my-light-curve-has-nans-in-it">My light curve has nans in it!</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+</ul>
+</div>
+<section id="release-notes">
+<h2>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h2>
+<section id="id1">
+<h3>2.4.9 (2022-29-05)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>require oldest-supported-numpy in pyproject.toml</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>2.4.8 (2021-24-05)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>fix bug in setup.py for python 3.8 install, add support for inverse transits</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>2.4.7 (2020-10-06)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>specify numpy as a build dependency, ensure times are contiguous, remove extraneous calculations for zero eccentricity orbits</p></li>
+</ul>
+</section>
+<section id="id4">
+<h3>2.4.6 (2017-11-25)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>ensure numerical stability for pathological transit depth case</p></li>
+</ul>
+</section>
+<section id="id5">
+<h3>2.4.5 (2017-05-11)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>correct tab spacing inconsistency</p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>2.4.4 (2017-05-08)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>ok now actually added .h files to MANIFEST.in :)</p></li>
+</ul>
+</section>
+<section id="id7">
+<h3>2.4.3 (2017-05-08)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>added .h files to MANIFEST.in</p></li>
+</ul>
+</section>
+<section id="id8">
+<h3>2.4.2 (2017-05-08)<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>added -std=c99 compile flags</p></li>
+</ul>
+</section>
+<section id="id9">
+<h3>2.4.1 (2017-05-07)<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>fix calculation of eccentric anomaly to handle diabolical inputs (following Eastmane et al. 2013)</p></li>
+<li><p>Optimized all files for GPU</p></li>
+<li><p>Restructured code so that _power2, _exponential, _logarithmic, _nonlinear, and _custom_ld all use a common code path</p></li>
+<li><p>Fixed bug where openmp.py duplicated a file handle without closing, causing operating system to run out of file handles after repeated re-runs</p></li>
+</ul>
+</section>
+<section id="id10">
+<h3>2.4.0 (2017-05-03)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>add power2 limb darkening model from Morello et al. 2017</p></li>
+<li><p>bug fix for secondary eclipse calculation (make variables private to avoid race condition)</p></li>
+<li><p>OpenACC to take advantage of GPU acceleration (thanks to Michael Zhang)</p></li>
+</ul>
+</section>
+<section id="id11">
+<h3>2.3.0 (2015-03-11)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>add get_true_anomaly() method</p></li>
+<li><p>remove redundant arrays</p></li>
+<li><p>improve accuracy for special cases (e.g. rp near 0.5)</p></li>
+</ul>
+</section>
+<section id="id12">
+<h3>2.2.0 (2015-12-19)<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>add inverse transit capability (can now handle negative rp)</p></li>
+<li><p>speed up super-sampling</p></li>
+</ul>
+</section>
+<section id="id13">
+<h3>2.1.0 (2015-08-06)<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>add get_t_conjunction() method</p></li>
+<li><p>change eclipse model normalization so that stellar flux is unity</p></li>
+</ul>
+</section>
+<section id="id14">
+<h3>2.0.0 (2015-08-04)<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>add secondary eclipse model</p></li>
+<li><p>change model parameterization to time of inferior conjunction from time of periastron (backwards-incompatible change in response to referee)</p></li>
+</ul>
+</section>
+<section id="id15">
+<h3>1.0.0 (2015-07-29)<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>first stable release</p></li>
+</ul>
+</section>
+<section id="id16">
+<h3>0.9.1 (2015-06-24)<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>fixing bug in call to _rsky</p></li>
+</ul>
+</section>
+<section id="id17">
+<h3>0.9.0 (2015-06-24)<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Beta version</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/batlogo.jpg" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="#">batman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trouble.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Laura Kreidberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

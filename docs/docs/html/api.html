@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>API &#8212; batman 2.4.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Troubleshooting" href="trouble.html" />
+    <link rel="prev" title="Tutorial" href="tutorial.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="api">
+<span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-batman"></span><dl class="py class">
+<dt class="sig sig-object py" id="batman.TransitParams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">batman.</span></span><span class="sig-name descname"><span class="pre">TransitParams</span></span><a class="headerlink" href="#batman.TransitParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object to store the physical parameters of the transit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t0</strong> (<em>float</em><em>, </em><em>optional</em>) – Time of inferior conjunction.</p></li>
+<li><p><strong>t_secondary</strong> (<em>float</em><em>, </em><em>optional</em>) – Time of secondary eclipse center.</p></li>
+<li><p><strong>per</strong> (<em>float</em>) – Orbital period.</p></li>
+<li><p><strong>rp</strong> (<em>float</em>) – Planet radius [in stellar radii].</p></li>
+<li><p><strong>a</strong> (<em>float</em>) – Semi-major axis [in stellar radii].</p></li>
+<li><p><strong>inc</strong> (<em>float</em>) – Orbital inclination [in degrees].</p></li>
+<li><p><strong>ecc</strong> (<em>float</em>) – Orbital eccentricity.</p></li>
+<li><p><strong>w</strong> (<em>float</em>) – Argument of periapse [in degrees]</p></li>
+<li><p><strong>u</strong> (<em>array_like</em>) – List of limb darkening coefficients.</p></li>
+<li><p><strong>limb_dark</strong> (<em>str</em>) – Limb darkening model (choice of “nonlinear”, “quadratic”, “exponential”, “logarithmic”, “squareroot”, “linear”, “uniform”, “power2”, or “custom”).</p></li>
+<li><p><strong>fp</strong> (<em>float</em><em>, </em><em>optional</em>) – Planet-to-star flux ratio (for secondary eclipse models).</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Units for the orbital period and ephemeris can be anything as long as they are consistent (e.g. both in days).</p></li>
+<li><p>The orbital path is calculated based on <cite>t0</cite> for primary transits and <cite>t_secondary</cite> for secondary eclipses.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Example</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">batman</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitParams</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">t0</span> <span class="o">=</span> <span class="mf">0.</span>                              <span class="c1">#time of inferior conjunction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">per</span> <span class="o">=</span> <span class="mf">1.</span>                             <span class="c1">#orbital period </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">rp</span> <span class="o">=</span> <span class="mf">0.1</span>                             <span class="c1">#planet radius (in units of stellar radii)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">15.</span>                              <span class="c1">#semi-major axis (in units of stellar radii)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">inc</span> <span class="o">=</span> <span class="mf">87.</span>                            <span class="c1">#orbital inclination (in degrees)       </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">ecc</span> <span class="o">=</span> <span class="mf">0.</span>                             <span class="c1">#eccentricity   </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mf">90.</span>                              <span class="c1">#longitude of periastron (in degrees) </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">u</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>                       <span class="c1">#limb darkening coefficients</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span><span class="o">.</span><span class="n">limb_dark</span> <span class="o">=</span> <span class="s2">&quot;quadratic&quot;</span>              <span class="c1">#limb darkening model</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="batman.TransitModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">batman.</span></span><span class="sig-name descname"><span class="pre">TransitModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_err</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nthreads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fac</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transittype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'primary'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supersample_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for generating model transit light curves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (a <cite>TransitParams</cite> instance) – A <a class="reference internal" href="#batman.TransitParams" title="batman.TransitParams"><code class="xref py py-attr docutils literal notranslate"><span class="pre">TransitParams</span></code></a> object containing the physical parameters of the transit</p></li>
+<li><p><strong>t</strong> (<em>ndarray</em>) – Array of times at which to calculate the model.</p></li>
+<li><p><strong>max_err</strong> (<em>float</em><em>, </em><em>optional</em>) – Error tolerance (in parts per million) for the model.</p></li>
+<li><p><strong>nthreads</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of threads to use for parallelization.</p></li>
+<li><p><strong>fac</strong> (<em>float</em><em>, </em><em>optional</em>) – Scale factor for integration step size</p></li>
+<li><p><strong>transittype</strong> (<em>string</em><em>, </em><em>optional</em>) – Type of transit (“primary” or “secondary”)</p></li>
+<li><p><strong>supersample_factor</strong> (<em>integer</em><em>, </em><em>optional</em>) – Number of points subdividing exposure</p></li>
+<li><p><strong>exp_time</strong> (<em>double</em><em>, </em><em>optional</em>) – Exposure time (in same units as <cite>t</cite>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Example</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span> <span class="o">=</span> <span class="n">batman</span><span class="o">.</span><span class="n">TransitModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">max_err</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">nthreads</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.calc_err">
+<span class="sig-name descname"><span class="pre">calc_err</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.calc_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate maximum error for transit light curve calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>plot</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, plots the error in the light curve model as a function of separation of centers.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Truncation error (parts per million)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.get_t_conjunction">
+<span class="sig-name descname"><span class="pre">get_t_conjunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.get_t_conjunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the time of primary transit center (calculated using <cite>params.t_secondary</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.get_t_periastron">
+<span class="sig-name descname"><span class="pre">get_t_periastron</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.get_t_periastron" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the time of periastron passage (calculated using <cite>params.t0</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.get_t_secondary">
+<span class="sig-name descname"><span class="pre">get_t_secondary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.get_t_secondary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the time of secondary eclipse center (calculated using <cite>params.t0</cite>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.get_true_anomaly">
+<span class="sig-name descname"><span class="pre">get_true_anomaly</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.get_true_anomaly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the true anomaly at each time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="batman.TransitModel.light_curve">
+<span class="sig-name descname"><span class="pre">light_curve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#batman.TransitModel.light_curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a model light curve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>params</strong> (A <cite>TransitParams</cite> instance) – Transit parameters</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Relative flux</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+<dt class="field-even">Example</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">flux</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">light_curve</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/batlogo.jpg" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html">batman</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trouble.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acknowledgements.html">Acknowledgements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tutorial.html" title="previous chapter">Tutorial</a></li>
+      <li>Next: <a href="trouble.html" title="next chapter">Troubleshooting</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Laura Kreidberg.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
