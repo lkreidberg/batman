@@ -3,8 +3,9 @@ import pytest
 from batman import TransitModel, TransitParams  # Adjust the import according to your project structure
 
 
-def test_valid_initialization():
-    """Test the constructor with valid input parameters."""
+@pytest.fixture
+def default_params():
+    """Provides default TransitParams with valid settings that can be customized per test."""
     params = TransitParams()
     params.limb_dark = "quadratic"
     params.t0 = 0.0
@@ -15,90 +16,129 @@ def test_valid_initialization():
     params.ecc = 0.0
     params.w = 90.0
     params.u = [0.1, 0.3]
-    t = np.linspace(-0.015, 0.015, 100)
+    return params
 
-    model = TransitModel(params, t)
+
+@pytest.fixture
+def default_time():
+    """Provides a default time array that can be used in most tests."""
+    return np.linspace(-0.015, 0.015, 100)
+
+
+def test_valid_initialization(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    model = TransitModel(default_params, default_time)
     assert model is not None
     assert model.t.size == 100
 
 
-def test_invalid_coefficients():
-    """Test the constructor with an invalid number of limb darkening coefficients."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.u = [0.1]  # Incorrect number for quadratic
-    params.rp = 0.1
+def test_valid_initialization_linear(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "linear"
+    default_params.u = [0.1]
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
 
-    t = np.linspace(0, 10, 100)
+
+def test_valid_initialization_nonlinear(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "nonlinear"
+    default_params.u = [0.1, 0.3, 0.2, 0.1]
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_squareroot(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "squareroot"
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_uniform(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "uniform"
+    default_params.u = []
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_logarithmic(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "logarithmic"
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_exponential(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "exponential"
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_power2(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "power2"
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_valid_initialization_custom(default_params, default_time):
+    """Test the constructor with valid input parameters."""
+    default_params.limb_dark = "custom"
+    model = TransitModel(default_params, default_time)
+    assert model is not None
+    assert model.t.size == 100
+
+
+def test_invalid_coefficients(default_params, default_time):
+    """Test the constructor with an invalid number of limb darkening coefficients."""
+    default_params.u = [0.1]
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t)
+        TransitModel(default_params, default_time)
     assert "Incorrect number of coefficients" in str(excinfo.value)
 
 
-def test_unsupported_limb_darkening():
+def test_unsupported_limb_darkening(default_params, default_time):
     """Test with an unsupported limb darkening model."""
-    params = TransitParams()
-    params.limb_dark = "unsupported_model"
-    params.u = [0.1, 0.2]
-    params.rp = 0.1
-
-    t = np.linspace(0, 10, 100)
+    default_params.limb_dark = "unsupported_model"
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t)
+        TransitModel(default_params, default_time)
     assert "limb darkening not supported" in str(excinfo.value)
 
 
-def test_invalid_error_tolerance():
+def test_invalid_error_tolerance(default_params, default_time):
     """Test with an invalid error tolerance."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.u = [0.1, 0.2]
-    params.rp = 0.1
-
-    t = np.linspace(0, 10, 100)
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t, max_err=0.0001)  # Below the threshold
+        TransitModel(default_params, default_time, max_err=0.0001)  # Below the threshold
     assert "The lowest allowed value for max_err is 0.001" in str(excinfo.value)
 
 
-def test_invalid_transit_type():
+def test_invalid_transit_type(default_params, default_time):
     """Test with an invalid transit type."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.u = [0.1, 0.2]
-    params.rp = 0.1
-
-    t = np.linspace(0, 10, 100)
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t, transittype="invalid_type")
+        TransitModel(default_params, default_time, transittype="invalid_type")
     assert "Allowed transit types are \"primary\" and \"secondary\"" in str(excinfo.value)
 
 
-def test_invalid_exposure_time_with_supersampling():
+def test_invalid_exposure_time_with_supersampling(default_params, default_time):
     """Test with an invalid exposure time when supersampling is used."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.u = [0.1, 0.2]
-    params.rp = 0.1
-
-    t = np.linspace(0, 10, 100)
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t, supersample_factor=2,
+        TransitModel(default_params, default_time, supersample_factor=2,
                      exp_time=0)  # Invalid because exp_time must be > 0 with supersampling
     assert "Please enter a valid exposure time" in str(excinfo.value)
 
 
-def test_non_array_time_input():
-    """Test with a non-array time input."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.u = [0.1, 0.2]
-    params.rp = 0.1
-
+def test_non_array_time_input(default_params):
     t = list(np.linspace(0, 10, 100))  # Pass a list instead of a numpy array
     with pytest.raises(Exception) as excinfo:
-        TransitModel(params, t)
+        TransitModel(default_params, t)
     assert "Times t must be a numpy array" in str(excinfo.value)
-
-# Use the following command in your terminal to run these tests:
-# pytest test_transit_model_constructor.py
