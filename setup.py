@@ -57,7 +57,7 @@ extensions = [
 
 setup(
     name="batman-package",
-    version="2.5.0",
+    version="2.5.1",
     author="Laura Kreidberg",
     author_email="laura.kreidberg@gmail.com",
     url="https://github.com/lkreidberg/batman",

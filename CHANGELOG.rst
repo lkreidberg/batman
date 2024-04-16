@@ -1,5 +1,13 @@
 .. :changelog:
 
+2.5.1 (2024-16-04)
+~~~~~~~~~~~~~~~~~~
+- created new tests for `transitmodels.py`
+
+2.5.0 (2024-16-04)
+~~~~~~~~~~~~~~~~~~
+- updated `setup.py` file with setuptools instead of distutils.
+
 2.4.9 (2022-29-05)
 ~~~~~~~~~~~~~~~~~~
 - require oldest-supported-numpy in pyproject.toml
