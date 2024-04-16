@@ -119,7 +119,9 @@ def test_unsupported_limb_darkening(default_params, default_time):
 def test_invalid_error_tolerance(default_params, default_time):
     """Test with an invalid error tolerance."""
     with pytest.raises(Exception) as excinfo:
-        TransitModel(default_params, default_time, max_err=0.0001)  # Below the threshold
+        TransitModel(
+            default_params, default_time, max_err=0.0001
+        )  # Below the threshold
     assert "The lowest allowed value for max_err is 0.001" in str(excinfo.value)
 
 
@@ -127,14 +129,15 @@ def test_invalid_transit_type(default_params, default_time):
     """Test with an invalid transit type."""
     with pytest.raises(Exception) as excinfo:
         TransitModel(default_params, default_time, transittype="invalid_type")
-    assert "Allowed transit types are \"primary\" and \"secondary\"" in str(excinfo.value)
+    assert 'Allowed transit types are "primary" and "secondary"' in str(excinfo.value)
 
 
 def test_invalid_exposure_time_with_supersampling(default_params, default_time):
     """Test with an invalid exposure time when supersampling is used."""
     with pytest.raises(Exception) as excinfo:
-        TransitModel(default_params, default_time, supersample_factor=2,
-                     exp_time=0)  # Invalid because exp_time must be > 0 with supersampling
+        TransitModel(
+            default_params, default_time, supersample_factor=2, exp_time=0
+        )  # Invalid because exp_time must be > 0 with supersampling
     assert "Please enter a valid exposure time" in str(excinfo.value)
 
 
