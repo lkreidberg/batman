@@ -94,6 +94,7 @@ def test_valid_initialization_power2(default_params, default_time):
 def test_valid_initialization_custom(default_params, default_time):
     """Test the constructor with valid input parameters."""
     default_params.limb_dark = "custom"
+    default_params.u = [0.1, 0.3, 0.2, 0.1, 0.2, 0.3]
     model = TransitModel(default_params, default_time)
     assert model is not None
     assert model.t.size == 100
