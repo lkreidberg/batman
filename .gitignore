@@ -11,6 +11,8 @@ build/*
 *.blg
 *.eps
 *.txt
+.coverage
+.idea/
 
 dist
 MANIFEST
