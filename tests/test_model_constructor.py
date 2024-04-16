@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from batman import TransitModel, TransitParams  # Adjust the import according to your project structure
+from batman import TransitModel, TransitParams
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def default_time():
     return np.linspace(-0.015, 0.015, 100)
 
 
-def test_valid_initialization(default_params, default_time):
+def test_valid_initialization_quadratic(default_params, default_time):
     """Test the constructor with valid input parameters."""
     model = TransitModel(default_params, default_time)
     assert model is not None
