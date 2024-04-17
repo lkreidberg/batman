@@ -29,10 +29,16 @@ Some intrepid users have braved the path of installing batman on Windows. Their 
 
 Tests
 -----
-To check whether the install is working, I recommend running a few basic tests with:
+To check whether the install is working, You can run a few basic tests with:
 
 ::
 
 	$ python -c 'import batman; batman.test()'
 
+If you run into a circular dependency error, you may need to run this command outside of the root directory.
 
+Alternatively, you can run more comprehensive tests using pytest from within the root directory:
+
+::
+
+	$ pytest tests
