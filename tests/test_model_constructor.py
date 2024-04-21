@@ -1,28 +1,6 @@
 import numpy as np
 import pytest
-from batman import TransitModel, TransitParams
-
-
-@pytest.fixture
-def default_params():
-    """Provides default TransitParams with valid settings that can be customized per test."""
-    params = TransitParams()
-    params.limb_dark = "quadratic"
-    params.t0 = 0.0
-    params.per = 1.0
-    params.rp = 0.1
-    params.a = 15.0
-    params.inc = 87.0
-    params.ecc = 0.0
-    params.w = 90.0
-    params.u = [0.1, 0.3]
-    return params
-
-
-@pytest.fixture
-def default_time():
-    """Provides a default time array that can be used in most tests."""
-    return np.linspace(-0.015, 0.015, 100)
+from batman import TransitModel
 
 
 def test_valid_initialization_quadratic(default_params, default_time):
