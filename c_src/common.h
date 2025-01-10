@@ -91,8 +91,8 @@ void calc_limb_darkening(double* f_array, double* d_array, int N, double rprs, d
 			while(x < x_out)
 			{
 				double A_f = area(d, x, rprs);				//calculates area of overlapping circles
-				double I = intensity(x - dx/2., intensity_args); 	//intensity at the midpoint
-				delta += (A_f - A_i)*I;				//increase in transit depth for this integration step
+				double Int = intensity(x - dx/2., intensity_args); 	//intensity at the midpoint
+				delta += (A_f - A_i)*Int;				//increase in transit depth for this integration step
 				dx = fac*acos(x);  				//updating step size
 				x = x + dx;					//stepping to next element
 				A_i = A_f;					//storing area
@@ -100,8 +100,8 @@ void calc_limb_darkening(double* f_array, double* d_array, int N, double rprs, d
 			dx = x_out - x + dx;  					//calculating change in radius for last step  FIXME
 			x = x_out;						//final radius for integration
 			double A_f = area(d, x, rprs);					//area for last integration step
-			double I = intensity(x - dx/2., intensity_args); 		//intensity at the midpoint
-			delta += (A_f - A_i)*I;					//increase in transit depth for this integration step
+			double Int = intensity(x - dx/2., intensity_args); 		//intensity at the midpoint
+			delta += (A_f - A_i)*Int;					//increase in transit depth for this integration step
 
 			f_array[i] = 1.0 - delta;	//flux equals 1 - \int I dA
 		}

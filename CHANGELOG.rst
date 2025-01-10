@@ -1,4 +1,8 @@
 .. :changelog:
+   
+2.5.2 (2025-10-01)
+~~~~~~~~~~~~~~~~~~
+- renamed I variable in common.h to avoid duplication with linux macros
 
 2.5.1 (2024-16-04)
 ~~~~~~~~~~~~~~~~~~
