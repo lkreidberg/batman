@@ -39,7 +39,7 @@ jobs:
       - name: Upload built wheels as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}
           path: wheelhouse/
 
   publish:
