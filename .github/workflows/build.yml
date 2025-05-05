@@ -6,7 +6,7 @@ on:
       - "v*.*.*"  # Only runs on version tags like v1.2.3
     branches:
       - master
-      - test-wheel-build  # <-- add this line if needed
+      - test-build-fix # <-- add this line if needed
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
