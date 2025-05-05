@@ -1,4 +1,8 @@
 .. :changelog:
+2.5.3 (2025-05-05)
+~~~~~~~~~~~~~~~~~~
+- update CI to latest stable python versions
+- update numpy version to 2.0 in C extensions
    
 2.5.2 (2025-10-01)
 ~~~~~~~~~~~~~~~~~~
