@@ -32,7 +32,6 @@ jobs:
           CIBW_SKIP: "cp36-* cp37-* cp38-* pp* *-musllinux*"
           CIBW_BEFORE_BUILD: "pip install numpy && pip install ."
           CIBW_TEST_REQUIRES: "pytest setuptools"
-          CIBW_BEFORE_TEST: "pip install setuptools"
           CIBW_TEST_COMMAND: "pytest {project}/tests"
         run: python -m cibuildwheel --output-dir wheelhouse
 
@@ -50,7 +49,6 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: wheels
           path: dist
 
       - name: Publish to PyPI
