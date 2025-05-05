@@ -33,7 +33,6 @@ jobs:
           CIBW_BEFORE_BUILD: "pip install numpy && pip install ."
           CIBW_TEST_REQUIRES: "pytest setuptools"
           CIBW_BEFORE_TEST: "pip install setuptools"
-          CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: "pytest {project}/tests"
         run: python -m cibuildwheel --output-dir wheelhouse
 
