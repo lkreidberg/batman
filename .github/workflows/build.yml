@@ -30,6 +30,7 @@ jobs:
 
         # Optional: Customize build behavior
         env:
+          CIBW_SKIP: "cp36-*"
           CIBW_SKIP: "pp* *-musllinux*"  # Skip PyPy and musl builds
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: "pytest {project}/tests"
