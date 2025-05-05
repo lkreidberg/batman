@@ -33,10 +33,12 @@ jobs:
 
         # Optional: Customize build behavior
         env:
+          CIBW_SKIP: "cp36-*"
           CIBW_BEFORE_BUILD: "pip install numpy && pip install ."
           CIBW_SKIP: "pp* *-musllinux*"  # Skip PyPy and musl builds
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: "pytest {project}/tests"
+          
 
       - name: Upload built wheels as artifact
         uses: actions/upload-artifact@v4
