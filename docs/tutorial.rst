@@ -179,13 +179,11 @@ The parallelization is done at the C level with OpenMP.  If your default C compi
 
 Modeling eclipses
 -----------------
-``batman`` can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio and the central eclipse time:
+``batman`` can also model eclipses (secondary transits). To do this, specify the planet-to-star flux ratio:
 
 ::
 	
 	params.fp = 0.001
-	params.t_secondary = 0.5
-         
 
 and initialize a model with the ``transittype`` parameter set to ``"secondary"``:
 
@@ -201,7 +199,7 @@ and initialize a model with the ``transittype`` parameter set to ``"secondary"``
 The eclipse light curve is normalized such that the flux of the star is unity. The eclipse depth is :math:`f_p`. 
 The model assumes that the eclipse center occurs when the true anomaly equals :math:`3\pi/2 - \omega`. 
 
-For convenience, `batman` includes utilities to calculate the time of secondary eclipse from the time of inferior conjunction, and vice versa. See the ``get_t_secondary`` and ``get_t_conjunction`` methods in the API.
+For convenience, `batman` includes utilities to calculate the time of secondary eclipse from the time of inferior conjunction (transit), and vice versa. See the ``get_t_secondary`` and ``get_t_primary`` methods in the API.
 
 .. warning:: Note that the secondary eclipse calculation does NOT account for the light travel time in the system (which is of order minutes). Future versions of ``batman`` may include this feature, but for now you're on your own!
 

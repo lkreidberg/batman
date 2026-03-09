@@ -1,4 +1,10 @@
 .. :changelog:
+
+3.0.0 (2026-03-06)
+~~~~~~~~~~~~~~~~~~
+- Removed t_secondary, because the presence of both t0 and t_secondary caused subtle but serious bugs (see GitHub Issues page).
+- Changed the signature of get_t_conjunction to take t_secondary (which is no longer in TransitParams).  Also renamed the method to get_t_transit to emphasize that it is not the same method.
+   
 2.5.3 (2025-05-05)
 ~~~~~~~~~~~~~~~~~~
 - update CI to latest stable python versions

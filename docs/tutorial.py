@@ -79,10 +79,11 @@ m.calc_err(plot = True)
 #m = batman.TransitModel(params, t, nthreads = 4)"""
 
 params.fp = 0.001
-params.t_secondary = 0.5
 t = np.linspace(0.48, 0.52, 1000)
 m = batman.TransitModel(params, t, transittype="secondary")	       
 flux = m.light_curve(params)
+
+#Secondary eclipse time is automatically calculated.  To see what it is, call m.get_t_secondary(params)
 
 plt.plot(t, flux)
 plt.ylim((0.9995, 1.0015))

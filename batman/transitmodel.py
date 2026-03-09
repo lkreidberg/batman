@@ -150,7 +150,6 @@ class TransitModel(object):
         self.u = params.u
         self.limb_dark = params.limb_dark
         self.fp = params.fp
-        self.t_secondary = params.t_secondary
         self.max_err = max_err
         self.supersample_factor = supersample_factor
         self.exp_time = exp_time
@@ -172,7 +171,6 @@ class TransitModel(object):
             self.transittype = 1
         else:
             self.transittype = 2
-            params.t0 = self.get_t_conjunction(params)
 
         if fac != None:
             self.fac = fac
@@ -463,10 +461,7 @@ class TransitModel(object):
             or params.inc != self.inc
             or params.ecc != self.ecc
             or params.w != self.w
-            or params.t_secondary != self.t_secondary
         ):
-            if self.transittype == 2 and params.t_secondary != self.t_secondary:
-                params.t0 = self.get_t_conjunction(params)
             self.ds = _rsky._rsky(
                 self.t_supersample,
                 params.t0,
@@ -492,7 +487,6 @@ class TransitModel(object):
         self.u = params.u
         self.limb_dark = params.limb_dark
         self.fp = params.fp
-        self.t_secondary = params.t_secondary
 
         # handles the case of inverse transits (rp < 0)
         self.inverse = False
@@ -618,13 +612,13 @@ class TransitModel(object):
         phase2 = self._get_phase(params, "secondary")
         return params.t0 + params.per * (phase2 - phase)
 
-    def get_t_conjunction(self, params):
+    def get_t_primary(self, params, t_secondary):
         """
-        Return the time of primary transit center (calculated using `params.t_secondary`).
+        Return the time of primary transit center from t_secondary.
         """
         phase = self._get_phase(params, "primary")
         phase2 = self._get_phase(params, "secondary")
-        return params.t_secondary + params.per * (phase - phase2)
+        return t_secondary + params.per * (phase - phase2)
 
     def get_true_anomaly(self):
         """
@@ -650,9 +644,6 @@ class TransitParams(object):
 
     :param t0: Time of inferior conjunction.
     :type t0: float, optional
-
-    :param t_secondary: Time of secondary eclipse center.
-    :type t_secondary: float, optional
 
     :param per: Orbital period.
     :type per: float
@@ -683,7 +674,7 @@ class TransitParams(object):
 
     .. note::
             - Units for the orbital period and ephemeris can be anything as long as they are consistent (e.g. both in days).
-            - The orbital path is calculated based on `t0` for primary transits and `t_secondary` for secondary eclipses.
+            - The orbital path is calculated based on `t0` for both primary and secondary transits
 
     :Example:
 
@@ -711,4 +702,4 @@ class TransitParams(object):
         self.u = None
         self.limb_dark = None
         self.fp = None
-        self.t_secondary = None
+
