@@ -103,6 +103,14 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         // allow for negative impact parameters
         d = fabs(d);
 
+        // source is unocculted: return before the corner-case adjustments and the squares below.
+        // None of the adjustments below can move d across 1 + p, so the result is unchanged.
+        if(d >= 1.0 + p)
+        {
+            f_array[i] = 1.0;
+            continue;
+        }
+
         // check the corner cases
         if(fabs(p - d) < tol)
         {

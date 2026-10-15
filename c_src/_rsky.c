@@ -42,25 +42,33 @@ static PyObject *_getf(PyObject *self, PyObject *args);
 
 inline double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
 {
+	/* Same iteration as before, with the repeated work removed: sin(E) is evaluated once per
+	   iteration instead of twice, fmod(|x|, 2pi) = |fmod(x, 2pi)| is evaluated once, and fmod is
+	   skipped where it is the identity (|x| < 2pi; 1 - e*cos(E) lies in (0, 2) for e < 1). */
 	double E = M, eps = 1.0e-7;
-	double fe, fs;
-  int ii, maxiter = 1000;
+	double fe, fs, sE, r, x;
+	int ii, maxiter = 1000;
+	const double twopi = 2.*M_PI;
 
 	// modification from LK 05/07/2017:
 	// add fmod to ensure convergence for diabolical inputs (following Eastman et al. 2013; Section 3.1)
-  ii = 0;
-	while ((fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps) & (ii < maxiter))
+	ii = 0;
+	while (ii < maxiter)
 	{
-		fe = fmod(E - e*sin(E) - M, 2.*M_PI);
-		fs = fmod(1 - e*cos(E), 2.*M_PI);
+		sE = sin(E);
+		x = E - e*sE - M;
+		fe = (fabs(x) < twopi) ? x : fmod(x, twopi);
+		if (!(fabs(fe) > eps)) break;
+		fs = 1 - e*cos(E);
+		fs = (fs >= 0. && fs < twopi) ? fs : fmod(fs, twopi);
 		E = E - fe/fs;
-    ii++;
+		ii++;
 	}
-  if (ii >= maxiter)
-  {
-    PyErr_SetString(PyExc_RuntimeError, "Eccentric anomaly computation reached the maximum number of interations");
-    return E;
-  }
+	if (ii >= maxiter)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Eccentric anomaly computation reached the maximum number of interations");
+		return E;
+	}
 	return E;
 }
 
@@ -96,6 +104,22 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
 	#endif
 
+	/* Quantities that do not depend on the sample are computed once. */
+	const double f0 = M_PI/2. - omega;						//true anomaly corresponding to time of primary transit center
+	const int circular = (ecc < 1.0e-5);
+	double tp;									//time of periastron
+	if(circular) tp = tc - per*f0/2./M_PI;
+	else
+	{
+		double E0 = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f0/2.));		//corresponding eccentric anomaly
+		double M0 = E0 - ecc*sin(E0);
+		tp = tc - per*M0/2./M_PI;
+	}
+	const double sini = sin(inc);
+	const double sqrt_ecc = sqrt((1.+ecc)/(1.-ecc));
+	const double one_m_e2 = 1.0 - ecc*ecc;
+	const int exactly_circular = (ecc == 0.0);					//then a(1-e^2)/(1+e cos f) = a exactly
+
 	#if defined (_OPENACC)
 	#pragma acc parallel loop copyin(t_array[:dims[0]]) copyout(output_array[:dims[0]])
 	#elif defined (_OPENMP)
@@ -104,45 +128,32 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 	for(int i = 0; i < dims[0]; i++)
 	{
 		double t = t_array[i];
+		double f;
 
-		//calculates time of periastron passage from time of inferior conjunction
-		double f = M_PI/2. - omega;							//true anomaly corresponding to time of primary transit center
-		double E;
-		double M;
-
-        // The true (f), eccentric (E) and mean (M) anomaly are all equal for a circular orbit
-        // Follows from general formulas (see also: https://luger.dev/starry/v0.3.0/tutorials/basics3.html)
-		if(ecc < 1.0e-5)
-		{
-			E = f;
-			M = f;
-		}
-		else
-		{
-			E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
-			M = E - ecc*sin(E);
-		}
-
-		double tp = tc - per*M/2./M_PI;							//time of periastron
-
-		if(ecc < 1.0e-5)
+		if(circular)
 		{
 			f = ((t - tp)/per - (int)((t - tp)/per))*2.*M_PI;			//calculates f for a circular orbit
 		}
 		else
 		{
-			M = n*(t - tp);
-			E = getE(M, ecc);
-			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
+			double M = n*(t - tp);
+			double E = getE(M, ecc);
+			f = 2.*atan(sqrt_ecc*tan(E/2.));
 		}
 		if (f_only) {
 			output_array[i] = f;
 		}
 		else {
 			double d;
-			if (transittype == 1 && sin(f + omega)*sin(inc) <= 0.) d = BIGD; //z < 0, so d is set to large value in order to not model primary transit during secondary eclipse
-			else if (transittype == 2 && sin(f + omega)*sin(inc) >= 0.) d = BIGD; //z > 0, so d is set to large value in order not to model secondary eclipse during primary transit
-			else d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers
+			double s = sin(f + omega);
+			double ss = s*sini;
+			if (transittype == 1 && ss <= 0.) d = BIGD; //z < 0, so d is set to large value in order to not model primary transit during secondary eclipse
+			else if (transittype == 2 && ss >= 0.) d = BIGD; //z > 0, so d is set to large value in order not to model secondary eclipse during primary transit
+			else
+			{
+				double r = exactly_circular ? a : a*one_m_e2/(1.0 + ecc*cos(f));
+				d = r*sqrt(1.0 - s*s*sini*sini);	//calculates separation of centers
+			}
 			output_array[i] = d;
 		}
 
