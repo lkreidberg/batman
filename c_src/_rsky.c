@@ -40,28 +40,63 @@ static PyObject *_rsky(PyObject *self, PyObject *args);
 
 static PyObject *_getf(PyObject *self, PyObject *args);
 
-inline double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
-{
-	double E = M, eps = 1.0e-7;
-	double fe, fs;
-  int ii, maxiter = 1000;
+// Helper function for solving Kepler's equation
+// Taken from https://github.com/kareemelbadry/gaiamock/blob/main/kepler_solve_astrometry.c
+// For more details, visit - http://alpheratz.net/dynamics/twobody/KeplerIterations_summary.pdf
+inline double eps3(double ecc, double M, double x){
+    double t1 = cos(x);
+    double t2 = -1.0 + ecc * t1;
+    double t3 = sin(x);
+    double t4 = ecc * t3;
+    double t5 = -x + t4 + M;
+    double t6 = t5 / (0.5 * t5 * t4 / t2 + t2);
+    return t5 / ((0.5 * t3 - (1.0 / 6.0) * t1 * t6) * ecc * t6 + t2);
+}
 
-	// modification from LK 05/07/2017:
-	// add fmod to ensure convergence for diabolical inputs (following Eastman et al. 2013; Section 3.1)
-  ii = 0;
-	while ((fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps) & (ii < maxiter))
-	{
-		fe = fmod(E - e*sin(E) - M, 2.*M_PI);
-		fs = fmod(1 - e*cos(E), 2.*M_PI);
-		E = E - fe/fs;
-    ii++;
-	}
-  if (ii >= maxiter)
-  {
-    PyErr_SetString(PyExc_RuntimeError, "Eccentric anomaly computation reached the maximum number of interations");
-    return E;
-  }
-	return E;
+// Helper function for finding an optimal first guess when solving Kepler's equation
+// Taken from https://github.com/kareemelbadry/gaiamock/blob/main/kepler_solve_astrometry.c
+// For more details, visit - http://alpheratz.net/dynamics/twobody/KeplerIterations_summary.pdf
+inline double KeplerStart3(double ecc, double M){
+    double t34 = ecc * ecc;
+    double t35 = ecc * t34;
+    double t33 = cos(M);
+    double correction = (-0.5 * t35 + ecc + (t34 + 1.5 * t33 * t35) * t33);
+    return M + correction * sin(M);
+}
+
+// Calculates the eccentric anomaly (drop-in replacement using high-efficiency cubic convergence)
+// Taken from https://github.com/kareemelbadry/gaiamock/blob/main/kepler_solve_astrometry.c
+// For more details, visit - http://alpheratz.net/dynamics/twobody/KeplerIterations_summary.pdf
+inline double getE(double M, double e)
+{
+    double xtol = 1.0e-10;
+    int maxiter = 100; // Third-order method converges so fast 100 is more than enough
+    
+    double Mnorm = fmod(M, 2.0 * M_PI);
+    if (Mnorm < 0.0) {
+        Mnorm += 2.0 * M_PI;
+    }
+
+    double EE = KeplerStart3(e, Mnorm);
+    double eps = 1.0;
+    double EE0 = 0.0;
+    int n_iter = 0;
+
+    while ((eps > xtol) && (n_iter < maxiter))
+    {
+        EE0 = EE;
+        EE = EE0 - eps3(e, Mnorm, EE0);
+        eps = fabs(EE0 - EE);
+        n_iter++;
+    }
+
+    if (n_iter >= maxiter)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Eccentric anomaly computation reached the maximum number of iterations");
+        return EE;
+    }
+
+    return EE;
 }
 
 static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
