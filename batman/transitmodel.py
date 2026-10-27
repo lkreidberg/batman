@@ -384,7 +384,8 @@ class TransitModel(object):
             n = 0
             err = 0.0
             while err > self.max_err or err < 0.99 * self.max_err:
-                fac = (fac_lo + fac_hi) / 2.0
+                # Low-amplitude transits can satisfy max_err even at fac_hi.
+                fac = fac_hi if n == 0 else (fac_lo + fac_hi) / 2.0
                 if self.limb_dark == "nonlinear":
                     f = _nonlinear_ld._nonlinear_ld(
                         ds,
@@ -427,6 +428,8 @@ class TransitModel(object):
                     )
 
                 err = np.max(np.abs(f - f0)) * 1.0e6
+                if n == 0 and err <= self.max_err:
+                    break
 
                 if err > self.max_err:
                     fac_hi = fac

@@ -124,3 +124,45 @@ def test_non_array_time_input(default_params):
     with pytest.raises(Exception) as excinfo:
         TransitModel(default_params, t)
     assert "Times t must be a numpy array" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "limb_dark,u",
+    [
+        ("nonlinear", [0.6283, -0.3063, 0.8965, -0.4593]),
+        ("squareroot", [0.3, 0.1]),
+        ("logarithmic", [0.3, 0.1]),
+        ("power2", [0.4, 0.7]),
+        ("custom", [0.1, 0.2, 0.3, 0.0, 0.0, 0.0]),
+    ],
+)
+def test_small_planet_within_error_tolerance(default_params, limb_dark, u):
+    # Issue #27: a Mars-sized planet does not need to reach the error budget.
+    default_params.per = 365.0
+    default_params.rp = 0.0055
+    default_params.a = 215.0
+    default_params.inc = 89.9
+    default_params.limb_dark = limb_dark
+    default_params.u = u
+    t = np.linspace(-0.3, 0.3, 1000)
+    model = TransitModel(default_params, t)
+    reference = TransitModel(default_params, t, fac=5e-4)
+    np.testing.assert_allclose(
+        model.light_curve(default_params),
+        reference.light_curve(default_params),
+        rtol=0,
+        atol=model.max_err * 1e-6,
+    )
+
+
+def test_uniform_nonlinear_profile(default_params, default_time):
+    default_params.limb_dark = "nonlinear"
+    default_params.u = [0.0, 0.0, 0.0, 0.0]
+    model = TransitModel(default_params, default_time)
+    flux = model.light_curve(default_params)
+    default_params.limb_dark = "uniform"
+    default_params.u = []
+    reference = TransitModel(default_params, default_time)
+    np.testing.assert_allclose(
+        flux, reference.light_curve(default_params), rtol=0, atol=1e-14
+    )
